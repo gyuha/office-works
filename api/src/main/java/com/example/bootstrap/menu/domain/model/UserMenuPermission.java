@@ -95,7 +95,7 @@ public class UserMenuPermission {
      *
      * @return 읽기 권한 여부
      */
-    public Boolean isCanRead() {
+    public Boolean getCanRead() {
         return canRead;
     }
 
@@ -113,7 +113,7 @@ public class UserMenuPermission {
      *
      * @return 쓰기 권한 여부
      */
-    public Boolean isCanWrite() {
+    public Boolean getCanWrite() {
         return canWrite;
     }
 

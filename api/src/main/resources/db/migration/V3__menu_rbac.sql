@@ -106,6 +106,7 @@ COMMENT ON COLUMN role_menu_permissions.can_write   IS '쓰기 권한 여부';
 COMMENT ON COLUMN role_menu_permissions.created_at  IS '생성일시';
 
 CREATE INDEX idx_role_menu_permissions_role_id ON role_menu_permissions (role_id);
+CREATE INDEX idx_role_menu_permissions_menu_id ON role_menu_permissions (menu_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. user_menu_permissions
@@ -133,7 +134,8 @@ COMMENT ON COLUMN user_menu_permissions.can_read    IS '읽기 권한 여부';
 COMMENT ON COLUMN user_menu_permissions.can_write   IS '쓰기 권한 여부';
 COMMENT ON COLUMN user_menu_permissions.created_at  IS '생성일시';
 
-CREATE INDEX idx_user_menu_permissions_user_id ON user_menu_permissions (user_id);
+CREATE INDEX idx_user_menu_permissions_user_id  ON user_menu_permissions (user_id);
+CREATE INDEX idx_user_menu_permissions_menu_id  ON user_menu_permissions (menu_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 초기 메뉴 데이터

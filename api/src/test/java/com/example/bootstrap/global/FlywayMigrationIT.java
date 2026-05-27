@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>V1: Account 도메인 + AI 도메인 테이블 생성</li>
  *   <li>V2: Spring Batch 5.x 메타데이터 테이블 및 시퀀스 생성</li>
+ *   <li>V3: 메뉴 RBAC 스키마 (menus, roles, user_roles, role_menu_permissions, user_menu_permissions)</li>
  * </ul>
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -60,14 +61,26 @@ class FlywayMigrationIT {
     }
 
     @Test
-    @DisplayName("Flyway 마이그레이션이 총 2건 실행되어야 한다")
-    void flyway_ShouldHaveExactlyTwoMigrations() {
+    @DisplayName("Flyway 마이그레이션 V3가 성공적으로 실행되어야 한다")
+    void flyway_V3Migration_ShouldSucceed() {
+        Map<String, Object> v3 = jdbcTemplate.queryForMap(
+            "SELECT version, description, success "
+                + "FROM flyway_schema_history WHERE version = '3'"
+        );
+
+        assertThat(v3.get("version")).isEqualTo("3");
+        assertThat(v3.get("success")).isEqualTo(true);
+    }
+
+    @Test
+    @DisplayName("Flyway 마이그레이션이 총 3건 실행되어야 한다")
+    void flyway_ShouldHaveExactlyThreeMigrations() {
         List<Map<String, Object>> history = jdbcTemplate.queryForList(
             "SELECT version, success FROM flyway_schema_history "
                 + "WHERE version IS NOT NULL ORDER BY installed_rank"
         );
 
-        assertThat(history).hasSize(2);
+        assertThat(history).hasSize(3);
         assertThat(history).allSatisfy(row ->
             assertThat(row.get("success")).isEqualTo(true)
         );
@@ -155,6 +168,100 @@ class FlywayMigrationIT {
 
         assertThat(columns).containsExactlyInAnyOrder(
             "id", "session_id", "role", "content", "model", "created_at"
+        );
+    }
+
+    // ── 메뉴 RBAC 테이블 검증 (V3) ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("menus 테이블이 정상적으로 생성되어야 한다")
+    void menus_TableShouldExist() {
+        assertTableExists("menus");
+    }
+
+    @Test
+    @DisplayName("menus 테이블이 올바른 컬럼 구조를 가져야 한다")
+    void menus_TableShouldHaveCorrectColumns() {
+        List<String> columns = queryColumnNames("menus");
+
+        assertThat(columns).containsExactlyInAnyOrder(
+            "id", "code", "name", "display_order", "is_active", "created_at"
+        );
+    }
+
+    @Test
+    @DisplayName("menus 테이블에 초기 메뉴 7건이 INSERT되어야 한다")
+    void menus_ShouldHaveSevenInitialRows() {
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM menus", Integer.class
+        );
+
+        assertThat(count)
+            .as("menus 테이블에 초기 데이터 7건이 존재해야 합니다")
+            .isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("roles 테이블이 정상적으로 생성되어야 한다")
+    void roles_TableShouldExist() {
+        assertTableExists("roles");
+    }
+
+    @Test
+    @DisplayName("roles 테이블이 올바른 컬럼 구조를 가져야 한다")
+    void roles_TableShouldHaveCorrectColumns() {
+        List<String> columns = queryColumnNames("roles");
+
+        assertThat(columns).containsExactlyInAnyOrder(
+            "id", "name", "description", "created_at"
+        );
+    }
+
+    @Test
+    @DisplayName("user_roles 테이블이 정상적으로 생성되어야 한다")
+    void userRoles_TableShouldExist() {
+        assertTableExists("user_roles");
+    }
+
+    @Test
+    @DisplayName("user_roles 테이블이 올바른 컬럼 구조를 가져야 한다")
+    void userRoles_TableShouldHaveCorrectColumns() {
+        List<String> columns = queryColumnNames("user_roles");
+
+        assertThat(columns).containsExactlyInAnyOrder(
+            "id", "user_id", "role_id", "created_at"
+        );
+    }
+
+    @Test
+    @DisplayName("role_menu_permissions 테이블이 정상적으로 생성되어야 한다")
+    void roleMenuPermissions_TableShouldExist() {
+        assertTableExists("role_menu_permissions");
+    }
+
+    @Test
+    @DisplayName("role_menu_permissions 테이블이 올바른 컬럼 구조를 가져야 한다")
+    void roleMenuPermissions_TableShouldHaveCorrectColumns() {
+        List<String> columns = queryColumnNames("role_menu_permissions");
+
+        assertThat(columns).containsExactlyInAnyOrder(
+            "id", "role_id", "menu_id", "can_read", "can_write", "created_at"
+        );
+    }
+
+    @Test
+    @DisplayName("user_menu_permissions 테이블이 정상적으로 생성되어야 한다")
+    void userMenuPermissions_TableShouldExist() {
+        assertTableExists("user_menu_permissions");
+    }
+
+    @Test
+    @DisplayName("user_menu_permissions 테이블이 올바른 컬럼 구조를 가져야 한다")
+    void userMenuPermissions_TableShouldHaveCorrectColumns() {
+        List<String> columns = queryColumnNames("user_menu_permissions");
+
+        assertThat(columns).containsExactlyInAnyOrder(
+            "id", "user_id", "menu_id", "can_read", "can_write", "created_at"
         );
     }
 
