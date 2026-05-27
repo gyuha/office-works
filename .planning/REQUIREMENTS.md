@@ -54,11 +54,24 @@
 
 ## Traceability
 
-| REQ-ID | Phase |
-|--------|-------|
-| SCH-01 ~ SCH-06 | Phase 1 |
-| DOM-01 ~ DOM-07 | Phase 1 |
-| API-01 | Phase 2 |
-| API-02 | Phase 3 |
-| SEC-01 ~ SEC-02 | Phase 2 |
-| SEC-03 ~ SEC-04 | Phase 3 |
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| SCH-01 | Phase 1 | Pending |
+| SCH-02 | Phase 1 | Pending |
+| SCH-03 | Phase 1 | Pending |
+| SCH-04 | Phase 1 | Pending |
+| SCH-05 | Phase 1 | Pending |
+| SCH-06 | Phase 1 | Pending |
+| DOM-01 | Phase 1 | Pending |
+| DOM-02 | Phase 1 | Pending |
+| DOM-03 | Phase 1 | Pending |
+| DOM-04 | Phase 1 | Pending |
+| DOM-05 | Phase 1 | Pending |
+| DOM-06 | Phase 2 | Pending |
+| DOM-07 | Phase 2 | Pending |
+| API-01 | Phase 2 | Pending |
+| SEC-01 | Phase 2 | Pending |
+| API-02 | Phase 3 | Pending |
+| SEC-02 | Phase 3 | Pending |
+| SEC-03 | Phase 3 | Pending |
+| SEC-04 | Phase 3 | Pending |
