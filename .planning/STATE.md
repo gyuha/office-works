@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Shipped — pushed to main (222aa1c)
-last_updated: "2026-05-28T13:41:15.619Z"
-last_activity: 2026-05-28 -- Phase 1 shipped
+status: Ready to execute
+last_updated: "2026-05-28T13:58:00Z"
+last_activity: 2026-05-28 -- Phase 2 planned (3 plans)
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 2
+  total_plans: 5
   completed_plans: 2
   percent: 33
 ---
@@ -20,16 +20,16 @@ progress:
 참조: .planning/PROJECT.md (최종 수정 2026-05-27)
 
 **Core value:** 사용자가 접근 가능한 메뉴 목록을 API로 정확히 내려주는 것
-**Current focus:** Phase 1 — DB 스키마 + 도메인 모델
+**Current focus:** Phase 2 — 권한 서비스 + 핵심 API
 
 ## Current Position
 
-Phase: 1 of 3 (DB 스키마 + 도메인 모델)
-Plan: 2 of 2 completed
-Status: Shipped — pushed to main (222aa1c)
-Last activity: 2026-05-28 -- Phase 1 shipped
+Phase: 2 of 3 (권한 서비스 + 핵심 API)
+Plan: 0 of 3 completed
+Status: Ready to execute — 3 plans in 3 waves
+Last activity: 2026-05-28 -- Phase 2 planned
 
-Progress: [███░░░░░░░] 33%
+Progress: [███░░░░░░░] 33% (Phase 1 complete, Phase 2 planned)
 
 ## Performance Metrics
 
