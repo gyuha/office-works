@@ -34,12 +34,12 @@ public class ApiAccessDeniedHandler implements ServerAccessDeniedHandler {
         response.setStatusCode(HttpStatus.FORBIDDEN);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        byte[] bytes;
+        final byte[] bytes;
         try {
             bytes = objectMapper.writeValueAsBytes(
                     ApiResponse.error("MENU_002", "메뉴 접근 권한이 없습니다."));
         } catch (Exception e) {
-            return Mono.error(e);
+            throw new RuntimeException("Failed to serialize access denied response", e);
         }
 
         response.getHeaders().setContentLength(bytes.length);

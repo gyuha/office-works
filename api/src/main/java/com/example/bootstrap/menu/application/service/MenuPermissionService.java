@@ -1,5 +1,6 @@
 package com.example.bootstrap.menu.application.service;
 
+import com.example.bootstrap.menu.application.dto.AdminMenuResponse;
 import com.example.bootstrap.menu.application.dto.MyMenuResponse;
 import com.example.bootstrap.menu.domain.model.Menu;
 import com.example.bootstrap.menu.domain.model.RoleMenuPermission;
@@ -39,6 +40,22 @@ public class MenuPermissionService {
         this.roleMenuPermissionRepository = roleMenuPermissionRepository;
         this.userMenuPermissionRepository = userMenuPermissionRepository;
         this.menuRepository = menuRepository;
+    }
+
+    /**
+     * ADMIN 전용 전체 메뉴 목록을 반환합니다 (display_order 오름차순).
+     *
+     * @return 모든 메뉴 목록 (비활성 포함)
+     */
+    public Mono<List<AdminMenuResponse>> getAllMenus() {
+        return menuRepository.findAll()
+                .collectSortedList(Comparator.comparingInt(
+                        m -> m.getDisplayOrder() != null ? m.getDisplayOrder() : 0))
+                .map(menus -> menus.stream()
+                        .map(m -> new AdminMenuResponse(
+                                m.getId(), m.getCode(), m.getName(),
+                                m.getDisplayOrder(), m.isActive()))
+                        .toList());
     }
 
     /**

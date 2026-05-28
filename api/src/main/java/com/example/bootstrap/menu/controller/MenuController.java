@@ -3,7 +3,6 @@ package com.example.bootstrap.menu.controller;
 import com.example.bootstrap.menu.application.dto.AdminMenuResponse;
 import com.example.bootstrap.menu.application.dto.MyMenuResponse;
 import com.example.bootstrap.menu.application.service.MenuPermissionService;
-import com.example.bootstrap.menu.domain.repository.MenuRepository;
 import com.example.bootstrap.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -26,16 +24,12 @@ import java.util.List;
 public class MenuController {
 
     private final MenuPermissionService menuPermissionService;
-    private final MenuRepository menuRepository;
 
     /**
      * @param menuPermissionService 메뉴 권한 서비스
-     * @param menuRepository        메뉴 리포지토리
      */
-    public MenuController(final MenuPermissionService menuPermissionService,
-                          final MenuRepository menuRepository) {
+    public MenuController(final MenuPermissionService menuPermissionService) {
         this.menuPermissionService = menuPermissionService;
-        this.menuRepository = menuRepository;
     }
 
     /**
@@ -48,14 +42,7 @@ public class MenuController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<ResponseEntity<ApiResponse<List<AdminMenuResponse>>>> getMenus() {
-        return menuRepository.findAll()
-                .collectSortedList(Comparator.comparingInt(
-                        m -> m.getDisplayOrder() != null ? m.getDisplayOrder() : 0))
-                .map(menus -> menus.stream()
-                        .map(m -> new AdminMenuResponse(
-                                m.getId(), m.getCode(), m.getName(),
-                                m.getDisplayOrder(), m.isActive()))
-                        .toList())
+        return menuPermissionService.getAllMenus()
                 .map(list -> ResponseEntity.ok(
                         ApiResponse.success("전체 메뉴 목록을 조회했습니다.", list)));
     }

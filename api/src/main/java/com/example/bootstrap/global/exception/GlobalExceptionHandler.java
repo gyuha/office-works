@@ -90,7 +90,12 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 메서드 수준 권한 거부 예외를 처리합니다.
+     * @PreAuthorize 권한 거부 예외를 처리합니다.
+     *
+     * <p>WebFlux에서 {@code @PreAuthorize}로 발생한 {@link AccessDeniedException}은
+     * {@code ExceptionTranslationWebFilter}가 아닌 {@code @RestControllerAdvice}로 전파됩니다.
+     * {@link com.example.bootstrap.global.security.ApiAccessDeniedHandler}는
+     * 보안 필터 체인 수준의 403을 처리하며, 이 핸들러는 메서드 수준 403을 처리합니다.
      *
      * @param ex       {@link AccessDeniedException}
      * @param exchange {@link ServerWebExchange}
