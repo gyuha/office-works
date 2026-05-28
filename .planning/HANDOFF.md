@@ -19,3 +19,9 @@
 | 2026-05-28T15:03:08Z | 03-new-phase | sg-next | gsd-plan | - | gyuha |
 | 2026-05-28T15:13:57Z | 03-new-phase | gsd-plan | sg-next | - | gyuha |
 | 2026-05-28T15:14:34Z | 03-new-phase | gsd-plan | parallel | 803a1f0 | gyuha |
+| 2026-05-28T15:21:14Z | 03-new-phase | parallel | sg-next | - | gyuha |
+| 2026-05-28T15:21:32Z | 03-new-phase | sg-next | review | - | gyuha |
+| 2026-05-28T15:27:37Z | 03-new-phase | review | sg-next | - | gyuha |
+| 2026-05-28T15:29:33Z | 03-new-phase | sg-next | sg-retro | - | gyuha |
+| 2026-05-28T15:29:47Z | 03-new-phase | sg-retro | sg-next | - | gyuha |
+| 2026-05-28T15:29:56Z | 03-new-phase | sg-next | ship | - | gyuha |
