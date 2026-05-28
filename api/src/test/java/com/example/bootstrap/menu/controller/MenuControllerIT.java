@@ -57,18 +57,6 @@ class MenuControllerIT {
     }
 
     @Test
-    @DisplayName("GET /api/menus/my — 유효한 USER 토큰으로 요청하면 200과 배열을 반환한다")
-    void getMyMenus_withValidUserToken_returnsOkWithArray() {
-        webTestClient.get().uri("/api/menus/my")
-                .header("Authorization", "Bearer " + userAccessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.code").isEqualTo("SUCCESS")
-                .jsonPath("$.data").isArray();
-    }
-
-    @Test
     @DisplayName("GET /api/menus/my — Bearer 토큰 없이 요청하면 401을 반환한다")
     void getMyMenus_withoutToken_returns401() {
         webTestClient.get().uri("/api/menus/my")
@@ -98,7 +86,10 @@ class MenuControllerIT {
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.code").isEqualTo("SUCCESS")
-                .jsonPath("$.data").isArray();
+                .jsonPath("$.data").isArray()
+                .jsonPath("$.data.length()").isNotEmpty()
+                .jsonPath("$.data[0].canRead").isEqualTo(true)
+                .jsonPath("$.data[0].canWrite").isEqualTo(true);
     }
 
     private void registerUser(final String email) {

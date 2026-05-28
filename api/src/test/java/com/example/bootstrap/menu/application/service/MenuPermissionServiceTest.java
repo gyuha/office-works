@@ -162,6 +162,27 @@ class MenuPermissionServiceTest {
     }
 
     @Test
+    void getMyMenus_withNoRolesButUserOverride_returnsMenuFromUserPermission() {
+        UserMenuPermission userPerm = buildUserPerm(10L, true, true);
+        Menu menu = buildMenu(10L, "REPORTS", "보고서", 1);
+
+        when(userRoleRepository.findByUserId(99L)).thenReturn(Flux.empty());
+        when(userMenuPermissionRepository.findByUserId(99L)).thenReturn(Flux.just(userPerm));
+        when(menuRepository.findAllById(List.of(10L))).thenReturn(Flux.just(menu));
+
+        StepVerifier.create(menuPermissionService.getMyMenus(99L, false))
+                .assertNext(list -> {
+                    assertThat(list).hasSize(1);
+                    assertThat(list.get(0).menuId()).isEqualTo(10L);
+                    assertThat(list.get(0).canRead()).isTrue();
+                    assertThat(list.get(0).canWrite()).isTrue();
+                })
+                .verifyComplete();
+
+        verify(roleMenuPermissionRepository, never()).findByRoleIdIn(any());
+    }
+
+    @Test
     void canRead_whenMenuCodeNotFound_returnsFalse() {
         when(menuRepository.findByCode("UNKNOWN")).thenReturn(Mono.empty());
 

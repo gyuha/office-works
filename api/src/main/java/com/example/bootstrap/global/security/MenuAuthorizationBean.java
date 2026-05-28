@@ -31,6 +31,9 @@ public class MenuAuthorizationBean {
      * @return 읽기 권한 여부
      */
     public Mono<Boolean> canRead(final Authentication authentication, final String menuCode) {
+        if (isAdmin(authentication)) {
+            return Mono.just(true);
+        }
         Long userId = (Long) authentication.getPrincipal();
         return menuPermissionService.canRead(userId, menuCode);
     }
@@ -43,7 +46,15 @@ public class MenuAuthorizationBean {
      * @return 쓰기 권한 여부
      */
     public Mono<Boolean> canWrite(final Authentication authentication, final String menuCode) {
+        if (isAdmin(authentication)) {
+            return Mono.just(true);
+        }
         Long userId = (Long) authentication.getPrincipal();
         return menuPermissionService.canWrite(userId, menuCode);
+    }
+
+    private boolean isAdmin(final Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }
