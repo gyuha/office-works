@@ -92,6 +92,43 @@ class MenuControllerIT {
                 .jsonPath("$.data[0].canWrite").isEqualTo(true);
     }
 
+    @Test
+    @DisplayName("GET /api/menus — ADMIN 토큰으로 요청하면 200과 전체 메뉴 목록을 반환한다")
+    void getMenus_withAdminToken_returns200WithFields() {
+        webTestClient.get().uri("/api/menus")
+                .header("Authorization", "Bearer " + adminAccessToken)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("SUCCESS")
+                .jsonPath("$.data").isArray()
+                .jsonPath("$.data[0].menuId").isNotEmpty()
+                .jsonPath("$.data[0].code").isNotEmpty()
+                .jsonPath("$.data[0].name").isNotEmpty()
+                .jsonPath("$.data[0].displayOrder").isNotEmpty()
+                .jsonPath("$.data[0].isActive").isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("GET /api/menus — USER 토큰으로 요청하면 403 Forbidden과 MENU_002 에러 응답을 반환한다")
+    void getMenus_withUserToken_returns403WithApiResponseEnvelope() {
+        webTestClient.get().uri("/api/menus")
+                .header("Authorization", "Bearer " + userAccessToken)
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("MENU_002")
+                .jsonPath("$.message").isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("GET /api/menus — Bearer 토큰 없이 요청하면 401을 반환한다")
+    void getMenus_withoutToken_returns401() {
+        webTestClient.get().uri("/api/menus")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
     private void registerUser(final String email) {
         String body = String.format(
                 "{\"email\":\"%s\",\"password\":\"pass1234\",\"nickname\":\"TestUser\"}", email);

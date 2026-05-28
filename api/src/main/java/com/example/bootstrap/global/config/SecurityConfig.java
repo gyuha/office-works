@@ -1,5 +1,6 @@
 package com.example.bootstrap.global.config;
 
+import com.example.bootstrap.global.security.ApiAccessDeniedHandler;
 import com.example.bootstrap.global.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,13 +41,15 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             final ServerHttpSecurity http,
-            final JwtAuthenticationFilter jwtAuthenticationFilter) {
+            final JwtAuthenticationFilter jwtAuthenticationFilter,
+            final ApiAccessDeniedHandler apiAccessDeniedHandler) {
         return http
             .csrf(csrf -> csrf.disable())
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(login -> login.disable())
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
+                .accessDeniedHandler(apiAccessDeniedHandler))
             .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
             .authorizeExchange(exchanges -> exchanges
                 // Actuator 엔드포인트
@@ -68,6 +71,8 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                 // 어드민 API
                 .pathMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // 메뉴 API
+                .pathMatchers("/api/menus/**").authenticated()
                 // 그 외 모든 요청은 인증 필요
                 .anyExchange().authenticated()
             )

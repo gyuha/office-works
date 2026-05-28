@@ -9,6 +9,7 @@ import org.springframework.context.i18n.LocaleContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -86,6 +87,22 @@ public class GlobalExceptionHandler {
         } finally {
             LocaleContextHolder.resetLocaleContext();
         }
+    }
+
+    /**
+     * 메서드 수준 권한 거부 예외를 처리합니다.
+     *
+     * @param ex       {@link AccessDeniedException}
+     * @param exchange {@link ServerWebExchange}
+     * @return 403 에러 응답
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
+            final AccessDeniedException ex,
+            final ServerWebExchange exchange) {
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(ApiResponse.error("MENU_002", "메뉴 접근 권한이 없습니다."));
     }
 
     /**
