@@ -84,3 +84,9 @@ None yet.
 Last session: 2026-05-27T14:51:17.463Z
 Stopped at: Phase 1 context gathered
 Resume file: .planning/phases/01-new-phase/01-CONTEXT.md
+
+### Quick Tasks Completed
+
+| ID | Description | Date | Commit | Dir |
+| --- | --- | --- | --- | --- |
+| 260528-ttg | Taskfile.yml 파일을 만들어서 각종 실행에 도움이 되도록 해 줘 | 2026-05-28 | (pending) | [260528-ttg-taskfile-yml](./quick/260528-ttg-taskfile-yml/) |
