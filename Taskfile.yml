@@ -1,0 +1,81 @@
+version: '3'
+
+includes:
+  api:
+    taskfile: ./api/Taskfile.yml
+    dir: ./api
+
+tasks:
+  dev:infra:
+    desc: 개발용 인프라(PostgreSQL/Redis)를 기동합니다.
+    cmds:
+      - task: api:docker:infra:up
+
+  dev:
+    desc: 인프라를 기동합니다. API는 `task api:run:local`, 웹은 `task web:dev`를 별도 터미널에서 실행하세요.
+    cmds:
+      - task: dev:infra
+      - cmd: |
+          echo ""
+          echo "  인프라 기동 완료."
+          echo "  API 실행:  task api:run:local"
+          echo "  웹 실행:   task web:dev"
+          echo ""
+
+  web:dev:
+    desc: 웹 개발 서버를 실행합니다. (포트 3000)
+    dir: web
+    cmds:
+      - pnpm run dev
+
+  web:build:
+    desc: 웹 프로덕션 빌드를 실행합니다.
+    dir: web
+    cmds:
+      - pnpm run build
+
+  web:typecheck:
+    desc: 웹 TypeScript 타입 검사를 실행합니다.
+    dir: web
+    cmds:
+      - pnpm run typecheck
+
+  web:lint:
+    desc: 웹 Biome 정적 분석을 실행합니다.
+    dir: web
+    cmds:
+      - pnpm run lint
+
+  web:lint:fix:
+    desc: 웹 Biome 정적 분석 오류를 자동 수정합니다.
+    dir: web
+    cmds:
+      - pnpm run lint:fix
+
+  check:
+    desc: API와 웹 전체 검증을 실행합니다. (테스트 + 커버리지 + 정적분석)
+    cmds:
+      - task: api:check
+      - task: web:typecheck
+      - task: web:lint
+
+  lint:
+    desc: API와 웹 정적 분석을 실행합니다.
+    cmds:
+      - task: api:lint
+      - task: web:lint
+
+  infra:up:
+    desc: PostgreSQL/Redis를 기동합니다.
+    cmds:
+      - task: api:docker:infra:up
+
+  infra:down:
+    desc: PostgreSQL/Redis를 중지합니다.
+    cmds:
+      - task: api:docker:infra:down
+
+  help:
+    desc: 사용 가능한 태스크 목록을 출력합니다.
+    cmds:
+      - task --list
