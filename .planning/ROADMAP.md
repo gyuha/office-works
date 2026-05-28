@@ -68,7 +68,12 @@ Plans:
   3. 미인증 요청으로 /api/menus/** 에 접근하면 401을 반환한다
   4. JwtAuthenticationFilter는 변경되지 않는다
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — AdminMenuResponse DTO + MenuController GET /api/menus 추가 (API-02, SEC-02)
+- [ ] 03-02-PLAN.md — ApiAccessDeniedHandler + SecurityConfig 수정 (SEC-03, SEC-04)
+- [ ] 03-03-PLAN.md — MenuControllerIT GET /api/menus 시나리오 3개 추가 (API-02, SEC-02, SEC-03, SEC-04)
 
 ## Progress
 
@@ -78,4 +83,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. DB 스키마 + 도메인 모델 | 0/2 | Not started | - |
 | 2. 권한 서비스 + 핵심 API | 0/3 | Not started | - |
-| 3. ADMIN API + Security 통합 | 0/TBD | Not started | - |
+| 3. ADMIN API + Security 통합 | 0/3 | Not started | - |
