@@ -50,6 +50,12 @@ public enum ErrorCode {
     /** 이미 실행 중인 배치 작업이 있습니다. */
     BATCH_003(HttpStatus.CONFLICT, "BATCH_003"),
 
+    // ── Menu 도메인 ──────────────────────────────────────────────────────────
+    /** 존재하지 않는 메뉴입니다. */
+    MENU_001(HttpStatus.NOT_FOUND, "MENU_001"),
+    /** 메뉴 접근 권한이 없습니다. */
+    MENU_002(HttpStatus.FORBIDDEN, "MENU_002"),
+
     // ── 공통 ─────────────────────────────────────────────────────────────────
     /** 입력값이 유효하지 않습니다. */
     COMMON_001(HttpStatus.BAD_REQUEST, "COMMON_001"),
