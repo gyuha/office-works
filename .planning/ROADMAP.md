@@ -30,8 +30,9 @@
   4. 각 리포지토리를 통해 Reactive 방식으로 (Mono/Flux) 기본 조회가 실행된다
   5. 기존 V1/V2 마이그레이션 파일은 변경되지 않는다
 
-**Plans**: 2 plansPlans:
+**Plans**: 2 plans
 
+Plans:
 - [ ] 01-01-PLAN.md — Flyway V3 마이그레이션 SQL (5개 테이블 DDL + 초기 메뉴 INSERT)
 - [ ] 01-02-PLAN.md — R2DBC 엔티티 5개 + 리포지토리 5개 (menu 도메인 레이어)
 
@@ -48,7 +49,12 @@
   4. 역할 미할당 사용자가 GET /api/menus/my를 호출하면 빈 배열([])을 반환한다 (500 아님)
   5. 미인증 요청은 401을 반환한다
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — MyMenuResponse DTO + MenuRepository 메서드 추가 + ErrorCode MENU 도메인 (계약 정의)
+- [ ] 02-02-PLAN.md — MenuPermissionService 구현 + 단위 테스트 (DOM-06, SEC-01)
+- [ ] 02-03-PLAN.md — MenuController + MenuAuthorizationBean + 통합 테스트 (API-01, DOM-07)
 
 ### Phase 3: ADMIN API + Security 통합
 
@@ -71,5 +77,5 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. DB 스키마 + 도메인 모델 | 0/2 | Not started | - |
-| 2. 권한 서비스 + 핵심 API | 0/TBD | Not started | - |
+| 2. 권한 서비스 + 핵심 API | 0/3 | Not started | - |
 | 3. ADMIN API + Security 통합 | 0/TBD | Not started | - |
