@@ -15,3 +15,5 @@
 | 2026-05-28T14:51:08Z | 02-new-phase | sg-next | sg-retro | - | gyuha |
 | 2026-05-28T14:51:26Z | 02-new-phase | sg-retro | sg-next | - | gyuha |
 | 2026-05-28T14:51:41Z | 02-new-phase | sg-next | ship | - | gyuha |
+| 2026-05-28T14:56:45Z | 02-new-phase | ship | sg-next | - | gyuha |
+| 2026-05-28T15:03:08Z | 03-new-phase | sg-next | gsd-plan | - | gyuha |
