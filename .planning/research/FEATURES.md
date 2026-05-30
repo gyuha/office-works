@@ -1,176 +1,166 @@
 # Feature Landscape
 
-**Domain:** 메뉴 기반 RBAC (Spring Boot WebFlux)
-**Researched:** 2026-05-27
-**Confidence:** HIGH (Spring Security 공식 문서 검증 완료)
+**Domain:** Microsoft Teams (Azure AD) OAuth2 소셜 로그인 추가
+**Researched:** 2026-05-30
+**Context:** 기존 Google/Kakao OAuth2 구현 위에 Microsoft provider 추가. 신규 아키텍처 없음 — 패턴 재사용.
 
 ---
 
-## Table Stakes
+## 기존 구현 재사용 범위 (재구현 불필요)
 
-시스템이 동작한다고 말하려면 반드시 있어야 하는 것들. 하나라도 빠지면 RBAC이 아니다.
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| ADMIN 바이패스 | 관리자가 권한 설정 실수로 잠기면 운영 불가 | Low | `users.role = 'ADMIN'` 조건 분기, DB 조회 스킵 |
-| 역할-메뉴 권한 테이블 | 역할 단위로 메뉴 접근을 정의하는 것이 RBAC의 본질 | Medium | `role_menu_permissions(role_id, menu_id, can_read, can_write)` |
-| 사용자-역할 매핑 | 사용자에게 역할을 부여해야 권한이 작동 | Low | `user_roles(user_id, role_id)` 다대다 |
-| 사용자 개별 오버라이드 | 역할로 커버 안 되는 예외 케이스가 반드시 존재 | Medium | `user_menu_permissions`로 역할 권한을 덮어씀 |
-| 내 접근 가능 메뉴 조회 API | 클라이언트가 메뉴를 렌더링하려면 이 API가 필수 | Medium | `GET /api/menus/my` — 핵심 가치 |
-| 권한 없는 접근 시 403 반환 | 없으면 보안 구멍 | Low | Spring Security `AccessDeniedException` → `GlobalExceptionHandler` |
-| 권한 해석 우선순위 확정 | user_override > role_permission 순서 미정의 시 버그 발생 | Low | user 개별 설정이 role 설정을 항상 덮어씀 |
-| Flyway V3 마이그레이션 | 스키마 없이는 아무것도 없음 | Low | V1, V2 절대 수정 금지 |
-| R2DBC 도메인 모델 | WebFlux 전 계층 Reactive 요구사항 | Medium | `Menu`, `Role`, `UserRole`, `RoleMenuPermission`, `UserMenuPermission` |
-| ADMIN 전용 메뉴 목록 API | 관리자가 전체 메뉴+역할 구성을 봐야 관리 가능 | Low | `GET /api/menus` — ADMIN role 검사 |
+| 기존 코드 | 재사용 방식 |
+|-----------|------------|
+| `AbstractOAuth2Handler` | 상속 — `fetchUserInfo()` 만 구현 |
+| `SocialUserInfo` record | 그대로 사용 (provider, providerId, email, nickname, profileImageUrl) |
+| `AuthController.socialLogin()` | switch 케이스 1개 추가만 필요 |
+| `findOrCreateAccount()`, `issueTokens()` | 부모 클래스에 이미 구현됨 |
+| `resolveEmail()` fallback | email nullable 처리 로직 재사용 |
+| `WebClient`, Repository 빈들 | 주입 그대로 사용 |
 
 ---
 
-## 권한 해석 알고리즘 (Table Stakes 상세)
+## Table Stakes (없으면 기능 자체가 동작하지 않음)
 
-권한 확인 로직은 반드시 이 순서를 따른다:
-
-```
-1. users.role = 'ADMIN' → 즉시 허용 (DB 조회 없음)
-2. user_menu_permissions에 해당 사용자+메뉴 레코드 존재 → 그 값 사용 (override)
-3. user_roles로 사용자의 역할 목록 조회 → role_menu_permissions에서 권한 집계
-4. 어느 역할이든 can_read=true이면 READ 허용 (additive model)
-5. 모두 없음 → 거부
-```
-
-이 순서가 코드와 문서에 명시되지 않으면 나중에 버그 원인을 찾는 데 시간을 낭비한다.
+| Feature | Why Expected | Complexity | 기존 의존성 |
+|---------|--------------|------------|------------|
+| `MicrosoftOAuth2Handler` 구현 | `AbstractOAuth2Handler` 패턴 그대로 확장 | Low | `AbstractOAuth2Handler` 상속 |
+| Microsoft Graph UserInfo API 호출 | access token → `https://graph.microsoft.com/oidc/userinfo` 호출하여 사용자 정보 획득 | Low | `WebClient` 재사용 |
+| `oauth_accounts` 테이블 CHECK 제약 확장 | 현재 `CHECK (provider IN ('google', 'kakao'))` 가 microsoft INSERT를 차단함 | Low | V4 Flyway 마이그레이션 필요 (V1~V3 수정 금지) |
+| `AuthController` switch 케이스 추가 | `resolveHandler("microsoft")` 처리 | Low | 기존 switch 1줄 확장 |
+| Azure AD App Registration | client-id 발급 (개발자 수동 작업, 코드 아님) | Low | 환경변수 추가 |
+| 단위 테스트 `MicrosoftOAuth2HandlerTest` | JaCoCo 60% 라인 커버리지 요구사항 | Low | Google/Kakao 테스트 패턴 그대로 복사 후 수정 |
 
 ---
 
-## Differentiators
+## Differentiators (있으면 좋지만, 없어도 기본 로그인은 동작)
 
-없어도 시스템은 돌아가지만, 있으면 production 품질이 된다.
-
-| Feature | Value Proposition | Complexity | Priority |
-|---------|-------------------|------------|----------|
-| Redis 권한 캐싱 | 매 요청마다 4-테이블 JOIN을 하면 p99 레이턴시 급등. `RedisCacheUtil`이 이미 존재하므로 통합 비용 낮음 | Medium | **High** — WebFlux 이벤트루프에서 DB round-trip 최소화 필수 |
-| 캐시 무효화 | 권한 변경 시 캐시가 남아있으면 변경이 즉시 반영 안 됨 | Low | **High** — Redis 캐싱을 하면 세트로 필요 |
-| 권한 변경 감사 로그 | 누가 언제 어떤 메뉴 권한을 바꿨는지 추적 | High | Medium — v1에서는 DB 레코드 자체가 감사 증거 |
-| `GET /api/menus/my` 응답에 권한 수준 포함 | 프론트엔드가 READ/WRITE 여부에 따라 버튼 렌더링 결정 가능 | Low | **High** — 응답 구조 설계 시 처음부터 포함해야 나중에 안 깨짐 |
-| 메뉴 활성화 플래그 필터링 | `menus.is_active = false` 메뉴는 내 목록에서 자동 제외 | Low | High — `menus` 테이블에 `is_active` 컬럼을 넣으면 자연스럽게 따라옴 |
-| `@PreAuthorize` SpEL 커스텀 표현식 | 서비스 메서드 레벨에서 `@PreAuthorize("@menuPermissionService.canRead(authentication, 'MENU_CODE')")` 선언형 보안 | Medium | Medium — `@EnableReactiveMethodSecurity`가 이미 활성화되어 있어서 통합 비용 낮음 |
-
-### Redis 캐싱 전략 (구체적)
-
-```
-캐시 키: "menu-perms:{userId}"
-캐시 값: Map<menuId, {canRead, canWrite}>
-TTL: 5분 (짧게 — 권한 변경 반영 지연 최소화)
-무효화: user_menu_permissions 또는 user_roles 변경 시 해당 userId 키 삭제
-```
-
-기존 `RedisCacheUtil`(ReactiveRedisTemplate 래퍼)을 재사용. 새 캐시 인프라 불필요.
+| Feature | Value Proposition | Complexity | 기존 의존성 |
+|---------|-------------------|------------|------------|
+| `tenantId` 저장 | Azure AD 멀티테넌트 환경에서 사용자가 어느 조직에 속하는지 추적 가능. `tid` 클레임에서 획득. 현재 비즈니스 요구사항이 명확하지 않으면 구현하지 말 것 | Medium | `SocialAccount` 모델 또는 별도 컬럼 필요 |
+| 개인 계정 vs. 조직 계정 구분 | `tid == 9188040d-6c67-4c5b-b112-36a304b66dad` 이면 개인 Microsoft 계정. 다르면 Azure AD 조직 계정 | Medium | `SocialAccount` 또는 `Account` 모델 변경 |
+| `displayName` 우선 사용 (`name` 클레임) | Microsoft Graph가 반환하는 `name`은 Azure AD 디렉토리 displayName. 조직 계정은 부서명 포함 형식 가능 | Low | `SocialUserInfo.nickname` 매핑으로 충분 |
 
 ---
 
-## Anti-Features
-
-v1에서 의도적으로 **빌드하지 않을 것들**. 이것들을 넣으면 납기를 놓치거나 코드가 복잡해진다.
+## Anti-Features (명시적으로 구현하지 말아야 할 것)
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| 메뉴 계층(트리) 구조 | parent_id + 재귀 쿼리 + 권한 상속 전파 로직이 복잡도를 3배 높임 | Flat 구조로 시작, `parent_id` 컬럼은 nullable로 예약만 해두고 쿼리에서 무시 |
-| 메뉴 CRUD 관리 API | `POST /api/menus`, `PUT /api/menus/{id}` 등을 지금 만들면 유효성 검증·정렬 관리 등 부수적 작업 폭증 | 초기값 SQL INSERT, 변경은 DBA 직접 처리 |
-| 권한 부여 UI / 관리 화면 | 프론트엔드 페이지 구현은 백엔드 API 안정화 후 별도 단계 | `GET /api/admin/roles`, `PUT /api/admin/roles/{id}/menus` 등 ADMIN API만 먼저 |
-| 역할 계층(role hierarchy) | "슈퍼매니저는 매니저 권한 상속" 같은 구조는 권한 전파 버그의 온상 | 역할은 항상 flat. 필요하면 동일 사용자에게 여러 역할 부여 |
-| 시간 기반 권한 (TTL permission) | "이 사용자는 내일까지만 WRITE 가능" 같은 기능은 만료 체크 + 스케줄러 + 알림까지 딸려옴 | 권한 변경은 수동 운영 |
-| Permission 부정 표현 (deny 규칙) | `can_read = false`를 명시적 거부로 쓰면 해석 로직이 폭발적으로 복잡해짐 | NULL = 권한 없음, TRUE = 허용만으로 단순화. 레코드 없음 = 거부 |
-| 다중 테넌트(multi-tenant) RBAC | 테넌트별 역할 격리는 스키마 변경 범위가 완전히 다름 | 단일 조직 기준으로 설계 |
+| Microsoft Graph `/v1.0/me` API 호출 | `User.Read` 권한 동의 필요. UserInfo endpoint(`/oidc/userinfo`)로 충분 | `https://graph.microsoft.com/oidc/userinfo` 사용 |
+| `email` 클레임 필수화 | 개인 Microsoft 계정은 email 클레임이 없을 수 있음. 조직 계정은 multi-tenant에서 unverified email 가능 [HIGH — 공식 문서] | 기존 `resolveEmail()` fallback 로직 그대로 사용 |
+| access token을 JWT로 직접 파싱 | Microsoft Graph access token은 클라이언트가 파싱하면 안 되는 불투명 토큰일 수 있음. 공식 문서에 명시: "do not attempt to validate or read tokens for any API you don't own" [HIGH] | Bearer 토큰으로 UserInfo endpoint에 그냥 전달 |
+| Spring Security OAuth2 Login 서버사이드 흐름 추가 | 현재 구조는 프론트엔드가 access token 획득 후 전달하는 클라이언트 주도 방식. 서버사이드 redirect 흐름은 아키텍처 변경 필요 | 기존 `POST /api/v1/auth/social/{provider}` 패턴 유지 |
+| `offline_access` scope 요청 | 서버가 Microsoft refresh token을 저장하는 구조가 아님. 프론트에서 access token만 전달 | scope 최소화: `openid profile email` |
 
 ---
 
-## API 설계 패턴
+## Microsoft Identity Platform: 스코프별 제공 데이터 정리
 
-### 권한 조회 엔드포인트
+### 스코프 선택 기준 [HIGH — Microsoft 공식 문서]
 
+| Scope | 필요 여부 | 획득 데이터 |
+|-------|----------|------------|
+| `openid` | 필수 | `sub` (pairwise ID), UserInfo endpoint 접근권 |
+| `profile` | 필수 | `name`, `given_name`, `family_name`, `preferred_username`, `oid` |
+| `email` | 권장 | `email` (없을 수 있음 — nullable 처리 필수) |
+| `User.Read` | 불필요 | Graph API 전체 사용자 프로필 — 이번 범위 초과 |
+
+**권장 스코프:** `openid profile email`
+
+### UserInfo Endpoint (`https://graph.microsoft.com/oidc/userinfo`) 응답 클레임 [HIGH]
+
+```json
+{
+  "sub": "OLu859SGc2Sr9ZsqbkG-QbeLgJlb41KcdiPoLYNpSFA",
+  "name": "Mikah Ollenburg",
+  "family_name": "Ollenburg",
+  "given_name": "Mikah",
+  "picture": "https://graph.microsoft.com/v1.0/me/photo/$value",
+  "email": "mikoll@contoso.com"
+}
 ```
-GET /api/menus/my
-  → Authorization: Bearer {token}
-  → Response: List<MenuPermissionResponse>
-     {
-       "menuId": 1,
-       "menuCode": "DASHBOARD",
-       "menuName": "대시보드",
-       "sortOrder": 1,
-       "canRead": true,
-       "canWrite": false
-     }
 
-GET /api/menus
-  → ADMIN 전용
-  → Response: 전체 메뉴 목록 (권한 정보 없음, 메뉴 디렉토리)
-```
+Microsoft 공식 문서: "Information in an ID token is a superset of the information available on UserInfo endpoint. We suggest getting the user's information from the token instead of calling the UserInfo endpoint." — 그러나 현재 구조(프론트가 access token만 전달)에서는 UserInfo endpoint 호출이 가장 단순한 경로.
 
-`GET /api/menus/my`는 권한 없는 메뉴를 응답에서 아예 제외한다. WRITE 불가 메뉴도 READ가 있으면 포함한다. 프론트엔드는 `canWrite` 필드로 수정 버튼 렌더링을 결정한다.
+### ID 토큰 주요 클레임 (참고용 — 현재 구조에서는 직접 사용 안 함)
 
-### 권한 체크 통합 패턴 (Spring Security)
+| 클레임 | 타입 | 설명 | 주의 |
+|--------|------|------|------|
+| `oid` | GUID | 테넌트 내 사용자 고유 ID — 앱 간 공유 가능 | `profile` scope 필요 |
+| `sub` | String | client-id별 pairwise ID — 앱 교차 조회 불가 | UserInfo는 `sub` 반환 |
+| `tid` | GUID | 테넌트 ID. `9188040d-...` = 개인 계정 | `profile` scope 포함 시 포함 |
+| `email` | String | 이메일 (nullable — 개인 계정은 없을 수 있음) | `email` scope 필요 |
+| `name` | String | displayName (mutable, 변경 가능) | `profile` scope 필요 |
+| `preferred_username` | String | UPN 또는 이메일 형식 (mutable) | v2.0 토큰만 |
 
-현재 아키텍처(`@EnableReactiveMethodSecurity` 활성화 상태)에서 두 가지 옵션이 있다:
+### `oid` vs `sub`: providerId 선택 판단 [HIGH]
 
-**Option A — 서비스 레벨 SpEL (권장):**
-```java
-@PreAuthorize("@menuPermissionService.hasReadPermission(authentication, 'MENU_CODE')")
-public Mono<SomeData> getSomeData(...) { ... }
-```
-- `menuPermissionService.hasReadPermission()`이 Redis 캐시 → DB fallback으로 권한 확인
-- 선언형, 테스트 용이
-
-**Option B — 서비스 내부 명시적 체크:**
-```java
-return menuPermissionService.checkReadPermission(userId, menuCode)
-    .then(actualBusinessLogic());
-```
-- 더 명시적, 리액티브 체인에 자연스럽게 통합
-- SpEL 표현식 없이도 동작
-
-둘 중 하나를 선택하고 일관되게 쓸 것. 혼용 금지.
+- UserInfo endpoint는 `sub`(pairwise)만 반환. `oid`를 쓰려면 ID token을 별도로 획득해야 함.
+- `sub`(pairwise)를 `providerId`로 쓰면: 동일 사용자가 다른 앱으로 로그인해도 이 앱의 `oauth_accounts` 레코드와 충돌 없음.
+- **결론:** 현재 구조(프론트가 access token만 전달)에서는 UserInfo endpoint의 `sub`를 `providerId`로 사용하는 것이 가장 단순하고 안전함. ID token 분리 파싱은 불필요한 복잡성.
 
 ---
 
-## Feature Dependencies
+## 개인 계정 vs. Azure AD 조직 계정 차이 [HIGH — Microsoft 공식 문서]
 
-```
-Flyway V3 스키마
-  → R2DBC 도메인 모델 (Menu, Role, UserRole, RoleMenuPermission, UserMenuPermission)
-    → MenuPermissionService (권한 집계 로직)
-      → Redis 캐싱 (선택, 성능)
-      → GET /api/menus/my (핵심 API)
-      → GET /api/menus (ADMIN API)
-      → @PreAuthorize 통합 (선택, 선언형 보안)
+| 항목 | 개인 Microsoft 계정 | Azure AD 조직 계정 |
+|------|--------------------|--------------------|
+| tenant 값 | `common` 또는 `consumers` | `organizations` 또는 특정 tenant ID |
+| `tid` 클레임 | `9188040d-6c67-4c5b-b112-36a304b66dad` | 조직 고유 GUID |
+| `email` 가용성 | 있을 수도, 없을 수도 있음 | 보통 있음 (UPN 기반) |
+| App Registration 설정 | "Personal accounts only" 또는 "Any Entra ID + Personal" | "Multitenant" 또는 "Single tenant" |
 
-users.role ADMIN 체크
-  → SecurityConfig 또는 MenuPermissionService 최상단 분기
-```
+**권장 Azure App Registration 설정:** `Multitenant + Personal Microsoft accounts` (authorizationUri의 tenant=`common`) — 가장 넓은 범위로 시작, 추후 조직 계정 전용으로 제한 가능.
 
 ---
 
-## MVP Recommendation
+## Feature 의존성 그래프
 
-v1에서 반드시 포함:
-1. Flyway V3 스키마 (5개 테이블)
-2. R2DBC 도메인 모델 + Repository
-3. 권한 해석 알고리즘 (user override > role 집계 > 거부)
-4. `GET /api/menus/my` — can_read/can_write 포함한 응답
-5. `GET /api/menus` — ADMIN 전용 전체 목록
-6. ADMIN 바이패스 (권한 DB 조회 스킵)
-7. `GET /api/menus/my` 응답 Redis 캐싱 + 권한 변경 시 캐시 무효화
+```
+V4 Flyway 마이그레이션 (oauth_accounts CHECK 제약 확장: 'microsoft' 추가)
+    ↓
+MicrosoftOAuth2Handler (AbstractOAuth2Handler 구현)
+    ↓
+AuthController switch 케이스 추가 ("microsoft" → handler)
+    ↓
+application-local.yml / application-prod.yml 환경변수 추가
+```
 
-v1에서 제외 (명시적 결정):
-- 메뉴 CRUD API: SQL 직접 삽입으로 충분
-- 감사 로그: DB 레코드가 감사 증거 역할
-- SpEL `@PreAuthorize` 통합: 서비스 레벨 명시적 체크로 시작
-- 메뉴 트리: flat 구조로 시작
+단위 테스트(`MicrosoftOAuth2HandlerTest`)는 `MicrosoftOAuth2Handler` 완성 후 작성.
+
+---
+
+## MVP 구현 범위
+
+**구현:**
+1. V4 Flyway — `oauth_accounts.provider` CHECK 제약에 `'microsoft'` 추가
+2. `MicrosoftOAuth2Handler` — `AbstractOAuth2Handler` 상속, `fetchUserInfo()` 구현
+3. `AuthController` — switch에 `case "microsoft" -> microsoftOAuth2Handler` 추가
+4. `application-local.yml` / `application-prod.yml` — 환경변수 주석 추가 (필요 시)
+5. `MicrosoftOAuth2HandlerTest` — 기존 Google/Kakao 테스트 패턴으로 단위 테스트
+
+**명시적 제외:**
+- `tenantId` 저장 — 현재 비즈니스 요구사항 없음
+- 개인/조직 계정 구분 로직
+- Microsoft Graph `/v1.0/me` 상세 프로필 조회
+
+---
+
+## 구현 시 핵심 주의사항 (우선순위순)
+
+1. **`email` nullable 처리 필수** — 기존 `resolveEmail()` fallback 이미 존재하므로 그대로 활용
+2. **UserInfo `sub`를 providerId로** — 별도 ID token 파싱 없이 단순하게 처리
+3. **UserInfo endpoint 주소 하드코딩 가능** — `https://graph.microsoft.com/oidc/userinfo` (Google의 `USERINFO_URL` 패턴 그대로)
+4. **V4 마이그레이션만 추가** — V1~V3 수정 금지 (기존 CLAUDE.md 규칙)
+5. **`SocialAccount.provider` CHECK 제약 변경** — DB 레벨 제약도 함께 수정해야 INSERT 성공
 
 ---
 
 ## Sources
 
-- Spring Security 6.5 공식 문서 — ReactiveAuthorizationManager, `@PreAuthorize`, `@EnableReactiveMethodSecurity`: https://docs.spring.io/spring-security/reference/6.5/reactive/authorization/method.html
-- RBAC 권한 해석 패턴 (additive model): https://learn.microsoft.com/en-us/azure/role-based-access-control/overview
-- Redis 권한 캐싱 전략: https://oneuptime.com/blog/post/2026-01-21-redis-user-permissions/view
-- RBAC 감사 로그 패턴: https://oneuptime.com/blog/post/2026-02-09-rbac-audit-logging-permissions/view
-- RBAC 예외(override) 설계 원칙: https://www.osohq.com/learn/rbac-best-practices
+- [Microsoft Identity Platform OIDC](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc) [HIGH]
+- [Microsoft Identity Platform Scopes](https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc) [HIGH]
+- [ID Token Claims Reference](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference) [HIGH]
+- [UserInfo Endpoint](https://learn.microsoft.com/en-us/entra/identity-platform/userinfo) [HIGH]
+- [App Registration Guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) [HIGH]
+- [Spring Security 6.5 Reactive OAuth2 Login](https://docs.spring.io/spring-security/reference/6.5/reactive/oauth2/login/core.html) [HIGH]
