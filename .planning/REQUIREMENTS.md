@@ -1,77 +1,45 @@
-# Requirements — 메뉴별 접근 권한 관리 (RBAC)
+# Requirements — Microsoft Teams (Azure AD) 소셜 로그인
 
-## v1 Requirements
+## v1.1 Requirements
 
-### Schema (DB 스키마)
+### OAuth (Microsoft 로그인 통합)
 
-- [ ] **SCH-01**: Flyway V3 마이그레이션 파일에 `menus` 테이블 생성 (id, code, name, display_order, is_active)
-- [ ] **SCH-02**: Flyway V3 마이그레이션 파일에 `roles` 테이블 생성 (id, name, description, created_at)
-- [ ] **SCH-03**: Flyway V3 마이그레이션 파일에 `user_roles` 테이블 생성 (user_id FK, role_id FK, 복합 PK)
-- [ ] **SCH-04**: Flyway V3 마이그레이션 파일에 `role_menu_permissions` 테이블 생성 (role_id FK, menu_id FK, can_read, can_write)
-- [ ] **SCH-05**: Flyway V3 마이그레이션 파일에 `user_menu_permissions` 테이블 생성 (user_id FK, menu_id FK, can_read, can_write)
-- [ ] **SCH-06**: 초기 샘플 메뉴 데이터 SQL INSERT 포함
+- [ ] **OAUTH-01**: 사용자는 Microsoft Teams(Azure AD) 계정으로 소셜 로그인할 수 있다 (단일 조직, 특정 tenantId)
+- [ ] **OAUTH-02**: Microsoft 로그인 시 Graph API `/v1.0/me`의 `id` 필드(oid)를 providerId로 저장한다 (`sub` 사용 금지)
+- [ ] **OAUTH-03**: Microsoft 로그인 시 email이 없는 경우 `preferred_username`(UPN) → `microsoft_{oid}@social.placeholder` 순으로 fallback 처리한다
+- [ ] **OAUTH-04**: 기존 `AbstractOAuth2Handler` 패턴을 상속하는 `MicrosoftOAuth2Handler`를 구현한다 (신규 의존성 추가 금지)
+- [ ] **OAUTH-05**: `MICROSOFT_CLIENT_ID`, `MICROSOFT_TENANT_ID` 환경변수로 Azure AD 앱 설정을 주입한다
 
-### Domain (Java 도메인 모델)
+### DB (스키마 변경)
 
-- [ ] **DOM-01**: `Menu` R2DBC 엔티티 + `MenuRepository` (메뉴 전체 조회)
-- [ ] **DOM-02**: `Role` R2DBC 엔티티 + `RoleRepository` (사용자 역할 조회)
-- [ ] **DOM-03**: `UserRole` R2DBC 엔티티 + `UserRoleRepository` (사용자-역할 매핑 조회)
-- [ ] **DOM-04**: `RoleMenuPermission` R2DBC 엔티티 + `RoleMenuPermissionRepository` (역할별 메뉴 권한 조회)
-- [ ] **DOM-05**: `UserMenuPermission` R2DBC 엔티티 + `UserMenuPermissionRepository` (개인 오버라이드 조회)
-- [ ] **DOM-06**: `MenuPermissionService` — ADMIN 바이패스 + 역할 권한 집계(additive) + 사용자 오버라이드(COALESCE) 병합 로직 (`Mono.zip()` 병렬 쿼리)
-- [ ] **DOM-07**: `MenuAuthorizationBean` — `@PreAuthorize` SpEL에서 호출할 수 있는 `Mono<Boolean>` 반환 빈
+- [ ] **DB-01**: Flyway V4 마이그레이션으로 `oauth_accounts.provider` CHECK 제약에 `'microsoft'`를 추가한다 (V1 수정 금지)
 
-### API (엔드포인트)
+### Test (테스트)
 
-- [ ] **API-01**: `GET /api/menus/my` — 인증된 사용자가 접근 가능한 메뉴 목록 반환 (menuId, code, name, canRead, canWrite 포함)
-- [ ] **API-02**: `GET /api/menus` — 전체 메뉴 목록 반환 (ADMIN 전용, 비권한자 403)
+- [ ] **TEST-01**: `MicrosoftOAuth2HandlerTest` 단위 테스트 — oid 매핑, null email fallback 케이스 포함 (JaCoCo 60% 충족)
+- [ ] **TEST-02**: Microsoft 소셜 로그인 통합 테스트 (IT) — Graph API mock + 신규 사용자 생성 / 기존 사용자 재로그인 시나리오
 
-### Security (권한 체크 통합)
+## Future Requirements
 
-- [ ] **SEC-01**: `ADMIN` 역할(`users.role = 'ADMIN'`) 보유 시 `GET /api/menus/my`에서 모든 메뉴를 canRead=true, canWrite=true로 반환
-- [ ] **SEC-02**: `GET /api/menus` 엔드포인트에 `@PreAuthorize("hasRole('ADMIN')")` 적용
-- [ ] **SEC-03**: SecurityConfig에 `/api/menus/**` 경로 인증 요구 등록
-- [ ] **SEC-04**: 권한 없는 메뉴 요청 시 403 Forbidden 응답
-
----
-
-## v2 Requirements (다음 마일스톤)
-
-- Redis 캐싱 (`menu-perms:{userId}`) + 권한 변경 시 캐시 무효화
-- 메뉴 권한 감사 로그
-
----
+- tenantId 저장 — `SocialAccount`에 컬럼 추가, 조직별 사용자 구분이 필요할 때
+- 프로필 이미지 — Graph API 사진 API 연동 (현재는 null 처리)
+- 개인/조직 계정 구분 (`tid` 클레임 기반)
 
 ## Out of Scope
 
-- **메뉴 트리/계층 구조** — flat 구조로 충분. 필요 시 parent_id 컬럼 추가로 확장 가능
-- **메뉴 CRUD 관리 API** — 초기 메뉴는 SQL INSERT로 직접 삽입
-- **관리자 UI 페이지** — 백엔드 API만
-- **역할 계층/상속** — 추가 복잡도 대비 현재 요구사항에서 불필요
-- **deny 규칙** — additive 모델로 충분. deny는 별도 우선순위 로직 필요
-
----
+- spring-cloud-azure-starter 또는 MSAL4J 도입 — WebFlux 미지원, 기존 SecurityWebFilterChain 오염
+- 프론트엔드 MSAL.js 연동 — `mock-auth-api.ts` 실 연동 범위는 별도 마일스톤
+- 멀티테넌트 (`/common` 엔드포인트) — 단일 조직 전용으로 결정
 
 ## Traceability
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| SCH-01 | Phase 1 | Pending |
-| SCH-02 | Phase 1 | Pending |
-| SCH-03 | Phase 1 | Pending |
-| SCH-04 | Phase 1 | Pending |
-| SCH-05 | Phase 1 | Pending |
-| SCH-06 | Phase 1 | Pending |
-| DOM-01 | Phase 1 | Pending |
-| DOM-02 | Phase 1 | Pending |
-| DOM-03 | Phase 1 | Pending |
-| DOM-04 | Phase 1 | Pending |
-| DOM-05 | Phase 1 | Pending |
-| DOM-06 | Phase 2 | Pending |
-| DOM-07 | Phase 2 | Pending |
-| API-01 | Phase 2 | Pending |
-| SEC-01 | Phase 2 | Pending |
-| API-02 | Phase 3 | Pending |
-| SEC-02 | Phase 3 | Pending |
-| SEC-03 | Phase 3 | Pending |
-| SEC-04 | Phase 3 | Pending |
+| OAUTH-01 | Phase 5 | — |
+| OAUTH-02 | Phase 5 | — |
+| OAUTH-03 | Phase 5 | — |
+| OAUTH-04 | Phase 5 | — |
+| OAUTH-05 | Phase 4 | — |
+| DB-01 | Phase 5 | — |
+| TEST-01 | Phase 5 | — |
+| TEST-02 | Phase 5 | — |
