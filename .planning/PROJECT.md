@@ -85,6 +85,16 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current Milestone: v1.1 Microsoft Teams 소셜 로그인
+
+**Goal:** 기존 Google/Kakao OAuth2 소셜 로그인에 Microsoft Teams(Azure AD) 로그인을 추가한다.
+
+**Target features:**
+- Microsoft Identity Platform OAuth2 인증 흐름 추가
+- Azure AD App Registration 연동 (client-id / client-secret 설정)
+- SocialAccount 도메인에 MICROSOFT 공급자 타입 추가
+- 기존 소셜 로그인 콜백/토큰 처리 로직 재사용
+
 ## Current State (v1.0)
 
 v1.0 — 메뉴별 접근 권한 관리 (RBAC) 완료.
