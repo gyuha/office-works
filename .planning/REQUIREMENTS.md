@@ -35,11 +35,11 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| OAUTH-01 | Phase 5 | — |
-| OAUTH-02 | Phase 5 | — |
-| OAUTH-03 | Phase 5 | — |
-| OAUTH-04 | Phase 5 | — |
-| OAUTH-05 | Phase 4 | — |
-| DB-01 | Phase 5 | — |
-| TEST-01 | Phase 5 | — |
-| TEST-02 | Phase 5 | — |
+| OAUTH-01 | Phase 5 | Pending |
+| OAUTH-02 | Phase 5 | Pending |
+| OAUTH-03 | Phase 5 | Pending |
+| OAUTH-04 | Phase 5 | Pending |
+| OAUTH-05 | Phase 4 | Pending |
+| DB-01 | Phase 5 | Pending |
+| TEST-01 | Phase 5 | Pending |
+| TEST-02 | Phase 5 | Pending |

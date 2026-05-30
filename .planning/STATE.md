@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Microsoft Teams 소셜 로그인
 status: planning
-last_updated: "2026-05-30T02:21:47.944Z"
+last_updated: "2026-05-30T00:00:00.000Z"
 last_activity: 2026-05-30
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,22 @@ progress:
 
 ## Project Reference
 
-참조: .planning/PROJECT.md (최종 수정 2026-05-27)
+참조: .planning/PROJECT.md (최종 수정 2026-05-29)
 
 **Core value:** 사용자가 접근 가능한 메뉴 목록을 API로 정확히 내려주는 것
-**Current focus:** v1.0 완료 — 다음 마일스톤 계획 필요
+**Current focus:** v1.1 — Microsoft Teams(Azure AD) 소셜 로그인 추가
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 4 (시작 전)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-30 — Milestone v1.1 started
+Status: Roadmap 작성 완료 — Phase 4 진입 대기
+Last activity: 2026-05-30 — v1.1 로드맵 생성 (Phase 4-5)
+
+```
+Phase 4 ░░░░░░░░░░  0%   Azure AD 앱 등록 설정
+Phase 5 ░░░░░░░░░░  0%   Microsoft OAuth2 백엔드 구현
+```
 
 ## Performance Metrics
 
@@ -41,7 +46,8 @@ Last activity: 2026-05-30 — Milestone v1.1 started
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 4 | - | - | - |
+| 5 | - | - | - |
 
 **Recent Trend:**
 
@@ -57,31 +63,37 @@ Last activity: 2026-05-30 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Init]: users.role 유지 + roles 테이블 병행 — 기존 코드 브레이킹 없이 확장
-- [Init]: ADMIN bypass는 JWT authorities 클레임으로만 판정 (DB 재조회 금지)
-- [Init]: @PreAuthorize SpEL 복합 표현식 금지 — 단일 MenuAuthorizationBean 메서드로 통합 (issue #15209)
+- [v1.1 Init]: MSAL4J / spring-cloud-azure-starter 도입 금지 — WebFlux 미지원, 기존 SecurityWebFilterChain 오염
+- [v1.1 Init]: Graph API `/v1.0/me`의 `id`(oid) 필드를 providerId로 사용 — `sub`는 앱별 값이므로 oid가 안정적
+- [v1.1 Init]: 단일 테넌트(`tenantId` 고정) — 멀티테넌트(`/common` 엔드포인트) 제외
+- [v1.0 Init]: users.role 유지 + roles 테이블 병행 — 기존 코드 브레이킹 없이 확장
+- [v1.0 Init]: ADMIN bypass는 JWT authorities 클레임으로만 판정 (DB 재조회 금지)
 
 ### Pending Todos
 
-None yet.
+- Phase 4 진입 전: Azure Portal App Registration 절차 수행 필요 (사람이 직접)
+- Phase 5 진입 전: `oauth_accounts.provider` 기존 CHECK 제약 SQL 확인 필요 (V1 마이그레이션)
 
 ### Blockers/Concerns
 
-- **Phase 1 진입 전 확인 필요**: R2dbcConfig NamingStrategy(snake_case→camelCase) 설정 여부 — 없으면 엔티티에 @Column 명시 필요
-- **Phase 2 진입 전 확인 필요**: 역할 미할당 사용자의 IN (:roleIds) 빈 리스트 동작 — 명시적 분기 필요
+없음 (현재)
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| v2 | Redis 캐싱 (menu-perms:{userId}) + 캐시 무효화 | Deferred | Init |
-| v2 | 메뉴 권한 감사 로그 | Deferred | Init |
+| v2 | Redis 캐싱 (menu-perms:{userId}) + 캐시 무효화 | Deferred | v1.0 Init |
+| v2 | 메뉴 권한 감사 로그 | Deferred | v1.0 Init |
+| v2 | tenantId 저장 — 조직별 사용자 구분 | Deferred | v1.1 Init |
+| v2 | 프로필 이미지 — Graph API 사진 API 연동 | Deferred | v1.1 Init |
+| v2 | 멀티테넌트 `/common` 엔드포인트 | Deferred | v1.1 Init |
+| v2 | 프론트엔드 MSAL.js 연동 (mock-auth-api.ts 실 연동) | Deferred | v1.1 Init |
 
 ## Session Continuity
 
-Last session: 2026-05-28T15:02:18.684Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-new-phase/03-CONTEXT.md
+Last session: 2026-05-30
+Stopped at: Roadmap created — Phase 4 not yet started
+Resume file: .planning/ROADMAP.md
 
 ### Quick Tasks Completed
 
