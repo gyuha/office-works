@@ -4,41 +4,52 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-Spring Boot WebFlux API(`api/`) + React SPA(`web/`) 모노레포. 현재 목표는 메뉴별 접근 권한 관리(RBAC) 추가 — `PROJECT.md` 참고.
+FastAPI 백엔드(`api/`) + React SPA(`web/`) 모노레포 — 프로젝트명 `office-works`.
+
+`api/`는 Python 3.12 / uv 기반 FastAPI 서버로, 인증(JWT + OAuth2 + 이메일 인증)과 LLM 채팅 프록시 도메인을 제공한다. `web/`는 React 19 + TanStack Router SPA다.
 
 ## 명령어
 
-### API (`api/` 디렉토리, Task 사용)
+### API (`api/` 디렉토리, [Task](https://taskfile.dev) 사용)
+
+`Taskfile.yml`이 정식 진입점이다(`Justfile`도 있지만 Taskfile과 동일 명령을 미러링). 모든 Python 실행은 `uv run` 경유, `PYTHONPATH=src`는 Taskfile이 자동 설정한다.
 
 ```bash
-# 인프라 기동 후 로컬 서버 실행
-task run
+# 인프라(Postgres/Redis/Mailpit) 기동 + 마이그레이션 + FastAPI 핫리로드
+task dev
 
-# 앱만 재시작 (Docker는 이미 실행 중일 때)
-task run:local
+# 앱만 재시작 (인프라/마이그레이션 스킵)
+task serve
 
-# 전체 검증 (테스트 + JaCoCo 60% + Checkstyle + SpotBugs)
-task check
+# 인프라 컨테이너만 기동/중지
+task infra
+task infra-down
 
-# 테스트만
+# 테스트 (커버리지 70% 강제 — pytest addopts의 --cov-fail-under=70)
 task test
+task test-unit          # 마커 unit 만
+task test-integration   # 마커 integration 만 (인프라 필요)
 
-# 단일 테스트 클래스 실행
-./gradlew test --tests "com.example.bootstrap.account.application.service.AuthServiceTest"
+# 단일 테스트
+uv run pytest "tests/test_config.py::TestMailSettings::test_mail_from_uses_project_slug"
 
-# 정적 분석만
+# 정적 분석 (ruff check + mypy strict)
 task lint
+task format             # ruff format + ruff check --fix
+task typecheck          # mypy 만
 
-# Docker 인프라 (PostgreSQL 15432, Redis 16379)
-task docker:infra:up
-task docker:infra:down
+# Alembic 마이그레이션
+task migrate            # upgrade head
+task revision           # autogenerate 리비전 생성 (대화형)
 ```
+
+> 전체 검증은 단일 `check` 태스크가 없다 — `task lint && task test`로 수행한다(커버리지 게이트는 pytest가 강제).
 
 ### 프론트엔드 (`web/` 디렉토리)
 
 ```bash
 pnpm dev          # 개발 서버 (port 3000)
-pnpm build        # tsc + vite build
+pnpm build        # tsc -b + vite build
 pnpm typecheck    # tsc --noEmit
 pnpm lint         # Biome 검사
 pnpm lint:fix     # Biome 자동 수정
@@ -48,19 +59,31 @@ pnpm lint:fix     # Biome 자동 수정
 
 ### API 레이어 구조
 
-도메인별 패키지 분리 후 레이어 적용:
+`src/`는 flat 레이아웃이다(패키지 prefix 없음, `PYTHONPATH=src`로 `core`/`domains`/`infra`를 톱레벨 import). 도메인별로 레이어를 적용한다:
 
 ```
-{domain}/controller → application/service → domain/model + repository → infrastructure
-global/ (security, exception, response, cache, config)
+{domain}/router → service → repository → models
+{domain}/schemas (Pydantic 요청/응답 DTO)
+core/ (config, database, redis, exceptions, logging, middleware)
+infra/ (llm — provider_factory 등 외부 어댑터)
 ```
 
-- `account/` — 인증, 계정 관리, OAuth2
-- `ai/` — OpenAI 채팅 (동기/SSE)
-- `batch/` — 만료 토큰 정리
-- `global/` — 횡단 관심사 (JWT, Redis, 예외, 응답 envelope)
+- `domains/auth/` — 회원가입·이메일 인증·로그인·토큰 회전·OAuth2(Google/Kakao/Naver). `oauth/`, `security`, `email` 모듈 포함
+- `domains/chat/` — LLM 채팅 (동기 + SSE 스트리밍)
+- `domains/shared/` — 도메인 공용 베이스(엔티티 base, 이벤트, 타입)
+- `core/` — 횡단 관심사 (설정, DB 세션, Redis, 예외 핸들러, 구조적 로깅, 미들웨어)
 
-모든 DB 접근은 R2DBC Reactive (`Mono`/`Flux`). JDBC는 Flyway 마이그레이션 + Spring Batch 전용.
+라우터는 `main.py`의 앱 팩토리에서 `/api/v1` prefix로 등록된다(`health_router`만 루트). 미들웨어는 `CorrelationIdMiddleware` + CORS.
+
+DB 접근은 **SQLAlchemy 2.0 async**(`AsyncSession` + asyncpg). Alembic 마이그레이션은 동기 드라이버(psycopg2)를 사용한다.
+
+요청 흐름:
+
+```
+요청 → CorrelationIdMiddleware → 라우터(/api/v1) → 서비스 → 리포지토리 → DB
+                                      ↓ AppError 발생
+                          register_exception_handlers → {"detail": ...} + X-Correlation-ID
+```
 
 ### 프론트엔드 구조
 
@@ -68,7 +91,7 @@ Feature-Sliced Design 변형:
 
 - `routes/` — TanStack Router 파일 기반 라우팅
 - `features/{domain}/` — 도메인 슬라이스 (components, hooks, store, schema)
-- `components/ui/` — shadcn/ui 기반 UI 프리미티브
+- `components/ui/` — Radix/Base UI + cva 기반 UI 프리미티브(shadcn 스타일)
 - `stores/` — Zustand 전역 클라이언트 상태
 - `providers/` — React Query, 인증 등 Provider 래핑
 
@@ -76,34 +99,43 @@ Feature-Sliced Design 변형:
 
 ### API — 반드시 따를 것
 
-**Reactive 에러 처리:**
-```java
-return repository.findByEmail(email)
-        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.AUTH_004)))
-        .flatMap(account -> ...);
+**DTO·검증은 Pydantic v2(`schemas/`):**
+```python
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 ```
 
-**DTO는 Java record, 엔티티는 수동 getter/setter (Lombok 금지):**
-```java
-public record LoginRequest(String email, String password) {}
+**비동기 일관성 — DB는 `AsyncSession`, 핸들러/서비스는 `async def`:**
+```python
+async def login(self, email: str, password: str) -> dict[str, Any]:
+    user = await self._repo.find_by_email(email)
+    ...
 ```
 
-**생성자 주입만 사용 (`@Autowired` 필드 주입 금지):**
-```java
-public AuthService(final AccountRepository repo, final PasswordEncoder encoder) { ... }
+**의존성 주입은 FastAPI `Depends` + 서비스 생성자 주입:**
+```python
+async def _get_service(
+    session: AsyncSession = Depends(get_async_session),
+    redis: Redis = Depends(get_redis_dep),
+) -> AuthService:
+    return AuthService(AuthRepository(session), redis, ...)
 ```
 
-**모든 API 응답은 `ApiResponse<T>` envelope:**
-```java
-ApiResponse.success("메시지", data)
-ApiResponse.error("AUTH_001", "message")
+**에러 처리는 `core/exceptions.py`의 `AppError` 계층을 raise** — 서비스에서 던지고, `register_exception_handlers`가 HTTP 응답으로 변환한다. 응답 envelope나 `DOMAIN_NNN` 코드 체계는 **없다**; 핸들러는 `{"detail": ...}` JSON + `X-Correlation-ID` 헤더를 반환한다.
+```python
+raise ConflictError(f"An account with email '{email}' already exists.")  # 409
+raise UnauthorizedError("Invalid email or password.")                    # 401
+raise NotFoundError("User")                                              # 404
+raise ForbiddenError(...)                                                # 403
+# 라우터에서 fastapi.HTTPException 직접 raise 도 허용
 ```
 
-**에러 코드 형식:** `DOMAIN_NNN` (예: `AUTH_001`, `ACCOUNT_002`, `MENU_001`)
+**설정은 pydantic-settings `Settings`(`core/config.py`)** — `get_settings()`로 주입, `.env` 로드. LLM 설정은 `LLM_` prefix.
 
-**블로킹 코드는 `Schedulers.boundedElastic()`으로 격리.**
+**로깅은 structlog** — JSON 구조적 로깅 + `correlation_id` 바인딩.
 
-**Flyway 마이그레이션:** V1, V2 절대 수정 금지. 신규는 `V3__` 이후로 추가.
+**Alembic 마이그레이션:** `0001_initial_schema` 등 기존 리비전 수정 금지. 신규는 `task revision`(autogenerate)으로 추가.
 
 ### 프론트엔드 — 반드시 따를 것
 
@@ -120,29 +152,34 @@ z.string().email('유효한 이메일 주소를 입력해주세요')
 
 ## 테스트 패턴
 
-**단위 테스트 (`*Test.java`):** `@ExtendWith(MockitoExtension.class)`, Spring context 없음, `@BeforeEach`에서 대상 클래스 수동 생성
+**프레임워크:** pytest (`asyncio_mode = auto` — async 테스트에 데코레이터 불필요). 파일 `test_*.py`, 클래스 `Test*`, 함수 `test_*`.
 
-**통합 테스트 (`*IT.java`):** `@SpringBootTest + @Import(TestcontainersConfig.class)`, PostgreSQL/Redis는 Testcontainers
+**마커:** `unit`(I/O 없음), `integration`(DB/Redis 접근), `e2e`(기동 서버 대상). `--strict-markers` 적용.
 
-**Reactive 테스트:** `StepVerifier.create(...).assertNext(...).verifyComplete()`
+**테스트 메서드 명명:** `test_methodUnderTest_scenario_expectation` (예: `test_mail_from_uses_project_slug`, `login_withValidCredentials_returnsTokenResponse` 스타일).
 
-**테스트 메서드 명명:** `methodUnderTest_scenario_expectation` (예: `login_withValidCredentials_returnsTokenResponse`)
+**Redis는 `fakeredis`로 스텁**, 단위 테스트는 `@BeforeEach` 없이 대상 객체를 직접 생성한다.
 
-**JaCoCo 60% 라인 커버리지 필수** — `./gradlew check`가 강제 적용. 엔티티(`domain/model/`), 설정(`config/`), 응답 envelope(`global/response/`)은 제외됨.
+**커버리지 70% 강제** — pytest `addopts`의 `--cov-fail-under=70`이 적용(대상 `src`, `alembic/`·`tests/`·`migrations/` 제외).
 
 ## 환경 설정
 
-API 로컬 실행 시 필요한 환경변수 (`task run:local`이 자동 설정):
-- `R2DBC_URL`, `JDBC_URL`, `DB_USERNAME`, `DB_PASSWORD`
-- `REDIS_HOST`, `REDIS_PORT`
-- `OPENAI_API_KEY` (없으면 `placeholder-key` 기본값)
-- `SPRING_PROFILES_ACTIVE=local`
+`cp .env.example .env` 후 값 채움(`task install`/`task dev`가 없으면 자동 복사). 주요 변수:
 
-설정 파일: `api/src/main/resources/application-local.yml` (로컬), `application-prod.yml` (프로덕션)
+- `APP_ENV`, `APP_DEBUG`, `SECRET_KEY`, `FRONTEND_URL`, `CORS_ORIGINS`, `HOST`/`PORT`/`WORKERS`
+- `DATABASE_URL` (`postgresql+asyncpg://...` — 앱 런타임), `DATABASE_URL_SYNC` (`postgresql+psycopg2://...` — Alembic)
+- `POSTGRES_*`, `REDIS_URL`/`REDIS_HOST`/`REDIS_PORT`/`REDIS_DB`
+- `JWT_SECRET_KEY`, `JWT_ALGORITHM`(HS256), `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`(15), `JWT_REFRESH_TOKEN_EXPIRE_DAYS`(7)
+- OAuth2: `GOOGLE_*`, `KAKAO_*`, `NAVER_*` (콜백 base는 `/api/v1/auth/oauth/{provider}/callback`)
+- LLM(`LLM_` prefix): `LLM_PROVIDER`, `LLM_DEFAULT_MODEL`, `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`/`GEMINI_API_KEY`/`AZURE_OPENAI_*`/`OLLAMA_BASE_URL`
+- 메일(dev=Mailpit): `MAIL_SERVER`(localhost), `MAIL_PORT`(1025), `MAIL_FROM`
+
+Docker 인프라(`task infra`, 모두 `127.0.0.1` 바인딩): PostgreSQL 5432, Redis 6379, Mailpit SMTP 1025 / UI 8025.
 
 ## 주의 사항
 
 - `web/src/features/auth/lib/mock-auth-api.ts` — 프론트엔드 인증이 현재 mock API 사용 중. 실 API 미연동 상태.
-- `AccountController.deleteMe()`에서 Authorization 헤더 직접 파싱 (`substring(7)`) — null 체크 없는 취약 패턴.
-- `users.role` 컬럼은 레거시 코드 호환성을 위해 유지. RBAC용 `roles` 테이블과 병행.
-- ADMIN bypass는 JWT `authorities` 클레임으로만 판정 (DB 재조회 금지).
+- **Python 3.12로 개발할 것.** Python 3.14 + langchain의 `pydantic.v1`은 비호환이라 chat 도메인 테스트가 collection 단계에서 실패한다(`requires-python = ">=3.12"`).
+- `Taskfile.yml`이 정식 진입점이며 `PYTHONPATH=src`를 전역 설정한다. `Justfile`은 동일 명령을 미러링하나 보조용이다.
+- 마이그레이션은 `0001_initial_schema` 하나뿐 — pyproject가 언급하는 RBAC는 아직 스키마에 미구현(계획 단계).
+- `api/CLAUDE.md`는 Ouroboros 스펙-우선 워크플로우 문서로, 이 스택 설명과 무관하다.

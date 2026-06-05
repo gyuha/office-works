@@ -1,287 +1,171 @@
 ---
-last_mapped_commit: 494e665f81fbd274fdf9d64df89b97a66a3839b3
+last_mapped_commit: b8943aa32230936b80046e2f9b1a4dec458255df
 mapped: 2026-06-05
 ---
 
-# 기술 스택
+# STACK
 
-모놀리식 리포지토리는 Spring Boot WebFlux 백엔드(`api/`)와 React SPA 프론트엔드(`web/`)로 구성됩니다.
+`office-works`는 FastAPI 백엔드(`api/`)와 React SPA(`web/`)로 구성된 모노레포다. 아래는 디스크 상의 실제 코드 기준 스택이다. (`api/`는 현재 git에서 untracked 상태이며, Java/Spring Boot에서 Python/FastAPI로 리셋된 직후다.)
 
-## 백엔드 (API)
+## 모노레포 레이아웃
 
-### 언어 및 런타임
+- `api/` — Python 3.12 / uv 기반 FastAPI 서버
+- `web/` — React 19 + TanStack Router SPA (pnpm)
 
-- **Java 21** — `api/gradle.properties`에서 `javaVersion=21` 설정
-- **Spring Boot 3.4.5** — `springBootVersion=3.4.5`
-
-### 빌드 시스템
-
-- **Gradle 8+** — `api/build.gradle`, `api/settings.gradle` 참조
-- 프로젝트명: `spring-bootstrap` (`api/settings.gradle`)
-- 그룹: `com.example` / 버전: `0.0.1-SNAPSHOT` (`api/gradle.properties`)
-- **Task/Taskfile**: `Taskfile.yml`, `api/Taskfile.yml` — 개발 워크플로우 자동화
-
-### 핵심 프레임워크 및 라이브러리
-
-#### 웹/반응형
-
-- **Spring WebFlux** — 비동기 리액티브 웹 프레임워크 (`spring-boot-starter-webflux`)
-- **Reactor** — 리액티브 스트림 구현 (테스트 지원: `reactor-test`)
-
-#### 데이터 액세스
-
-- **R2DBC + PostgreSQL** — 리액티브 데이터베이스 드라이버
-  - `spring-boot-starter-data-r2dbc`
-  - `org.postgresql:r2dbc-postgresql`
-- **JDBC + PostgreSQL** — Flyway 마이그레이션 및 Spring Batch용
-  - `spring-boot-starter-jdbc`
-  - `org.postgresql:postgresql` (런타임)
-
-#### 데이터베이스 마이그레이션
-
-- **Flyway** — JDBC 기반 스키마 마이그레이션 (`flyway-core`, `flyway-database-postgresql`)
-  - 설정: `api/src/main/resources/application.yml` (위치: `classpath:db/migration`)
-  - 환경별: local/prod 프로파일 분리, Flyway 전용 계정 지원
-
-#### 배치 처리
-
-- **Spring Batch** — `spring-boot-starter-batch`
-  - Flyway + JDBC를 사용한 배치 테이블 관리
-  - 테스트: `spring-batch-test`
-
-#### 보안 및 인증
-
-- **Spring Security WebFlux** — 비동기 인증/인가
-  - `spring-boot-starter-security`
-  - WebFlux 설정: `api/src/main/java/com/example/bootstrap/global/config/SecurityConfig.java`
-- **JWT (JJWT)** — HS256 토큰 생성/검증
-  - `io.jsonwebtoken:jjwt-api:0.12.6`
-  - `io.jsonwebtoken:jjwt-impl:0.12.6`
-  - `io.jsonwebtoken:jjwt-jackson:0.12.6`
-  - 구성: `api/src/main/resources/application.yml` (액세스: 30분, 리프레시: 14일)
-- **OAuth2 소셜 로그인** — 구글, 카카오 (Microsoft Teams 연구 진행 중)
-  - 구현체: `api/src/main/java/com/example/bootstrap/account/infrastructure/oauth2/`
-    - `GoogleOAuth2Handler.java`
-    - `KakaoOAuth2Handler.java`
-    - `AbstractOAuth2Handler.java` (공통 로직)
-
-#### 캐싱 및 세션
-
-- **Redis (Reactive)** — 토큰 블랙리스트, 캐싱
-  - `spring-boot-starter-data-redis-reactive`
-  - JWT 블랙리스트 서비스: `api/src/main/java/com/example/bootstrap/global/security/jwt/JwtBlacklistService.java`
-  - 설정: `api/src/main/resources/application.yml`
-
-#### AI 통합
-
-- **Spring AI 1.0.0** — OpenAI 채팅
-  - `spring-ai-bom:1.0.0` (BOM 관리)
-  - `spring-ai-starter-model-openai`
-  - 구성: `api/src/main/java/com/example/bootstrap/global/config/AiConfig.java`
-  - 서비스:
-    - 동기: `Schedulers#boundedElastic()` 격리 실행
-    - 스트리밍 (SSE): 네이티브 `Flux<String>` 응답
-  - 참조: `api/src/main/java/com/example/bootstrap/ai/application/service/AiChatService.java`
-
-#### 검증
-
-- **Validation** — `spring-boot-starter-validation`
-
-#### Actuator 및 모니터링
-
-- **Spring Boot Actuator** — 헬스 체크, 메트릭
-  - `spring-boot-starter-actuator`
-  - **Prometheus** — 메트릭 수집
-    - `io.micrometer:micrometer-registry-prometheus`
-  - 설정: `api/src/main/resources/application.yml` (프로파일별 엔드포인트 제어)
-
-#### API 문서화
-
-- **SpringDoc OpenAPI 2.8.8** — Swagger UI, OpenAPI 스펙
-  - `springdoc-openapi-starter-webflux-ui:2.8.8`
-  - local 프로파일에서만 활성화 (`api/src/main/resources/application-local.yml`)
-
-#### 매핑 및 유틸
-
-- **MapStruct 1.6.3** — 자동 DTO/엔티티 매핑
-  - 어노테이션 프로세서 포함
-  - Lombok 바인딩: `lombok-mapstruct-binding:0.2.0`
-- **Lombok** — 보일러플레이트 생성
-  - 컴파일 타임 어노테이션 처리
-
-#### 로깅
-
-- **Logback + Logstash Encoder** — JSON 로깅 (운영 환경)
-  - `net.logstash.logback:logstash-logback-encoder:8.1`
-  - 설정: `api/src/main/resources/logback-*.xml`
-
-#### 정적 분석
-
-- **Checkstyle 10.23.0** — 코드 스타일 검사
-  - 설정: `api/config/checkstyle/checkstyle.xml`
-- **SpotBugs 4.9.3** — 버그 탐지
-  - 설정: `api/config/spotbugs/exclude.xml`
-
-#### 테스트 커버리지
-
-- **JaCoCo 0.8.12** — 라인 커버리지 측정 (최소 기준: 60%)
-  - 리포트 생성 및 검증 설정: `api/build.gradle` (tasks.named('jacocoTestReport'), 'jacocoTestCoverageVerification')
-  - 제외 패턴: MapStruct 생성 클래스, 엔티티 VO, 설정 클래스, 응답 DTO
-
-#### 테스팅
-
-- **JUnit 5** — 단위/통합 테스트
-  - `junit-platform-launcher`
-- **Testcontainers** — Docker 기반 테스트 격리
-  - `spring-boot-testcontainers`
-  - `testcontainers-junit-jupiter`
-  - `testcontainers-postgresql`
-  - `testcontainers-redis:2.2.4`
-  - `testcontainers-r2dbc`
-- **Spring Security Test** — 보안 기능 테스트
-  - `spring-security-test`
-
-### 설정 파일
-
-- `api/gradle.properties` — Gradle 변수 및 JVM 옵션
-- `api/build.gradle` — 의존성 및 플러그인 구성
-- `api/src/main/resources/application.yml` — 기본 설정
-- `api/src/main/resources/application-local.yml` — 로컬 개발 (Swagger 활성화, 확장 Actuator)
-- `api/src/main/resources/application-prod.yml` — 운영 환경 (최소 엔드포인트, JSON 로깅)
-- `api/docker-compose.yml` — PostgreSQL 16, Redis 7, Prometheus 2.53.0, Grafana 11.1.0
+두 패키지는 독립 빌드 체계를 가진다. 루트에는 통합 워크스페이스 매니페스트가 없고, 각 디렉토리가 자체 진입점(`api/Taskfile.yml`, `web/package.json`)을 갖는다.
 
 ---
 
-## 프론트엔드 (웹)
+## API (`api/`)
 
-### 언어 및 런타임
+### 언어 / 런타임
 
-- **TypeScript 5.8.3** — 정적 타입 검사
-  - `api/tsconfig.json` 참조: `target: ES2022`, `moduleResolution: Bundler`, strict 모드
-- **JavaScript (ES2022)** — ECMAScript 모듈
-- **Node.js 18.17.0+**, **pnpm 10.28.2+** — 패키지 관리자
+- **Python `>=3.12`** (`api/pyproject.toml`의 `requires-python`, ruff `target-version = "py312"`, mypy `python_version = "3.12"`).
+- 패키지 매니저 / 가상환경: **uv** (lock 파일 `api/uv.lock` 약 800KB, `[tool.uv].default-groups = ["dev"]`).
+- 빌드 백엔드: **hatchling** (`[build-system]`, `[tool.hatch.build.targets.wheel].packages = ["src"]`).
+- 소스 레이아웃: **flat src 레이아웃** — 톱레벨 패키지 prefix 없음. `PYTHONPATH=src`로 `core`/`domains`/`infra`를 직접 import (`api/src/`).
 
-### 빌드 및 번들러
+> 주의: 디스크상 `api/.venv`와 `__pycache__`에 `cpython-314` 산출물이 보이나(예: `api/src/infra/llm/__pycache__/*.cpython-314.pyc`), 프로젝트는 Python 3.12 개발을 강제한다. CLAUDE.md에 따르면 3.14 + langchain `pydantic.v1` 비호환으로 chat 도메인 테스트가 collection 단계에서 실패한다.
 
-- **Vite 6.0.0** — 고속 빌드, HMR 개발 서버
-  - 플러그인: `@vitejs/plugin-react`, `@tanstack/router-plugin`, `@tailwindcss/vite`
-  - 설정: `vite.config.ts` (명시적 설정 없음, 기본값 사용)
+### 웹 프레임워크 / 서버
 
-### 핵심 프레임워크
+- **FastAPI** `>=0.115.0` (`fastapi[standard]`), 앱 팩토리 `create_app()` (`api/src/main.py`).
+- **uvicorn** `>=0.30.0` (`uvicorn[standard]`) — 핫리로드 진입점 `uvicorn main:app`.
+- **python-multipart** `>=0.0.12` (폼/파일 업로드).
+- 미들웨어: `CorrelationIdMiddleware`(`api/src/core/middleware.py`) + `CORSMiddleware`. CORS는 `settings.cors_origins_list`, `expose_headers=["X-Correlation-ID"]`.
+- 시작/종료: `lifespan` 컨텍스트 — Redis 풀 warm-up + ping, 종료 시 풀 close (`api/src/main.py`).
+- 라우터 등록: 도메인 라우터는 `/api/v1` prefix, `health_router`(`/health`, `/ready`)만 루트.
 
-- **React 19.0.0** — 사용자 인터페이스
-  - `react-dom:19.0.0`
-  - JSX Transform (자동)
+### 검증 / 설정
 
-### 라우팅
+- **Pydantic** `>=2.9.0`, **pydantic-settings** `>=2.5.0` — 설정 클래스 `Settings`/`LLMSettings` (`api/src/core/config.py`).
+- **email-validator** `>=2.2.0` (`EmailStr` 활성화).
+- 설정 싱글톤: `get_settings()` (`@lru_cache(maxsize=1)`), 모듈 레벨 `settings`. `.env` 로드(`env_file=".env"`), `extra="ignore"`, `case_sensitive=False`.
+- LLM 설정은 `env_prefix="LLM_"`, 자격증명은 alias(`OPENAI_API_KEY` 등)로 매핑.
 
-- **TanStack Router 1.95.0** — 타입 안전 라우팅
-  - `@tanstack/react-router`
-  - DevTools: `@tanstack/react-router-devtools:1.166.13`
-  - 플러그인: `@tanstack/router-plugin:1.95.0`
+### 데이터베이스 / ORM
 
-### 상태 관리
+- **SQLAlchemy 2.0** `>=2.0.36` (`sqlalchemy[asyncio]`, 타입 플러그인 `sqlalchemy[mypy]`).
+- 런타임 드라이버: **asyncpg** `>=0.30.0` (`postgresql+asyncpg://`), 엔진 `create_async_engine` (`api/src/core/database.py`, pool_size 5 / max_overflow 10 / pool_recycle 3600 / pool_pre_ping).
+- 마이그레이션 드라이버: **psycopg2-binary** `>=2.9.9` (`postgresql+psycopg2://`, Alembic 전용).
+- **Alembic** `>=1.14.0` (`api/alembic.ini`, `api/alembic/env.py`). env.py는 `DATABASE_URL_SYNC` 우선, 없으면 `Settings.sync_database_url`로 fallback하고 `sqlalchemy.url`을 오버라이드. asyncpg DSN 사용 시 명시적 에러.
+- 리비전: 단일 `api/alembic/versions/0001_initial_schema.py`.
+- 모델: 선언적 base `Base(DeclarativeBase)` (`api/src/core/database.py`). UUID PK는 `postgresql.UUID(as_uuid=True)`.
+  - auth: `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens`, `email_verifications`, `password_resets`, `oauth_accounts` (`api/src/domains/auth/models/auth_models.py`).
+  - chat: `conversations`, `messages` (`api/src/domains/chat/models/chat_models.py`).
 
-- **Zustand 5.0.3** — 경량 상태 관리
-- **TanStack Query 5.75.0** — 서버 상태 관리 (`@tanstack/react-query`)
-- **Immer 11.1.4** — 불변 상태 업데이트
+> RBAC 테이블(roles/permissions/조인)은 ORM 모델에 정의되어 있고 `require_permission`이 사용하나, 단일 초기 마이그레이션 외 시드/추가 리비전 여부는 마이그레이션 파일 직접 확인 필요.
 
-### 폼 및 검증
+### 인증 / 보안
 
-- **React Hook Form 7.55.0** — 성능 최적화 폼
-  - DevTools: `@hookform/devtools:4.4.0`
-  - Resolver: `@hookform/resolvers:4.1.3`
-- **Zod 3.24.2** — 스키마 기반 검증
+- **python-jose[cryptography]** `>=3.3.0` — JWT encode/decode. 기본 알고리즘 HS256 (`api/src/domains/auth/security.py`).
+- **passlib[argon2]** `>=1.7.4` + **argon2-cffi** `>=23.1.0` — 비밀번호 해싱(`CryptContext(schemes=["argon2"])`).
+- JWT: access TTL 15분, refresh TTL 7일(보안 모듈 상수 + 설정). refresh 회전 + 재사용 탐지(family revocation), Redis `jwt:blacklist:` 블랙리스트.
+- FastAPI 보안 스킴: `HTTPBearer(auto_error=False)` — Bearer 헤더만, 쿠키 미사용.
 
-### UI 컴포넌트
+### 캐시 / Pub-Sub
 
-- **shadcn/ui** — Radix UI 기반 고급 컴포넌트 시스템
-  - Radix UI: `radix-ui:1.4.3`
-  - Icons: `@radix-ui/react-icons:1.3.2`
-  - Label: `@radix-ui/react-label:2.1.8`
-  - Slot: `@radix-ui/react-slot:1.2.0`
-- **Base UI 1.4.1** — 무헤드 컴포넌트 라이브러리
-- **Lucide React 0.487.0** — 아이콘 세트
-- **cmdk 1.1.1** — 커맨드 팔레트
-- **sonner 2.0.3** — 토스트 알림
-- **react-day-picker 10.0.0** — 날짜 선택 캘린더
+- **redis[hiredis]** `>=5.2.0` — async 클라이언트 `redis.asyncio` (`api/src/core/redis.py`, `from_url`, `decode_responses=True`, `max_connections=20`). 용도: JWT 블랙리스트, refresh 재사용 탐지, OAuth state nonce, rate limit, 캐시, SSE fan-out.
 
-### 스타일링 및 유틸
+### HTTP 클라이언트
 
-- **TailwindCSS 4.0.0** — Utility-first CSS 프레임워크
-  - 변수/커스텀 속성 지원: `@tailwindcss/vite:4.0.0`
-- **class-variance-authority 0.7.1** — 컴포넌트 스타일 바리언트
-- **clsx 2.1.1** — 조건부 클래스 이름 합성
-- **tailwind-merge 2.6.0** — TailwindCSS 클래스 병합
-- **tw-animate-css 1.4.0** — 애니메이션 유틸
-- **motion 11.18.0** — 애니메이션 라이브러리
-- **@fontsource-variable/inter 5.1.1** — Inter 폰트
+- **httpx** `>=0.27.0` — OAuth 토큰 교환/유저인포 호출 (`api/src/domains/auth/oauth/*.py`). dev 그룹에도 중복 선언(AsyncClient 테스트용).
 
-### 테이블 및 차트
+### 이메일
 
-- **TanStack Table 8.21.3** — 고급 테이블 컴포넌트 (`@tanstack/react-table`)
-- **Recharts 3.8.1** — 리액트 차트 라이브러리
+- **fastapi-mail** `>=1.4.2` — `ConnectionConfig`/`FastMail`/`MessageSchema` (`api/src/domains/auth/email.py`). 설정 조립은 `Settings.mail_connection_config`.
+
+### 관측성 / 로깅
+
+- **structlog** `>=24.4.0` — JSON 구조적 로깅 + `correlation_id` 바인딩 (`api/src/core/logging.py`, `configure_logging`). 포맷 `json`/`console` 선택.
+
+### Rate Limiting
+
+- **slowapi** `>=0.1.9` — `Limiter` 인스턴스(`api/src/main.py`), 키 함수 `_get_user_key`(인증 사용자 ID 우선, 없으면 remote IP), `RateLimitExceeded` 핸들러 등록.
+
+### 스트리밍 / LLM / Chat
+
+- **sse-starlette** `>=2.1.0` — `EventSourceResponse` (`api/src/domains/chat/router/chat_router.py`, `[DONE]` sentinel).
+- **langchain** `>=0.3.0`, **langchain-core** `>=0.3.0`, **langchain-community** `>=0.3.0`.
+- **langchain-litellm** `>=0.2.0** — `ChatLiteLLM` 어댑터 (`api/src/infra/llm/provider_factory.py`의 `make_chat_litellm`이 유일한 생성 지점).
+- **litellm** `>=1.50.0** — provider 라우팅(openai/anthropic/gemini/azure/ollama).
+- **tenacity** `>=8.5.0** — 일시적 LLM 에러 재시도.
+
+### 에러 처리
+
+- 응답 envelope나 `DOMAIN_NNN` 코드 체계 없음. 서비스가 `AppError` 계층(`NotFoundError`/`ConflictError`/`UnauthorizedError`/`ForbiddenError`, 각 `status_code` 보유, `api/src/core/exceptions.py`)을 raise → `register_exception_handlers`가 `{"detail": ...}` JSON + `X-Correlation-ID`로 변환. 라우터에서 `HTTPException` 직접 raise도 허용.
+
+### 빌드 / 개발 도구
+
+- **정식 진입점: `api/Taskfile.yml`** (Taskfile.dev). `env: PYTHONPATH: src` 전역 설정, 모든 Python 실행은 `uv run` 경유. `api/Justfile`은 동일 명령 미러링(보조).
+  - 주요 태스크: `install`(uv sync + pre-commit), `infra`/`infra-down`(docker compose), `dev`(install+migrate+uvicorn reload), `serve`, `test`/`test-unit`/`test-integration`/`test-fast`/`test-cov`, `lint`(ruff+mypy), `format`, `typecheck`, `migrate`/`revision`/`downgrade`, `prod-up`/`prod-down`/`prod-build`/`prod-migrate`, `smoke-test*`.
+- **ruff** `>=0.8.0** — 린터+포매터. line-length 100, double quote, lf. select: E/W/F/I/N/UP/B/C4/SIM/ANN/S/T20/PT/RUF. per-file ignore: tests, alembic, scripts, `config.py`(S104), `oauth/*`(S105).
+- **mypy** `>=1.13.0** — `strict = true`, 플러그인 `pydantic.mypy` + `sqlalchemy.ext.mypy.plugin`. langchain/litellm/jose/passlib/redis/slowapi/fastapi_mail 등은 `ignore_missing_imports`.
+- **pytest** `>=8.3.0** (+ pytest-asyncio `>=0.24.0`, pytest-cov `>=5.0.0`, anyio, fakeredis `>=2.26.0`). `asyncio_mode = "auto"`, `pythonpath = ["src"]`, 마커 unit/integration/e2e (`--strict-markers`), 커버리지 게이트 `--cov-fail-under=70`(대상 `src`, alembic/tests/migrations 제외), `filterwarnings = ["error", ...]`.
+- **pre-commit** `>=4.0.0** + **detect-secrets** `>=1.5.0** (`api/.secrets.baseline`).
+- 타입 스텁: `types-passlib`, `types-python-jose`, `sqlalchemy[mypy]`.
+
+### 컨테이너 빌드
+
+- `api/Dockerfile` — 멀티스테이지: `uv-binary`(핀: `ghcr.io/astral-sh/uv:0.6.13`) → `builder`(`python:3.12-slim-bookworm`, build-essential/libpq-dev/git, `/runtime-venv`에 런타임 전용 deps, `uv build --wheel`, compileall) → `runtime`(`python:3.12-slim-bookworm`, libpq5+curl만, 비root `appuser` uid 1000, `/runtime-venv` + alembic만 복사, uv/pip 부재).
+  - ARG: `PYTHON_VERSION=3.12`, `UV_VERSION=0.6.13`.
+  - HEALTHCHECK: `curl http://localhost:${PORT}/health`.
+  - CMD: `uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS:-1} --proxy-headers --forwarded-allow-ips='*'`.
+
+### 설정 파일
+
+- `api/.env` / `api/.env.example` / `api/.env.prod.example` — 환경변수.
+- `api/pyproject.toml` — 메타데이터/deps/ruff/mypy/pytest/coverage.
+- `api/alembic.ini`, `api/alembic/env.py` — 마이그레이션.
+- `api/.dockerignore`, `api/.gitignore`, `api/.secrets.baseline`.
+
+---
+
+## WEB (`web/`)
+
+### 언어 / 런타임 / 패키지 매니저
+
+- **TypeScript** `^5.8.3`, **React 19** (`react`/`react-dom` `^19.0.0`).
+- 패키지 매니저: **pnpm** (`packageManager: pnpm@10.28.2`, lock `web/pnpm-lock.yaml`, `web/pnpm-workspace.yaml`). engines: node `>=18.17.0`, pnpm `>=10.0.0`.
+- 모듈 타입 ESM (`"type": "module"`).
+- tsconfig (`web/tsconfig.json`): target ES2022, module ESNext, moduleResolution Bundler, jsx react-jsx, `strict`, `noUnusedLocals`/`noUnusedParameters`, path alias `@/* → ./src/*`. project reference `tsconfig.node.json`.
+
+### 빌드 / 개발 도구
+
+- **Vite** `^6.0.0` (`web/vite.config.ts`) — 개발 서버 port 3000. 플러그인: `@tanstack/router-plugin`(파일 기반 라우팅, `routesDirectory: src/routes`, `generatedRouteTree: src/routeTree.gen.ts`, autoCodeSplitting), `@vitejs/plugin-react` `^4.3.4`, `@tailwindcss/vite` `^4.0.0`, `vite-tsconfig-paths` `^5.1.4`.
+- 스크립트(`web/package.json`): `dev`(vite), `build`(`tsc -b && vite build`), `preview`, `typecheck`(`tsc --noEmit`), `lint`(biome check), `lint:fix`, `format`.
+- **Biome** `@biomejs/biome ^1.9.4** (`web/biome.json`) — formatter: 2 spaces, lineWidth 100, single quotes, trailing commas es5; linter recommended; organizeImports. ignore: node_modules/dist/`src/routeTree.gen.ts`.
+
+### 핵심 프레임워크 / 라이브러리
+
+- **라우팅: @tanstack/react-router** `^1.95.0` (+ devtools `^1.166.13`, router-plugin `^1.95.0`). 파일 기반(`web/src/routes/`).
+- **서버 상태: @tanstack/react-query** `^5.75.0` — Provider 래핑 `web/src/providers/app-providers.tsx`(`QueryClientProvider`).
+- **클라이언트 전역 상태: zustand** `^5.0.3` (+ immer `^11.1.4`). 디렉토리 `web/src/stores/`, `web/src/features/auth/store/`.
+- **테이블: @tanstack/react-table** `^8.21.3`.
+- **폼: react-hook-form** `^7.55.0` + `@hookform/resolvers` `^4.1.3` (+ devtools `^4.4.0`).
+- **검증: zod** `^3.24.2` (한국어 메시지, `web/src/features/auth/schema/`).
+
+### UI / 스타일
+
+- **Tailwind CSS** `^4.0.0** (Vite 플러그인 경유) + `tw-animate-css` `^1.4.0`, `tailwind-merge` `^2.6.0`, `clsx` `^2.1.1`, `class-variance-authority` `^0.7.1`.
+- **UI 프리미티브: @base-ui/react** `^1.4.1`, **radix-ui** `^1.4.3` (+ `@radix-ui/react-icons`/`react-label`/`react-slot`), shadcn 스타일(`web/components.json`, `web/src/components/ui/`).
+- 아이콘: `lucide-react` `^0.487.0`. 애니메이션: `motion` `^11.18.0`, `react-focus-lock` `^2.13.7`.
+- 폰트: `@fontsource-variable/inter` `^5.1.1`.
+- 차트: `recharts` `^3.8.1`. 날짜: `date-fns` `^4.1.0`, `react-day-picker` `^10.0.0`. 커맨드 팔레트: `cmdk` `^1.1.1`. 토스트: `sonner` `^2.0.3`.
+- 목 데이터: `@faker-js/faker` `^10.4.0`.
 
 ### 국제화
 
-- **i18next 26.0.10** — 국제화 프레임워크
-- **react-i18next 17.0.7** — React 바인딩
+- **i18next** `^26.0.10` + **react-i18next** `^17.0.7`. 로케일 `web/src/sample/i18n/locales/{en,ko}/`.
 
-### 접근성
+### 프론트엔드 구조 (Feature-Sliced Design 변형)
 
-- **react-focus-lock 2.13.7** — 포커스 관리
+- `web/src/routes/` — TanStack Router 파일 기반 라우팅 (`auth/`, `sample/`, `test/`).
+- `web/src/features/{domain}/` — 도메인 슬라이스(components/hooks/store/schema/lib/types). 현재 `auth/`.
+- `web/src/components/ui/` — Radix/Base UI + cva 프리미티브.
+- `web/src/stores/` — Zustand 전역 상태.
+- `web/src/providers/` — Provider 래핑.
+- `web/src/sample/` — 대규모 샘플/데모 슬라이스(apps/auth/chats/dashboard/help-center/settings/tasks/users 등).
+- `web/src/lib/` — `router.ts`, `utils.ts`.
 
-### 코드 품질
-
-- **TypeScript** — 정적 타입 검사
-  - 설정: `web/tsconfig.json`
-    - `target: ES2022`
-    - `moduleResolution: Bundler`
-    - `strict: true`
-    - `noUnusedLocals`, `noUnusedParameters` 강제
-    - 경로 별칭: `@/*` → `./src/*`
-- **Biome 1.9.4** — 린팅 및 포맷팅 (`@biomejs/biome`)
-  - 설정: `web/biome.json`
-    - 포맷터: 스페이스 2칸, 줄 너비 100
-    - JavaScript: 싱글 쿼트, ES5 트레일링 쉼마
-    - 임포트 정렬 활성화
-    - Linter: recommended 규칙 활성화
-
-### 패키지 관리
-
-- **pnpm 10.28.2+** — 효율적인 의존성 관리
-  - `web/package.json` 참조
-  - 스크립트:
-    - `dev` — Vite 개발 서버
-    - `build` — TypeScript 빌드 + Vite 번들링
-    - `preview` — 프로덕션 빌드 미리보기
-    - `typecheck` — 타입 검사
-    - `lint` — Biome 린팅
-    - `lint:fix` — 자동 수정
-    - `format` — 코드 포맷팅
-
-### 설정 파일
-
-- `web/package.json` — 의존성 및 스크립트
-- `web/tsconfig.json` — TypeScript 컴파일 옵션
-- `web/tsconfig.node.json` — 빌드 도구 타입스크립트 설정
-- `web/biome.json` — 린팅/포맷팅 규칙
-- `vite.config.ts` — Vite 번들러 설정 (생성 예상)
-- `src/routeTree.gen.ts` — TanStack Router 제너레이터 아티팩트 (biome 무시 대상)
-
----
-
-## 공통 구성
-
-### 모놀리식 구조
-
-- Root `Taskfile.yml` — 프로젝트 전체 작업 조율
-- `package.json` 메타데이터:
-  - 이름: `react-bootstrap`
-  - 버전: `0.0.1`
-  - 프라이빗 모드 활성화
-
-### 버전 관리
-
-- Git 저장소 (현재 커밋: `494e665f81fbd274fdf9d64df89b97a66a3839b3`)
-
+> 프론트엔드 인증은 현재 **mock API**를 사용 중이며 실 API 미연동 상태다(`web/src/features/auth/lib/mock-auth-api.ts` — setTimeout 지연 + 하드코딩 분기). 통합 세부는 INTEGRATIONS.md 참조.
