@@ -1,134 +1,434 @@
 ---
-last_mapped_commit: b8943aa32230936b80046e2f9b1a4dec458255df
+last_mapped_commit: 5c5103df2b3695a9b8bd62b9c5701f2988b8e0ab
 mapped: 2026-06-05
 ---
 
-# ARCHITECTURE
+# 아키텍처 (Office Works)
 
-`office-works`는 FastAPI 백엔드(`api/`)와 React 19 SPA(`web/`)로 구성된 모노레포다. 두 영역은 서로 다른 아키텍처 패턴을 따른다. 이 문서는 디스크에 존재하는 현재 코드를 기준으로 한다.
+모노레포 구조: FastAPI 백엔드(`api/`) + React 19 SPA(`web/`). 도메인 주도 설계(DDD) + 포트-어댑터 아키텍처.
 
-> 참고: `web/`의 인증은 아직 `api/`와 연동되지 않았다. `web/src/features/auth/hooks/use-auth-mutation.ts`가 `web/src/features/auth/lib/mock-auth-api.ts`의 mock 함수를 호출한다.
+## 전체 요청 흐름
 
----
-
-## 1. API — 계층형 도메인 아키텍처
-
-### 1.1 패턴
-
-`api/src/`는 flat 레이아웃이다. 패키지 prefix 없이 `PYTHONPATH=src`로 `core`/`domains`/`infra`를 톱레벨 import한다. 도메인은 DDD/헥사고날을 절충한 계층 구조를 따른다.
+### 백엔드 — FastAPI 비동기 처리
 
 ```
-{domain}/router → service → repository → models
-{domain}/schemas  (Pydantic v2 요청/응답 DTO)
-core/             (config, database, redis, exceptions, logging, middleware — 횡단 관심사)
-infra/            (llm — provider_factory 등 외부 어댑터)
+HTTP 요청
+    ↓
+CorrelationIdMiddleware (UUID 생성, structlog 바인딩)
+    ↓
+CORSMiddleware
+    ↓
+라우터 (FastAPI APIRouter @ /api/v1)
+    ├─ /api/v1/auth/* (회원가입, 로그인, OAuth2, 토큰 회전)
+    └─ /api/v1/chat/* (LLM 채팅 + SSE 스트리밍)
+    ↓
+서비스 (비즈니스 로직, async def)
+    ├─ AuthService
+    │  ├─ AuthRepository (DB 쿼리)
+    │  ├─ Redis (토큰 블랙리스트, 세션)
+    │  └─ AuthEmailSender (이메일 전송)
+    └─ ChatService
+       ├─ ChatRepository (대화 저장)
+       └─ AbstractLLMPort (LLM 호출)
+    ↓
+리포지토리 (SQLAlchemy 2.0 async, AsyncSession)
+    ↓
+PostgreSQL 데이터베이스
+    ↓
+AppError 예외 발생 시
+    ├─ NotFoundError (404)
+    ├─ ConflictError (409)
+    ├─ UnauthorizedError (401)
+    └─ ForbiddenError (403)
+    ↓
+register_exception_handlers (전역 예외 처리)
+    ↓
+{"detail": "error message"} + X-Correlation-ID 헤더
 ```
 
-- `router` — HTTP 핸들러. FastAPI `Depends`로 service를 조립하고 `AppError`를 `HTTPException`으로 변환한다.
-- `service` — 비즈니스 로직. HTTP를 모르고 `AppError` 하위 예외를 raise한다.
-- `repository` — 모든 DB I/O. `AsyncSession`을 받아 SQLAlchemy 2.0 쿼리를 실행한다.
-- `models` — SQLAlchemy ORM. 전부 `core/database.py`의 `Base`를 상속한다.
-- `schemas` — Pydantic v2 DTO. ORM 직렬화는 `model_config = {"from_attributes": True}` 사용.
-
-흐름: `라우터 → 서비스 → 리포지토리 → 모델`
-
-### 1.2 엔트리포인트 — 앱 팩토리
-
-`api/src/main.py`가 진입점이다.
-
-- `create_app()` — FastAPI 인스턴스를 만들고 미들웨어/예외 핸들러/라우터를 등록한다. 모듈 레벨 `app = create_app()`이 uvicorn 진입점이다.
-- `lifespan` (asynccontextmanager) — 시작 시 `configure_logging` 호출, Redis 풀 warm-up(`get_redis_client().ping()`), 종료 시 `close_redis_client()`.
-- `_register_routers(application)` — `health_router`(루트 `/health`, `/ready`)는 prefix 없이 등록. `domains.auth.router`와 `domains.chat.router`는 `/api/v1` prefix로 등록(import 실패 시 graceful skip).
-- `limiter = Limiter(key_func=_get_user_key)` — slowapi 레이트리미터. 키는 인증 사용자 ID 또는 remote IP.
-
-`api/src/__main__.py` + `main.py`의 `if __name__ == "__main__"` 블록은 `python -m` 직접 실행(개발 시 hot-reload ON)을 지원한다.
-
-### 1.3 미들웨어 + 요청 흐름
-
-미들웨어는 outermost→innermost 순서로 `CorrelationIdMiddleware` → `CORSMiddleware`.
-
-`CorrelationIdMiddleware`(`api/src/core/middleware.py`):
-- 요청 헤더의 `X-Correlation-ID`를 읽고, 없으면 `uuid4` 생성.
-- structlog contextvars에 `correlation_id`/`method`/`path` 바인딩 → 응답 후 clear.
-- `request_started`/`request_finished` 로그를 INFO로 남기고 응답 헤더에 `X-Correlation-ID` 부착.
-
-요청 데이터 흐름:
+### 프론트엔드 — React 19 + TanStack Router
 
 ```
-요청 → CorrelationIdMiddleware → CORS → 라우터(/api/v1) → 서비스 → 리포지토리 → DB(AsyncSession)
-                                                  ↓ AppError raise
-                                  register_exception_handlers → {"detail": ...} JSON + X-Correlation-ID
+사용자 입력
+    ↓
+TanStack Router 파일 기반 라우팅 (src/routes/)
+    ├─ / (홈 — 인증 상태 표시)
+    ├─ /auth/login (로그인)
+    ├─ /auth/signup (회원가입)
+    └─ /sample/* (샘플 페이지)
+    ↓
+Feature 슬라이스 (src/features/{domain}/)
+    ├─ components/ (Form, 버튼 등)
+    ├─ hooks/ (use-auth-mutation)
+    ├─ store/ (Zustand)
+    └─ lib/ (mock-auth-api)
+    ↓
+TanStack Query (서버 상태)
+    ├─ useAuthMutation
+    └─ [향후] useChatQuery
+    ↓
+Zustand Store (클라이언트 전역 상태)
+    └─ useAuthStore (user, isAuthenticated)
+    ↓
+HTTP 요청 (fetch / axios)
+    ↓
+백엔드 API (/api/v1)
 ```
 
-### 1.4 에러 처리
+## 백엔드 레이어별 구조
 
-`api/src/core/exceptions.py`:
-- `AppError(message, status_code)` 기반 계층 — `NotFoundError`(404), `ConflictError`(409), `UnauthorizedError`(401), `ForbiddenError`(403). 각 인스턴스가 `status_code`를 보유.
-- `register_exception_handlers(application)`가 세 핸들러를 등록: `HTTPException`(`{"detail": ...}`), `RequestValidationError`(422, Pydantic ctx의 비직렬화 객체를 문자열로 sanitize), generic `Exception`(500, "Internal server error.").
-- **응답 envelope나 `DOMAIN_NNN` 코드 체계는 없다.** 모든 에러 응답은 `{"detail": ...}` + `X-Correlation-ID` 헤더.
-- 주의: `AppError` 자체에 대한 핸들러는 등록되지 않는다. 라우터의 `_app_error_to_http()` 헬퍼(`auth_router.py`)가 서비스의 `AppError`를 잡아 `HTTPException`으로 수동 변환한다(401일 때 `WWW-Authenticate: Bearer` 헤더 추가). chat 라우터는 `HTTPException`을 직접 raise한다.
+### `api/src/main.py` — 앱 팩토리
 
-### 1.5 비동기 + 영속성 패턴
+- `lifespan()`: 시작/종료 시 Redis 연결 warmup, 구조적 로깅 설정
+- `create_app()`: FastAPI 앱 초기화, 미들웨어 등록, 라우터 포함
+- `_register_routers()`: `/health`, `/ready` + `/api/v1/auth`, `/api/v1/chat` 라우터 동적 로딩
+- 예외 핸들러 등록 → `register_exception_handlers(app)`
 
-`api/src/core/database.py`:
-- SQLAlchemy 2.0 **async** — `create_async_engine(settings.async_database_url)` + asyncpg 드라이버.
-- 엔진 파라미터: `pool_pre_ping=True`, `pool_size=5`, `max_overflow=10`, `pool_recycle=3600`, `echo=settings.app_debug`.
-- `AsyncSessionFactory = async_sessionmaker(expire_on_commit=False, autoflush=False, autocommit=False)`.
-- `get_async_session()` — FastAPI 의존성. 정상 시 commit, 예외 시 rollback, 항상 close.
-- `Base(DeclarativeBase)` — 모든 도메인 모델의 부모.
-- 핸들러·서비스·리포지토리는 전부 `async def`.
-- **Alembic 마이그레이션만 동기 드라이버(psycopg2, `DATABASE_URL_SYNC`)를 쓴다** (`api/alembic/env.py`).
+### `core/` — 횡단 관심사
 
-Redis(`api/src/core/redis.py`):
-- `redis.asyncio` 싱글톤 클라이언트. `get_redis_client()`(lazy 풀 생성, `decode_responses=True`, `max_connections=20`), `close_redis_client()`, `get_redis_dep()`(FastAPI 의존성).
-- 용도: JWT blacklist(`jti`), refresh-token 재사용 탐지, OAuth state nonce, 레이트리밋, 캐시, SSE pub/sub.
+**`config.py`** (Pydantic Settings)
+- `AppEnv` enum: development, staging, production
+- `LLMProvider` enum: openai, anthropic, gemini, azure, ollama
+- `LLMSettings`: LLM 제공자별 설정 (API 키, 모델, 베이스 URL 등)
+- `Settings`: 전체 애플리케이션 설정 (DB, Redis, JWT, OAuth, 이메일, 로깅 포맷)
+- `get_settings()`: 싱글톤 설정 반환 (캐시됨)
 
-### 1.6 의존성 주입
+**`database.py`** (SQLAlchemy 2.0 async)
+- `Base`: 모든 ORM 모델의 declarative base
+- `engine`: `create_async_engine()` with `asyncpg` 드라이버
+- `SessionLocal`: `async_sessionmaker(AsyncSession)`
+- `get_async_session()`: FastAPI Depends 의존성 — 요청별 AsyncSession 제공
 
-FastAPI `Depends` + 서비스 생성자 주입.
+**`redis.py`** (Redis 연결 풀)
+- `get_redis_client()`: 싱글톤 Redis 클라이언트 (접속 풀)
+- `close_redis_client()`: 종료 시 정리
+- `get_redis_dep()`: FastAPI Depends 의존성
 
-- auth: `auth_router.py`의 `_get_service()`가 `get_async_session`/`get_redis_dep`/`get_auth_email_service`를 받아 `AuthService(AuthRepository(session), redis, mail_service=...)`를 조립.
-- chat: `domains/chat/container.py`가 DI 경계. `get_llm_factory()`가 `LLMClientFactoryProtocol`(인터페이스)을 반환하고, `get_chat_service(factory)`가 `ChatService(llm_client=factory.get_llm_client())`를 빌드. 구상 클래스(`DefaultLLMClientFactory`) import는 함수 내부에 두어 모듈 네임스페이스에 노출되지 않는다(아키텍처 경계 강제). 테스트는 `app.dependency_overrides[get_llm_factory]`로 stub 주입.
-- 설정: `get_settings()`(`core/config.py`, `@lru_cache`)로 주입. pydantic-settings `Settings`, `.env` 로드, LLM 설정은 `LLM_` prefix.
+**`middleware.py`**
+- `CorrelationIdMiddleware`: 요청마다 UUID 생성, structlog 컨텍스트 바인딩
+- 헤더: `X-Correlation-ID` 주입
 
-### 1.7 핵심 추상화
+**`exceptions.py`** (AppError 계층)
+- `AppError`: 기본 예외 (status_code, message)
+- `NotFoundError(404)`, `ConflictError(409)`, `UnauthorizedError(401)`, `ForbiddenError(403)`
+- `register_exception_handlers()`: FastAPI에 전역 핸들러 등록
+- 응답: `{"detail": "..."}` JSON + `X-Correlation-ID` 헤더
 
-- **auth 도메인** (`domains/auth/`) — 회원가입·이메일 인증·로그인·토큰 회전·로그아웃·비밀번호 재설정·OAuth2. JWT(Bearer only, access 15분 / refresh 7일, `jti` + Redis blacklist), argon2(`passlib`) 비밀번호 해싱, `require_permission(key)` RBAC 의존성 팩토리, `get_current_user` 의존성 (`security.py`). `oauth/`에 Google/Kakao/Naver 어댑터, 라우터의 `_get_oauth_adapter()`가 provider 문자열로 분기. 이메일은 `fastapi-mail`(`email.py`, dev=Mailpit, prod=SMTP).
-- **chat 도메인** (`domains/chat/`) — 헥사고날(Ports & Adapters). `ports.py`에 `LLMClientProtocol`(runtime_checkable Protocol), `LLMClientFactoryProtocol`, `AbstractLLMPort`(ABC) 정의. `ChatService`(`service/chat_service.py`)는 port 추상화에만 의존하고 LangChain/litellm 타입은 `TYPE_CHECKING` 블록에서만 import. 동기(`/complete`) + SSE 스트리밍(`/stream`, `sse-starlette` `EventSourceResponse`) 제공. DB 백킹 conversation/message CRUD는 `ChatRepository`(`require_permission("chat:write")` 가드, 스트림 종료 후 assistant 메시지 영속화 + 첫 턴 auto-title).
-- **shared 도메인** (`domains/shared/`) — `base.py`의 DDD 베이스(`Entity`/`AggregateRoot`/`ValueObject`, 순수 dataclass — SQLAlchemy `Base`와 무관), `events.py`, `types.py`.
-- **infra/llm** (`infra/llm/provider_factory.py`) — langchain-litellm 어댑터. `LLM_PROVIDER` env만 바꾸면 openai/anthropic/gemini/azure/ollama 전환. 도메인이 `langchain_litellm`을 직접 import하지 않도록 격리하는 단일 지점. 모델 문자열 라우팅(`<provider>/<model>`)은 `domains/chat/llm_factory.py`의 `ProviderFactory`.
+**`logging.py`** (structlog)
+- `configure_logging()`: JSON 구조적 로깅 초기화
+- 모든 로그는 correlation_id 바인딩
 
----
+### `domains/` — 도메인 경계
 
-## 2. WEB — Feature-Sliced Design 변형
+#### `domains/shared/` — 공유 커널
+- `base.py`: `Entity`, `AggregateRoot`, `ValueObject` 추상 클래스
+- `events.py`: `DomainEvent`, `DomainEventBus`
+- `types.py`: `UserId`, `ConversationId`, `MessageId`, `PermissionKey` (NewType)
+- **중요**: `auth`, `chat`은 `shared`를 import 가능, 반대는 금지 (비순환 의존성)
 
-### 2.1 엔트리포인트
+#### `domains/auth/` — 인증 도메인
 
-`web/src/main.tsx` — `createRoot`로 `RouterProvider`(TanStack Router) 렌더. `@fontsource-variable/inter`, `@/styles/globals.css`, `@/sample/i18n` import. `StrictMode` 래핑.
+**모델** (`models/auth_models.py`)
+- `User`: 사용자 계정 (email, hashed_password, display_name, is_verified, is_active, roles)
+- `RefreshToken`: 갱신 토큰 (JTI, family_id, rotated_at, replaced_by_jti — 토큰 로테이션/재사용 감지)
+- `EmailVerification`: 이메일 검증 대기 (token, expires_at)
+- `PasswordReset`: 비밀번호 재설정 대기
+- `OAuthAccount`: OAuth2 연동 계정 (Google, Kakao, Naver — provider + provider_user_id)
+- `Role`, `Permission`: RBAC 스키마 (미구현 — 계획 단계)
 
-`web/src/lib/router.ts` — `createRouter({ routeTree, defaultPreload: 'intent', scrollRestoration: true })`. `routeTree`는 `@/routeTree.gen`(Vite `@tanstack/router-plugin`이 `src/routes`에서 자동 생성).
+**리포지토리** (`repository/auth_repository.py`)
+- 모든 메서드 `async def`
+- `get_user_by_id()`, `get_user_by_email()`, `create_user()`, `mark_user_verified()`
+- `refresh_token_*()`: 갱신 토큰 CRUD
+- 트랜잭션 관리: `async with repo.transaction():`
 
-`web/src/routes/__root.tsx` — 루트 라우트. `AppProviders` 래핑, `Outlet`, `Modals`(`modal-manager`), `Toaster`(sonner), DEV 시 `TanStackRouterDevtools`. sample 경로가 아닐 때만 `ThemeToggle` 렌더.
+**서비스** (`service/auth_service.py`)
+- `signup()`: 이메일 + 비밀번호 → 사용자 생성, 검증 이메일 전송
+- `verify_email()`: 토큰 검증 → 사용자 활성화
+- `login()`: 이메일 + 비밀번호 → AccessToken + RefreshToken
+- `refresh()`: RefreshToken → 새 AccessToken + 회전된 RefreshToken (토큰 로테이션)
+- `logout()`: RefreshToken 블랙리스트 (Redis) + AccessToken JTI 블랙리스트
+- `password_reset_request()`, `password_reset_confirm()`: 비밀번호 재설정
+- OAuth2: `get_oauth_login_url()`, `handle_oauth_callback()` (Google, Kakao, Naver)
 
-### 2.2 Provider 계층
+**라우터** (`router/auth_router.py`, 접두사 `/auth`)
+- `POST /signup`: `SignupRequest` → 검증, 서비스 호출
+- `POST /verify-email/{token}`: 이메일 검증
+- `POST /login`: `LoginRequest` → `TokenResponse` (access_token, refresh_token, expires_in)
+- `POST /refresh`: `RefreshRequest` → 새 토큰 쌍
+- `POST /logout`: 토큰 폐기
+- `GET /me`: 현재 사용자 정보 (Bearer 토큰 필수)
+- `GET /auth/oauth/{provider}/login`: OAuth2 인증 URL 반환
+- `GET /auth/oauth/{provider}/callback`: OAuth2 콜백 (code 교환)
 
-`web/src/providers/app-providers.tsx` — `QueryClientProvider`만 래핑. `QueryClient`는 `useState`로 1회 생성, `mutations.retry: false`. 별도 Auth Provider는 없다(인증 상태는 Zustand store).
+**보안** (`security.py`)
+- `hash_password()`, `verify_password()`: argon2
+- `create_access_token()`, `create_refresh_token()`: JWT (HS256)
+- `decode_token()`: JWT 검증
+- `get_current_user()`: Bearer 토큰으로부터 User 추출 (FastAPI Depends)
+- `get_current_access_token_context()`: AccessToken JWT 페이로드 추출
+- `require_permission()`: 권한 검증
+- `blacklist_jti()`: Redis에 JTI 추가
 
-### 2.3 상태 관리 분리 (TanStack Query vs Zustand)
+**이메일** (`email.py`)
+- `AuthEmailSender`: 이메일 발송 (SMTP via Mailpit in dev)
+- `send_verification_email()`, `send_password_reset_email()`
 
-- **서버 상태 = TanStack Query** — `@tanstack/react-query`. 현재는 `web/src/features/auth/hooks/use-auth-mutation.ts`의 `useMutation`(`useLoginMutation`/`useSignupMutation`)이 유일하게 사용되며 mock API를 호출. `onSuccess`에서 Zustand store 갱신 + `useNavigate`.
-- **클라이언트 전역 상태 = Zustand** — `web/src/features/auth/store/auth.store.ts`(`useAuthStore`: `isAuthenticated`/`user`/`setUser`/`clearUser`), `web/src/stores/modal-store.ts`(`useModal`, `devtools` 미들웨어, 모달 스택), `web/src/sample/users/store/users-store.ts`.
+#### `domains/chat/` — LLM 채팅 도메인
 
-분리 원칙: 서버에서 받은 데이터/뮤테이션은 React Query, 순수 클라이언트 UI/세션 상태(모달, 인증 플래그)는 Zustand.
+**모델** (`models/chat_models.py`)
+- `Conversation`: 대화 (user_id, created_at, updated_at)
+- `Message`: 메시지 (conversation_id, role, content, created_at)
 
-### 2.4 폼 검증
+**포트** (`ports.py` — hexagonal architecture)
+- `LLMClientProtocol`: 런타임 체크 가능 Protocol (`ainvoke`, `astream`)
+- `LLMClientFactoryProtocol`: 팩토리 Protocol (`get_llm_client()`)
+- `AbstractLLMPort`: ABC — `invoke()`, `stream()`
+- **설계 목표**: 도메인이 infra 구체 클래스를 import하지 않음 (interface만 사용)
 
-`react-hook-form` + `@hookform/resolvers`(zodResolver) + `zod`. 스키마는 `web/src/features/auth/schema/auth.schema.ts`, 메시지는 한국어(예: `'유효한 이메일 주소를 입력해주세요'`).
+**서비스** (`service/chat_service.py`)
+- `complete()`: 비스트리밍 응답 (LLM 완전 응답 대기)
+- `stream()`: 스트리밍 응답 (async generator — SSE에 사용)
+- LangChain `BaseMessage` 입출력
+- **격리**: `AbstractLLMPort`에만 의존, infra 클래스는 TYPE_CHECKING 블록에서만 import
 
-### 2.5 UI 레이어
+**리포지토리** (`repository/chat_repository.py`)
+- `create_conversation()`, `get_conversation()`
+- `create_message()`, `get_messages_for_conversation()`
 
-`web/src/components/ui/` — Radix UI / Base UI + `class-variance-authority`(cva) + `tailwind-merge` 기반 shadcn 스타일 프리미티브 31개(`button`, `dialog`, `form`, `table`, `command` 등). 모달 시스템은 `components/ui/modal/`(manager/container/backdrop/form/header/default). Tailwind CSS v4(`@tailwindcss/vite`).
+**라우터** (`router/chat_router.py`, 접두사 `/chat`)
+- `POST /complete`: 비스트리밍 완성
+- `POST /stream`: SSE 스트리밍 응답
+- `GET /provider`: 현재 활성 LLM 제공자 정보
 
-### 2.6 sample 영역
+**컨테이너** (`container.py` — DI)
+- `get_llm_factory()`: LLMClientFactoryProtocol 반환
+- `get_chat_service()`: ChatService 반환 (팩토리 + repo + session 조립)
 
-`web/src/sample/`은 admin 대시보드 데모(dashboard/users/tasks/chats/apps/settings/help-center/errors/auth). 실제 도메인 기능(`features/`)과 분리된 참조 구현이며 자체 i18n(`sample/i18n`, ko/en)과 `*.test.ts`를 포함한다.
+### `infra/` — 인프라 어댑터
+
+**`llm/provider_factory.py`** (LangChain-LiteLLM 어댑터)
+- `make_chat_litellm()`: LLMSettings로부터 `ChatLiteLLM` 인스턴스 생성
+- 제공자별 라우팅 (OpenAI, Anthropic, Gemini, Azure, Ollama)
+- API 키, 베이스 URL, 모델명 설정
+
+**`llm/llm_client.py`** (LLMClient 어댑터)
+- `LLMClient`: `ChatLiteLLM`을 래핑, `AbstractLLMPort` 구현
+- `ainvoke()`: 비스트리밍 호출
+- `astream()`: 스트리밍 호출 (async generator)
+- `DefaultLLMClientFactory`: LLMClientFactoryProtocol 구현
+
+## 데이터 모델 & 흐름
+
+### 인증 흐름
+
+1. **회원가입** (signup)
+   - POST `/auth/signup` → `SignupRequest` (email, password, display_name)
+   - `AuthService.signup()` → `AuthRepository.create_user()` → User 생성
+   - 이메일 검증 토큰 생성 → Redis 임시 저장
+   - 검증 이메일 발송 → `AuthEmailSender.send_verification_email()`
+
+2. **이메일 검증** (verify-email)
+   - GET `/auth/verify-email/{token}`
+   - 토큰 유효성 검증 (Redis에서 조회)
+   - User.is_verified = True
+
+3. **로그인** (login)
+   - POST `/auth/login` → `LoginRequest` (email, password)
+   - `AuthService.login()` → 비밀번호 검증
+   - AccessToken + RefreshToken 발급
+   - RefreshToken을 DB에 저장 (family_id로 기족 추적, 로테이션 감지)
+
+4. **토큰 회전** (refresh)
+   - POST `/auth/refresh` → RefreshToken
+   - 기존 토큰 유효성 검사 (재사용 감지)
+   - 새 AccessToken + 새 RefreshToken 발급
+   - 기존 토큰 replaced_by_jti로 마크
+
+5. **로그아웃** (logout)
+   - POST `/auth/logout` → AccessToken JTI + RefreshToken
+   - JTI를 Redis 블랙리스트에 추가 (유효 기간 동안)
+
+### 채팅 흐름
+
+1. **비스트리밍 완성** (complete)
+   - POST `/chat/complete` → `ChatRequest` (messages: [{role, content}, ...])
+   - `ChatService.complete()` → LLM 호출
+   - LLM 응답 완전히 대기 → JSON 반환
+
+2. **스트리밍 완성** (stream)
+   - POST `/chat/stream` → `ChatRequest`
+   - `ChatService.stream()` → async generator
+   - SSE (Server-Sent Events) 응답
+   - 각 청크 = 한 줄 이벤트, 마지막은 `[DONE]` 마커
+
+## 데이터베이스 스키마
+
+PostgreSQL 16, 모든 ID는 UUID (as_uuid=True).
+
+### 주요 테이블
+
+- `users`: email (unique), hashed_password, display_name, is_verified, is_active, created_at, updated_at
+- `roles`: key (unique), description
+- `permissions`: key (unique), description
+- `role_permissions`: role_id ↔ permission_id (M:N)
+- `user_roles`: user_id ↔ role_id (M:N)
+- `refresh_tokens`: user_id, jti (unique), family_id, rotated_at, replaced_by_jti, expires_at
+- `email_verifications`: user_id, token (unique), expires_at
+- `password_resets`: user_id, token (unique), expires_at
+- `oauth_accounts`: user_id, provider, provider_user_id, created_at
+- `conversations`: user_id, created_at, updated_at
+- `messages`: conversation_id, role (system/user/assistant), content, created_at
+
+마이그레이션: Alembic 1개 리비전 (`0001_initial_schema`) — 신규 리비전은 `task revision` autogenerate
+
+## 의존성 주입 (DI) 패턴
+
+### FastAPI Depends 헬퍼
+
+```python
+# 라우터에서
+async def _get_service(
+    session: AsyncSession = Depends(get_async_session),
+    redis: Redis = Depends(get_redis_dep),
+) -> AuthService:
+    repo = AuthRepository(session)
+    return AuthService(repo, redis, ...)
+
+@router.post("/login")
+async def login(
+    req: LoginRequest,
+    svc: AuthService = Depends(_get_service),
+) -> TokenResponse:
+    tokens = await svc.login(req.email, req.password)
+    ...
+```
+
+### 채팅 DI
+
+```python
+# container.py
+async def get_chat_service(
+    factory: LLMClientFactoryProtocol = Depends(get_llm_factory),
+    session: AsyncSession = Depends(get_async_session),
+) -> ChatService:
+    repo = ChatRepository(session)
+    client = factory.get_llm_client()
+    return ChatService(llm_client=client, repo=repo)
+
+# 라우터에서
+@router.post("/chat/complete")
+async def chat_complete(
+    req: ChatRequest,
+    svc: ChatService = Depends(get_chat_service),
+) -> dict:
+    response = await svc.complete(req.to_langchain_messages())
+    ...
+```
+
+## 미들웨어 & 예외 처리 체인
+
+```
+요청 → CorrelationIdMiddleware (UUID + structlog 바인딩)
+    ↓
+    CORSMiddleware
+    ↓
+    라우터 (FastAPI)
+    ↓
+    [정상] → JSON 응답 + X-Correlation-ID 헤더
+    ↓ [AppError 발생]
+    register_exception_handlers()
+        ├─ NotFoundError → 404 + detail
+        ├─ ConflictError → 409 + detail
+        ├─ UnauthorizedError → 401 + detail + WWW-Authenticate 헤더
+        ├─ ForbiddenError → 403 + detail
+        └─ 기타 → 500 + safe message
+    ↓
+    {"detail": "..."} + X-Correlation-ID
+```
+
+## 프론트엔드 아키텍처
+
+### 라우팅 (TanStack Router)
+
+파일 기반 라우팅, 생성된 라우트 트리: `src/routeTree.gen.ts` (자동 생성).
+
+- `__root.tsx`: 루트 레이아웃, AppProviders 감싸기
+- `index.tsx`: 홈 페이지 (인증 상태 표시)
+- `auth/login.tsx`, `auth/signup.tsx`: 인증 페이지
+- `sample/*`: 샘플 페이지 (대시보드, 채팅, 사용자 등)
+
+### Feature 슬라이스 (도메인별)
+
+`src/features/auth/`
+- `components/`: LoginForm, SignupForm (Zod 폼 검증)
+- `hooks/`: useAuthMutation (TanStack Query)
+- `store/`: useAuthStore (Zustand) — isAuthenticated, user
+- `lib/`: mock-auth-api.ts (현재 mock 상태)
+- `types/`: AuthUser, LoginRequest, TokenResponse
+- `schema/`: Zod 스키마 (이메일, 비밀번호 검증)
+
+### 상태 관리
+
+- **서버 상태**: TanStack Query (useQuery, useMutation)
+- **클라이언트 전역 상태**: Zustand store (useAuthStore)
+
+### UI 컴포넌트
+
+`src/components/ui/`
+- Radix UI + shadcn 스타일 프리미티브
+- `button.tsx`, `input.tsx`, `modal/`, etc.
+- CVA (class-variance-authority)로 변형 관리
+- Tailwind CSS (Vite 플러그인)
+
+### 프로바이더 (AppProviders)
+
+`src/providers/app-providers.tsx`
+- QueryClientProvider (TanStack Query)
+- 향후: 인증 provider, 테마 provider 등
+
+## 비동기 모델
+
+### 백엔드 (FastAPI)
+
+- 핸들러/서비스/리포지토리 모두 `async def`
+- AsyncSession + asyncpg (비동기 DB 드라이버)
+- Redis: redis-py의 async 클라이언트
+- 라이프사이클: `@asynccontextmanager` — startup/shutdown 로직
+
+### 프론트엔드 (React)
+
+- TanStack Query: `useQuery`, `useMutation` (React hooks)
+- async/await는 백엔드 API 호출에서만 (fetch, axios)
+
+## 제공자 전환 (Provider Switching)
+
+LLM 제공자는 `LLM_PROVIDER` 환경 변수로만 결정:
+
+```bash
+# OpenAI
+LLM_PROVIDER=openai
+LLM_DEFAULT_MODEL=gpt-4o-mini
+OPENAI_API_KEY=sk-...
+
+# Anthropic
+LLM_PROVIDER=anthropic
+LLM_DEFAULT_MODEL=claude-3-5-sonnet
+ANTHROPIC_API_KEY=sk-ant-...
+
+# 로컬 Ollama
+LLM_PROVIDER=ollama
+LLM_DEFAULT_MODEL=llama2
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+코드 변경 없음 — `core/config.py`의 `LLMSettings`에서 해석, `infra/llm/provider_factory.py`에서 라우팅.
+
+## 배포 단위
+
+- **backend**: Docker 이미지 (api/, Python 3.12, uv)
+- **frontend**: Docker 이미지 (web/, Node.js, Vite)
+- **인프라**: Docker Compose (PostgreSQL, Redis, Mailpit)
+
+개발: `task dev` (모든 것을 호스트에서 실행)
+

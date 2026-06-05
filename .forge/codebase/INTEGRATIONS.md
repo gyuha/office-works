@@ -1,115 +1,397 @@
 ---
-last_mapped_commit: b8943aa32230936b80046e2f9b1a4dec458255df
+last_mapped_commit: 5c5103df2b3695a9b8bd62b9c5701f2988b8e0ab
 mapped: 2026-06-05
 ---
 
-# INTEGRATIONS
+# 외부 통합 (Integrations)
 
-`office-works` API가 의존하는 외부 시스템과 연동 지점이다. 설정 소스는 `api/.env.example`(템플릿) + `api/src/core/config.py`(`Settings`/`LLMSettings`), 컨테이너 토폴로지는 `api/docker-compose.yml`(dev) + `api/docker-compose.prod.yml`(prod overlay)다.
+## 데이터베이스
 
-> 시크릿 주의: `api/.env`는 실제 값을 담은 비예제 파일이다(디스크에 존재). 이 문서에는 어떤 키/토큰/비밀번호 값도 복사하지 않는다 — 값이 필요하면 `api/.env`를 직접 확인하라. `.env.example`은 모두 플레이스홀더다.
+### PostgreSQL
+
+**위치**: Docker 컨테이너 (docker-compose.yml)
+
+**접근**:
+- **로컬 개발**: `postgresql+asyncpg://app:app@localhost:5432/app_db` (asyncpg 드라이버)
+- **Alembic 마이그레이션**: `postgresql+psycopg2://app:app@localhost:5432/app_db` (psycopg2)
+- 환경변수: `DATABASE_URL` (async), `DATABASE_URL_SYNC` (Alembic)
+- 대체: POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB 조합
+
+**마이그레이션**:
+- 파일: `api/alembic/` (env.py, alembic.ini, versions/)
+- 현재 버전: 1개 (`0001_initial_schema.py`)
+- 명령어: `task migrate` (upgrade head), `task revision` (autogenerate)
+- SQLAlchemy + Alembic (RBAC 미구현)
 
 ---
 
-## 데이터베이스 — PostgreSQL
+## 캐시 & 메시지 브로커
 
-- 이미지 `postgres:17-alpine` (`api/docker-compose.yml`). dev 포트 바인딩 `127.0.0.1:${POSTGRES_PORT:-5432}:5432`, 볼륨 `postgres_data`, healthcheck `pg_isready`.
-- 런타임 접근: SQLAlchemy 2.0 async + **asyncpg** (`postgresql+asyncpg://`). DSN은 `DATABASE_URL` 또는 `POSTGRES_*` 조합 → `Settings.async_database_url` (`api/src/core/config.py`). 엔진은 `api/src/core/database.py`.
-- 마이그레이션 접근: Alembic + **psycopg2** (`postgresql+psycopg2://`). `DATABASE_URL_SYNC` 또는 `Settings.sync_database_url`. env.py(`api/alembic/env.py`)가 asyncpg DSN 감지 시 명시적 에러.
-- 환경변수: `POSTGRES_HOST`/`PORT`/`USER`/`PASSWORD`/`DB`, `DATABASE_URL`, `DATABASE_URL_SYNC`.
-- prod: `app` 컨테이너가 `POSTGRES_HOST: postgres`(서비스명) 사용, `DATABASE_URL`/`DATABASE_URL_SYNC`를 compose가 오버라이드 (`api/docker-compose.prod.yml`).
-- 헬스 체크 `/ready`가 `SELECT 1`로 DB 연결 검증 (`api/src/main.py`).
+### Redis
 
-## 캐시 / 상태 저장소 — Redis
+**위치**: Docker 컨테이너 (docker-compose.yml)
 
-- 이미지 `redis:7-alpine` (`api/docker-compose.yml`). dev 포트 `127.0.0.1:${REDIS_PORT:-6379}:6379`, 볼륨 `redis_data`, `redis-server --save 60 1`, healthcheck `redis-cli ping`.
-- 클라이언트: `redis.asyncio` (`from_url`, `decode_responses=True`, `max_connections=20`, `api/src/core/redis.py`). 싱글톤, lifespan에서 warm-up ping.
-- DSN: `REDIS_URL` 또는 `REDIS_HOST`/`PORT`/`DB` → `Settings.redis_dsn`.
-- 용도(코드 확인):
-  - JWT 블랙리스트 — 키 prefix `jwt:blacklist:` (`api/src/domains/auth/security.py`), 로그아웃 시 access jti를 token 만료까지 TTL 저장.
-  - OAuth state nonce(CSRF) — 키 prefix `oauth:state:`, TTL 600초 (`api/src/domains/auth/router/auth_router.py`).
-  - Rate limiting(slowapi), refresh 재사용 탐지, 일반 캐시, SSE fan-out(주석상 용도).
-- prod: `app` 컨테이너가 `REDIS_HOST: redis`, `REDIS_URL: redis://redis:6379/${REDIS_DB}`.
+**접근**:
+- **URL**: `redis://localhost:6379/0` (기본값)
+- 환경변수: `REDIS_URL` 또는 REDIS_HOST, REDIS_PORT, REDIS_DB 조합
+- 라이브러리: redis-py >= 5.2.0 (async, hiredis 최적화)
 
-## 인증 — JWT (자체 발급)
+**용도**:
+1. **JWT 블랙리스트**: 로그아웃 토큰 무효화 (jti 키, TTL = token expiry)
+2. **리프레시 토큰 재사용 탐지**: 부정 로그인 방지 (Redis key/value 저장)
+3. **OAuth 상태 nonce**: 임시 저장 (짧은 TTL)
+4. **레이트 제한**: slowapi Redis 백엔드 (per-user / per-IP)
+5. **일반 캐시**: 애플리케이션 캐싱
+6. **SSE fan-out**: 실시간 메시지 pub/sub 채널
 
-- python-jose, 알고리즘 HS256(`JWT_ALGORITHM`), 비밀키 `JWT_SECRET_KEY` (`api/src/domains/auth/security.py`).
-- access TTL 15분(`JWT_ACCESS_TOKEN_EXPIRE_MINUTES`), refresh TTL 7일(`JWT_REFRESH_TOKEN_EXPIRE_DAYS`).
-- refresh 회전 + family revocation(재사용 공격 시 사용자 전체 세션 무효화). refresh는 DB `refresh_tokens`에 SHA-256 해시로 저장(원문 미저장).
-- Bearer 헤더 전용(`HTTPBearer`), 쿠키 미사용. `get_current_user`가 서명/만료/type/블랙리스트/사용자 활성 검증.
-- RBAC: `require_permission(key)` 의존성 팩토리, `User.has_permission`이 roles→permissions 순회 (예: chat 라우터가 `chat:write` 요구). 모델 `roles`/`permissions`/`role_permissions`/`user_roles` (`api/src/domains/auth/models/auth_models.py`).
+**접근 코드**:
+- `api/src/core/redis.py` — Redis 싱글톤 클라이언트 (`get_redis_client()`, `get_redis_dep`)
+- DI: FastAPI `Depends(get_redis_dep)` 또는 `await get_redis_client()`
 
-## 인증 — 이메일 인증 / 비밀번호 재설정
+**헬스 체크**:
+- Startup: `lifespan` 컨텍스트에서 `redis.ping()` 호출
+- Readiness: `/ready` 엔드포인트 Redis 상태 확인
 
-- `email_verifications` / `password_resets` 테이블에 SHA-256 토큰 해시 저장(원문은 이메일로 발송). 가입 24h, 재설정 1h 만료(이메일 본문 기준).
-- 검증 링크 base: `FRONTEND_URL` + `/auth/verify-email/{token}`. 재설정 링크 base: `FRONTEND_RESET_CONFIRM_URL_BASE`(`api/src/domains/auth/email.py`).
-- 라우트: `/api/v1/auth/signup`, `/verify-email/{token}`, `/password-reset`, `/password-reset/confirm` (`api/src/domains/auth/router/auth_router.py`).
+---
 
-## 인증 — OAuth2 (Google / Kakao / Naver)
+## 인증 및 OAuth
 
-- 라우트: `GET /api/v1/auth/oauth/{provider}/login`, `GET /api/v1/auth/oauth/{provider}/callback`. state nonce는 Redis 저장 + 콜백 검증, 콜백 후 자체 JWT 발급(`oauth_provision_user`). 연동 신원은 `oauth_accounts` 테이블(provider + provider_user_id 유니크).
-- 어댑터는 httpx로 토큰 교환/유저인포 호출. callback에서 naver만 `exchange_code(code, state)`(state 필요), 나머지는 `exchange_code(code)`.
+### OAuth2 제공자
 
-| Provider | Auth URL | Token URL | UserInfo URL | env 자격증명 | 어댑터 |
-|----------|----------|-----------|--------------|--------------|--------|
-| Google | `accounts.google.com/o/oauth2/v2/auth` | `oauth2.googleapis.com/token` | `www.googleapis.com/oauth2/v3/userinfo` | `GOOGLE_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` | `api/src/domains/auth/oauth/google.py` |
-| Kakao | `kauth.kakao.com/oauth/authorize` | `kauth.kakao.com/oauth/token` | `kapi.kakao.com/v2/user/me` | `KAKAO_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` | `api/src/domains/auth/oauth/kakao.py` |
-| Naver | `nid.naver.com/oauth2.0/authorize` | `nid.naver.com/oauth2.0/token` | `openapi.naver.com/v1/nid/me` | `NAVER_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` | `api/src/domains/auth/oauth/naver.py` |
+#### Google
 
-- Google 스코프 `openid email profile`, `access_type=offline`, `prompt=consent`.
-- 콜백 redirect URI 기본 패턴(.env.example): `http://localhost:8000/api/v1/auth/oauth/{provider}/callback`.
-- 어댑터 매핑/지원 목록 검증: `_get_oauth_adapter`(`api/src/domains/auth/router/auth_router.py`) — 미지원 provider는 400.
+**설정 파일**: `api/src/domains/auth/oauth/google.py`
 
-## 메일 — Mailpit (dev) / SMTP (prod)
+**환경변수**:
+- `GOOGLE_CLIENT_ID`: Google Cloud 프로젝트 클라이언트 ID
+- `GOOGLE_CLIENT_SECRET`: 클라이언트 시크릿
+- `GOOGLE_REDIRECT_URI`: http://localhost:8000/api/v1/auth/oauth/google/callback
 
-- dev: `axllent/mailpit:latest` (`api/docker-compose.yml`). SMTP `127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025`, Web UI `127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025`. `MP_SMTP_AUTH_ACCEPT_ANY=1`, `MP_SMTP_AUTH_ALLOW_INSECURE=1`, SQLite 영속(`/data/mailpit.db`), healthcheck `/mailpit readyz`.
-- 발송: fastapi-mail `ConnectionConfig`/`FastMail`/`MessageSchema` (plain text) (`api/src/domains/auth/email.py`). 설정 조립 `Settings.mail_connection_config` — `USE_CREDENTIALS`는 username 존재 시에만, `VALIDATE_CERTS`는 TLS 활성 시에만.
-- env: `MAIL_SERVER`(dev=localhost)/`MAIL_PORT`(dev=1025)/`MAIL_USERNAME`/`MAIL_PASSWORD`/`MAIL_FROM`/`MAIL_FROM_NAME`/`MAIL_STARTTLS`/`MAIL_SSL_TLS`.
-- prod: mailpit은 `dev-tools` 프로파일로 제한되어 `--profile prod`에서 제외. `app` 컨테이너가 실제 SMTP(`MAIL_SERVER`/`MAIL_PORT`/`MAIL_STARTTLS` 기본 `smtp.office-works.local:587/true`)로 교체 (`api/docker-compose.prod.yml`).
-- `/ready` 헬스 체크가 SMTP 220 배너로 Mailpit 도달성 검증 (`api/src/main.py`).
+**흐름**:
+1. 프론트엔드가 Google 로그인 시작
+2. 백엔드 라우터: GET `/api/v1/auth/oauth/google` → Google authz 엔드포인트로 리디렉트
+3. Google 콜백 → GET `/api/v1/auth/oauth/google/callback?code=...&state=...`
+4. 백엔드: 토큰 교환, 사용자 프로필 조회, User 레코드 생성/업데이트
+5. JWT 반환 (access + refresh)
 
-## LLM 프로바이더 (OpenAI / Anthropic / Gemini / Azure / Ollama)
+**통합 코드**:
+- 라우터: `api/src/domains/auth/router/` (google.py)
+- 서비스: `api/src/domains/auth/service/auth_service.py` (oauth_login 메서드)
+- 리포지토리: `api/src/domains/auth/repository/auth_repository.py`
 
-- 단일 스위치 `LLM_PROVIDER`로 런타임 선택. 추상화: langchain-litellm `ChatLiteLLM`. 유일 생성 지점 `make_chat_litellm`(`api/src/infra/llm/provider_factory.py`), kwargs 조립 `LLMSettings.as_litellm_kwargs`(`api/src/core/config.py`).
-- 모델 식별자 형식 `<provider>/<model>`(`LLMSettings.litellm_model`). azure는 `azure/<deployment>`(deployment 없으면 default_model).
-- 공통 파라미터: `LLM_DEFAULT_MODEL`, `LLM_TEMPERATURE`(0.0~2.0, 기본 0.7), `LLM_MAX_TOKENS`(기본 2048), `LLM_STREAMING`(기본 true).
-- provider enum 검증: `LLMProvider`(openai/anthropic/gemini/azure/ollama), 미지원 값은 명시적 ValueError.
+#### Kakao
 
-| Provider | env 자격증명 / 엔드포인트 | 비고 |
-|----------|---------------------------|------|
-| OpenAI(기본) | `OPENAI_API_KEY` | `LLM_DEFAULT_MODEL=gpt-4o-mini` 예시 |
-| Anthropic | `ANTHROPIC_API_KEY` | claude 모델 |
-| Gemini | `GEMINI_API_KEY` | `gemini/<model>` |
-| Azure OpenAI | `AZURE_OPENAI_API_KEY`/`_ENDPOINT`/`_DEPLOYMENT`/`_API_VERSION`(기본 2024-08-01-preview) | `api_base`+`api_version` 전달 |
-| Ollama | `OLLAMA_BASE_URL`(기본 `http://localhost:11434`) | API 키 불필요, `api_key="ollama"` sentinel |
+**설정 파일**: `api/src/domains/auth/oauth/kakao.py`
 
-- Chat 엔드포인트(`api/src/domains/chat/router/chat_router.py`, prefix `/api/v1/chat`):
-  - `POST /chat/complete` — 비스트리밍 완성.
-  - `POST /chat/stream` — SSE 스트리밍(sse-starlette `EventSourceResponse`, `[DONE]` sentinel, `event: error`).
-  - `GET /chat/provider` — 활성 provider/model 메타(LLM 호출 없음).
-  - `POST /chat/conversations`, `GET /chat/conversations`, `GET /chat/conversations/{id}`, `GET .../messages`, `POST .../messages`(SSE + DB 영속, 인증 + `chat:write` 권한). 첫 턴에 LLM로 제목 자동 생성(`_auto_title`).
-- 대화/메시지 영속: `conversations`/`messages` 테이블 (`api/src/domains/chat/models/chat_models.py`).
+**환경변수**:
+- `KAKAO_CLIENT_ID`: REST API 키 (https://developers.kakao.com/console/app)
+- `KAKAO_CLIENT_SECRET`: 클라이언트 시크릿
+- `KAKAO_REDIRECT_URI`: http://localhost:8000/api/v1/auth/oauth/kakao/callback
 
-## HTTP / 상관관계 추적
+**흐름**: Google과 동일 (Kakao 엔드포인트 사용)
 
-- `CorrelationIdMiddleware`(`api/src/core/middleware.py`) — 요청별 correlation id 생성/바인딩, 응답 헤더 `X-Correlation-ID`(CORS `expose_headers`로 노출).
-- CORS: `CORS_ORIGINS`(JSON 배열 또는 콤마구분) → `Settings.cors_origins_list`. `allow_credentials=True`, methods/headers `*`.
+#### Naver
 
-## 웹훅
+**설정 파일**: `api/src/domains/auth/oauth/naver.py`
 
-- 인바운드/아웃바운드 웹훅 엔드포인트는 발견되지 않음. 외부 연동은 OAuth provider HTTP 호출과 LLM provider 호출(litellm)에 한정.
+**환경변수**:
+- `NAVER_CLIENT_ID`: Naver 앱 클라이언트 ID (https://developers.naver.com/apps/#/list)
+- `NAVER_CLIENT_SECRET`: 클라이언트 시크릿
+- `NAVER_REDIRECT_URI`: http://localhost:8000/api/v1/auth/oauth/naver/callback
 
-## 헬스 / 레디니스
+**흐름**: Google과 동일 (Naver 엔드포인트 사용)
 
-- `GET /health` — `{"status":"ok","env":...}` (Docker HEALTHCHECK, 로드밸런서용).
-- `GET /ready` — Postgres(`SELECT 1`) + Redis(ping) + Mailpit(SMTP 220 배너) 실연결 검증, 실패 시 503.
+### OAuth 상태 관리
 
-## 컨테이너 토폴로지
+**위치**: `api/src/domains/auth/oauth/` 각 제공자 모듈
 
-- dev (`api/docker-compose.yml`, 모두 `127.0.0.1` 바인딩): postgres 5432, redis 6379, mailpit SMTP 1025 / UI 8025. FastAPI 앱은 컨테이너가 아닌 호스트에서 `uv run uvicorn`(핫리로드)로 실행.
-- prod (`api/docker-compose.yml` + `api/docker-compose.prod.yml`, `--profile prod`): postgres + redis + `app`(Dockerfile `runtime` 타겟). mailpit 제외, `restart: always`, `env_file: .env.prod`, 컨테이너 간 서비스명 통신, `app` healthcheck `curl /health`.
+**Redis 저장소**:
+- 키 패턴: `oauth_state:{state_value}` (short TTL, 예: 5분)
+- 용도: CSRF 방지, 상태 검증
 
-## 프론트엔드 → 백엔드 연동 상태
+---
 
-- 현재 **미연동**. 프론트엔드 인증은 mock API(`web/src/features/auth/lib/mock-auth-api.ts`)를 사용 — `setTimeout` 지연 + 하드코딩 분기(`fail@example.com`/`taken@example.com`)로 응답을 시뮬레이션하며 실제 HTTP 호출이 없다.
-- React Query Provider만 구성됨(`web/src/providers/app-providers.tsx`, `QueryClientProvider`). API base URL/HTTP 클라이언트 설정은 발견되지 않음. dev 서버 포트 3000(`web/vite.config.ts`).
+## 메일
+
+### SMTP 서버
+
+**로컬 개발**:
+- **Mailpit** (Docker)
+- SMTP 포트: `localhost:1025`
+- 웹 UI: `http://localhost:8025` (발송된 메일 확인)
+- 설정: MAIL_USERNAME/PASSWORD 불필요 (익명 SMTP)
+
+**프로덕션**:
+- 환경변수로 실제 SMTP 서버 주입:
+  - `MAIL_SERVER`: smtp.provider.com
+  - `MAIL_PORT`: 587 또는 465
+  - `MAIL_USERNAME`: apikey 또는 이메일
+  - `MAIL_PASSWORD`: API 키 또는 비밀번호
+  - `MAIL_STARTTLS`: true (포트 587)
+  - `MAIL_SSL_TLS`: false (STARTTLS 사용 시)
+- 프로덕션 설정 파일: `api/.env.prod.example`
+
+**라이브러리**:
+- fastapi-mail >= 1.4.2
+- `api/src/domains/auth/email.py` — 템플릿 & 발송 로직
+
+**사용 사례**:
+1. **이메일 인증**: 회원가입 후 검증 링크 발송
+2. **비밀번호 재설정**: 재설정 토큰 및 링크 메일 발송
+
+**환경변수**:
+- `MAIL_SERVER`: localhost (개발) 또는 SMTP 호스트 (프로덕션)
+- `MAIL_PORT`: 1025 (Mailpit) 또는 587/465 (SMTP)
+- `MAIL_USERNAME`: "" (Mailpit) 또는 apikey (프로덕션)
+- `MAIL_PASSWORD`: "" (Mailpit) 또는 API 키 (프로덕션)
+- `MAIL_FROM`: noreply@office-works.example.com
+- `MAIL_FROM_NAME`: Office Works
+- `MAIL_STARTTLS`: false (Mailpit) 또는 true (SMTP)
+- `MAIL_SSL_TLS`: false (개발)
+
+**접근 코드**:
+- 설정: `api/src/core/config.py` (Settings.mail_connection_config)
+- 서비스: `api/src/domains/auth/email.py`
+
+---
+
+## LLM 제공자
+
+### 다중 제공자 지원 (LangChain + LiteLLM)
+
+**아키텍처**:
+- 인프라 레이어: `api/src/infra/llm/provider_factory.py` (`make_chat_litellm()`)
+- 도메인 인터페이스: `api/src/domains/chat/ports.py` (LLMClientProtocol)
+- 서비스: `api/src/domains/chat/service/chat_service.py`
+
+**환경변수**:
+- `LLM_PROVIDER`: openai | anthropic | gemini | azure | ollama
+- `LLM_DEFAULT_MODEL`: 모델 식별자 (예: gpt-4o-mini, claude-3-5-sonnet-20241022)
+- `LLM_TEMPERATURE`: 0.0–2.0 (기본값 0.7)
+- `LLM_MAX_TOKENS`: 최대 출력 토큰 (기본값 2048)
+- `LLM_STREAMING`: true | false (SSE 스트리밍 활성화, 기본값 true)
+
+### OpenAI (기본값)
+
+**환경변수**:
+- `LLM_PROVIDER=openai`
+- `LLM_DEFAULT_MODEL=gpt-4o-mini`
+- `OPENAI_API_KEY=sk-...`
+
+**모델 문자열**: `openai/gpt-4o-mini`
+
+**통합 코드**:
+- `api/src/core/config.py` (LLMSettings, as_litellm_kwargs 메서드)
+- `api/src/infra/llm/provider_factory.py` (ChatLiteLLM 생성)
+
+### Anthropic
+
+**환경변수**:
+- `LLM_PROVIDER=anthropic`
+- `LLM_DEFAULT_MODEL=claude-3-5-sonnet-20241022`
+- `ANTHROPIC_API_KEY=sk-ant-...`
+
+**모델 문자열**: `anthropic/claude-3-5-sonnet-20241022`
+
+### Google Gemini
+
+**환경변수**:
+- `LLM_PROVIDER=gemini`
+- `LLM_DEFAULT_MODEL=gemini-1.5-flash`
+- `GEMINI_API_KEY=AIza...`
+
+**모델 문자열**: `gemini/gemini-1.5-flash`
+
+### Azure OpenAI
+
+**환경변수**:
+- `LLM_PROVIDER=azure`
+- `LLM_DEFAULT_MODEL=gpt-4o` (배포명이 비어있을 경우 폴백)
+- `AZURE_OPENAI_API_KEY=...`
+- `AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/`
+- `AZURE_OPENAI_DEPLOYMENT=my-deployment-name`
+- `AZURE_OPENAI_API_VERSION=2024-08-01-preview`
+
+**모델 문자열**: `azure/my-deployment-name` (배포명)
+
+### Ollama (로컬)
+
+**환경변수**:
+- `LLM_PROVIDER=ollama`
+- `LLM_DEFAULT_MODEL=llama3.2`
+- `OLLAMA_BASE_URL=http://localhost:11434`
+- API 키 불필요
+
+**모델 문자열**: `ollama/llama3.2`
+
+---
+
+## 스트리밍 & WebSocket
+
+### Server-Sent Events (SSE)
+
+**라이브러리**: sse-starlette >= 2.1.0
+
+**용도**: LLM 채팅 스트리밍 응답
+
+**엔드포인트**:
+- POST `/api/v1/chat/stream` — 스트리밍 응답 (Content-Type: text/event-stream)
+
+**구현**:
+- 라우터: `api/src/domains/chat/router/chat_router.py`
+- 서비스: `api/src/domains/chat/service/chat_service.py`
+
+---
+
+## 구조적 로깅
+
+### structlog
+
+**라이브러리**: structlog >= 24.4.0
+
+**포맷**:
+- 개발: `LOG_FORMAT=console` (인간 친화적)
+- 프로덕션: `LOG_FORMAT=json` (머신 파싱 가능)
+
+**레벨**: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- 환경변수: `LOG_LEVEL` (기본값 INFO)
+
+**바인딩**:
+- `correlation_id`: 모든 요청 추적 (CorrelationIdMiddleware)
+- 커스텀 필드: service, action, status 등
+
+**설정 파일**:
+- `api/src/core/logging.py` (configure_logging 함수)
+- `api/src/core/middleware.py` (CorrelationIdMiddleware)
+
+**접근**:
+```python
+import structlog
+logger = structlog.get_logger(__name__)
+logger.info("message", key="value")  # JSON 또는 console 형식
+```
+
+---
+
+## 레이트 제한
+
+### slowapi
+
+**라이브러리**: slowapi >= 0.1.9
+
+**백엔드**: Redis (redis-py)
+
+**키 함수**: authenticated user ID (user:{id}) 또는 remote IP
+
+**설정**:
+- `api/src/main.py` (Limiter 정의, _get_user_key 함수)
+- 라우터에서 `@limiter.limit("...")`로 per-route 적용
+
+---
+
+## 헬스 체크
+
+### 엔드포인트
+
+1. **라이브니스**: GET `/health`
+   - 응답: `{"status": "alive"}`
+   - 즉시 응답 (의존성 확인 안 함)
+
+2. **레디니스**: GET `/ready`
+   - 응답: `{"status": "ready", "postgres": "ok", "redis": "ok"}`
+   - PostgreSQL + Redis 연결 확인
+
+**구현**:
+- 라우터: `api/src/domains/shared/router/` 또는 main.py
+
+**Docker HEALTHCHECK**:
+- Dockerfile HEALTHCHECK: `curl -f http://localhost:${PORT}/health || exit 1`
+- Interval: 30s, Timeout: 10s, Retries: 3, Start Period: 30s
+
+---
+
+## 프론트엔드 API 클라이언트 (현황)
+
+**상태**: Mock API 사용 중 (실제 API 미연동)
+
+**파일**: `web/src/features/auth/lib/mock-auth-api.ts`
+
+**마이그레이션 필요**:
+- 실제 백엔드 API 엔드포인트 호출로 전환
+- TanStack Query 쿼리 설정 (useAuthMutation)
+- 에러 처리, 토큰 관리, 리디렉션 로직 구현
+
+---
+
+## 환경별 구성
+
+### 개발 (Local)
+
+**파일**: `.env.example` 복사 후 수정
+
+**인프라**:
+- Postgres + Redis + Mailpit (Docker)
+- FastAPI 호스트 실행 (uv run uvicorn)
+
+**명령어**: `task dev`
+
+### 프로덕션
+
+**파일**: `.env.prod.example` 복사 후 수정
+
+**인프라**:
+- Postgres + Redis (Docker 또는 관리형 서비스)
+- FastAPI 컨테이너 (docker-compose.prod.yml, --profile prod)
+- Mailpit 제외 (실제 SMTP 서버 사용)
+
+**명령어**: `task prod-up`
+
+---
+
+## CI/CD 고려사항
+
+### Docker 빌드
+
+**이미지 태그**: `office-works:latest` (dev) 또는 `office-works:prod` (production)
+
+**빌드 명령어**:
+```bash
+docker build --target runtime -t office-works:prod \
+  --build-arg PYTHON_VERSION="3.12" .
+```
+
+### 마이그레이션
+
+**프로덕션 컨테이너**:
+```bash
+docker run --rm --env-file .env.prod office-works:latest \
+  /runtime-venv/bin/alembic upgrade head
+```
+
+### 테스트
+
+**로컬**: `task test` (pytest, 커버리지 70% 강제)
+
+**CI**: pre-commit hooks (ruff, mypy) + pytest (asyncio, markers)
+
+---
+
+## 시크릿 관리
+
+**파일**:
+- `.env.example` (템플릿, 안전함)
+- `.env` (로컬 개발용, .gitignore)
+- `.env.prod` (프로덕션용, .gitignore)
+- `.env.prod.example` (템플릿)
+
+**스캔 도구**:
+- detect-secrets >= 1.5.0 (pre-commit hook)
+- 기준선: `.secrets.baseline`
+
+**주요 시크릿**:
+- SECRET_KEY, JWT_SECRET_KEY (openssl rand -hex 32)
+- POSTGRES_PASSWORD, REDIS credentials (필요시)
+- OAuth 클라이언트 시크릿 (Google, Kakao, Naver)
+- LLM API 키 (OpenAI, Anthropic, Gemini, Azure 등)
+- MAIL_PASSWORD (SMTP)
+
