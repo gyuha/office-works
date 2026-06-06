@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/[email protected]/dist/web/variable/pretendardvariable-jp-dynamic-subset.css");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/[email protected]/dist/web/static/pretendard-jp.css");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -37,9 +39,25 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-sans: "Pretendard JP Variable", "Pretendard JP", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Hiragino Sans", system-ui, sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: ui-monospace, "SF Mono", "Pretendard JP", Menlo, Consolas, monospace;
+
+  --color-om-sidebar: #1b2435;
+  --color-om-sidebar-deep: #161e2c;
+  --color-om-canvas: #f3f4f6;
+  --color-om-green: #00bf40;
+  --color-om-green-bg: #e6f8ec;
+  --color-om-orange: #ff9200;
+  --color-om-orange-bg: #fff3e0;
+  --color-om-red: #ff3b3b;
+  --color-om-red-bg: #ffebeb;
+  --color-om-purple: #8b5cf6;
+  --color-om-purple-bg: #f1ecfe;
+  --color-om-indigo: #4f66d6;
+  --color-om-indigo-bg: #e8ecfb;
+  --color-om-blue: #0066ff;
+  --color-om-blue-bg: #e8f0ff;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -53,8 +71,8 @@
   --card-foreground: oklch(0.2697 0 0);
   --popover: oklch(1.0 0 0);
   --popover-foreground: oklch(0.2697 0 0);
-  --primary: oklch(0.5296 0.1863 258.1459);
-  --primary-foreground: oklch(1.0 0 0);
+  --primary: #0066ff;
+  --primary-foreground: #fff;
   --secondary: oklch(0.9686 0.0035 247.859);
   --secondary-foreground: oklch(0.2697 0 0);
   --muted: oklch(0.9696 0 0);
@@ -64,7 +82,7 @@
   --destructive: oklch(0.5409 0.2143 28.4788);
   --border: oklch(0.861 0 0);
   --input: oklch(0.9234 0 0);
-  --ring: oklch(0.5296 0.1863 258.1459);
+  --ring: #0066ff;
   --chart-1: oklch(0.5296 0.1863 258.1459);
   --chart-2: oklch(0.6902 0.1481 162.3676);
   --chart-3: oklch(0.6683 0.1657 54.1917);
