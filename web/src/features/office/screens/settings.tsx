@@ -4,15 +4,21 @@ import { toast } from 'sonner';
 
 import {
   createEmploymentTypeApiV1EmploymentTypesPostMutation,
+  createGradeApiV1GradesPostMutation,
   createPositionApiV1PositionsPostMutation,
   deleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteMutation,
+  deleteGradeApiV1GradesGradeIdDeleteMutation,
   deletePositionApiV1PositionsPositionIdDeleteMutation,
   listEmploymentTypesApiV1EmploymentTypesGetOptions,
   listEmploymentTypesApiV1EmploymentTypesGetQueryKey,
+  listGradesApiV1GradesGetOptions,
+  listGradesApiV1GradesGetQueryKey,
   listPositionsApiV1PositionsGetOptions,
   listPositionsApiV1PositionsGetQueryKey,
   renamePositionApiV1PositionsPositionIdPatchMutation,
+  reorderGradesApiV1GradesOrderPatchMutation,
   reorderPositionsApiV1PositionsOrderPatchMutation,
+  updateGradeApiV1GradesGradeIdPatchMutation,
 } from '@/client/@tanstack/react-query.gen';
 import { cn } from '@/lib/utils';
 import { OfficeIcon, type OfficeIconName } from '../icons';
@@ -32,37 +38,6 @@ const TABS: { key: TabKey; icon: OfficeIconName; label: string }[] = [
   { key: 'work', icon: 'clock', label: '근무 기본값' },
   { key: 'leave', icon: 'leave', label: '연차 설정' },
   { key: 'company', icon: 'dept', label: '회사 정보' },
-];
-
-const GRADE_INFO = [
-  {
-    name: '초급',
-    color: '#70737C',
-    bg: '#EEEFF1',
-    bd: '#C2C4C8',
-    desc: '입문 단계 · 업무 보조 및 기초 역량 학습',
-  },
-  {
-    name: '중급',
-    color: '#FF9200',
-    bg: '#FFF3E0',
-    bd: '#FFD9A0',
-    desc: '독립 수행 가능 · 실무 경험 2년 이상',
-  },
-  {
-    name: '고급',
-    color: '#00BF40',
-    bg: '#E6F8EC',
-    bd: '#B8EECB',
-    desc: '전문성 인정 · 팀 리딩 가능 수준',
-  },
-  {
-    name: '특급',
-    color: '#0066FF',
-    bg: '#E8F0FF',
-    bd: '#A9C9FF',
-    desc: '최고 전문가 · 사내 기술 리더',
-  },
 ];
 
 /* ---------------- 재사용 카드 ---------------- */
@@ -288,37 +263,264 @@ function RanksTab() {
    2. 등급 체계
 ================================================================ */
 
+interface GradeForm {
+  name: string;
+  color: string;
+  bg: string;
+  border: string;
+  description: string;
+}
+
+const BLANK_GRADE: GradeForm = {
+  name: '',
+  color: '#0066FF',
+  bg: '#E8F0FF',
+  border: '#A9C9FF',
+  description: '',
+};
+
 function GradesTab() {
+  const queryClient = useQueryClient();
+  const gradesQuery = useQuery(listGradesApiV1GradesGetOptions());
+  const grades = gradesQuery.data ?? [];
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<GradeForm>(BLANK_GRADE);
+  const [adding, setAdding] = useState(false);
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: listGradesApiV1GradesGetQueryKey() });
+
+  const createMut = useMutation({
+    ...createGradeApiV1GradesPostMutation(),
+    onSuccess: () => {
+      setAdding(false);
+      setForm(BLANK_GRADE);
+      invalidate();
+    },
+    onError: () => toast.error('등급 추가에 실패했습니다.'),
+  });
+  const updateMut = useMutation({
+    ...updateGradeApiV1GradesGradeIdPatchMutation(),
+    onSuccess: () => {
+      setEditId(null);
+      invalidate();
+    },
+    onError: () => toast.error('등급 수정에 실패했습니다.'),
+  });
+  const deleteMut = useMutation({
+    ...deleteGradeApiV1GradesGradeIdDeleteMutation(),
+    onSuccess: invalidate,
+    onError: () => toast.error('사용 중인 등급은 삭제할 수 없습니다.'),
+  });
+  const reorderMut = useMutation({
+    ...reorderGradesApiV1GradesOrderPatchMutation(),
+    onSuccess: invalidate,
+    onError: () => toast.error('순서 변경에 실패했습니다.'),
+  });
+  const busy =
+    createMut.isPending || updateMut.isPending || deleteMut.isPending || reorderMut.isPending;
+
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= grades.length) return;
+    const ids = grades.map((g) => g.id);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    reorderMut.mutate({ body: { ordered_ids: ids } });
+  };
+
   return (
     <SettingsPanel>
-      <PanelHead title="등급 체계" sub="구성원의 역량 등급 기준을 정의합니다" />
+      <PanelHead
+        title="등급 체계"
+        sub="구성원의 역량 등급 기준을 정의합니다. 호버하여 편집하세요."
+      />
       <div className="py-2">
-        {GRADE_INFO.map((g) => (
-          <div
-            key={g.name}
-            className="flex items-center gap-4 border-b border-[#EEF0F3] px-[22px] py-4 last:border-b-0"
-          >
-            <span
-              className="flex w-[58px] flex-shrink-0 items-center justify-center rounded-lg border py-1.5 text-[13px] font-extrabold"
-              style={{ background: g.bg, color: g.color, borderColor: g.bd }}
-            >
-              {g.name}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[14px] font-bold text-[#1B2435]">{g.name}</div>
-              <div className="mt-[3px] text-[13px] text-[#8A94A6]">{g.desc}</div>
-            </div>
-            <span className="flex flex-shrink-0 items-center gap-1.5 font-mono text-[12.5px] text-[#8A94A6]">
-              <span
-                className="inline-block size-2.5 flex-shrink-0 rounded-full"
-                style={{ background: g.color }}
-              />
-              {g.color}
-            </span>
+        {gradesQuery.isPending ? (
+          <div className="px-[22px] py-10 text-center text-[13.5px] text-[#8A94A6]">
+            불러오는 중…
           </div>
-        ))}
+        ) : gradesQuery.isError ? (
+          <div className="px-[22px] py-10 text-center text-[13.5px] text-om-red">
+            등급을 불러오지 못했습니다.
+          </div>
+        ) : (
+          grades.map((g, i) =>
+            editId === g.id ? (
+              <GradeEditRow
+                key={g.id}
+                form={form}
+                setForm={setForm}
+                busy={busy}
+                onSave={() => updateMut.mutate({ path: { grade_id: g.id }, body: { ...form } })}
+                onCancel={() => setEditId(null)}
+              />
+            ) : (
+              <div
+                key={g.id}
+                className="group/grade flex items-center gap-4 border-b border-[#EEF0F3] px-[22px] py-4 transition-colors last:border-b-0 hover:bg-[#F8F9FA]"
+              >
+                <span
+                  className="flex w-[58px] flex-shrink-0 items-center justify-center rounded-lg border py-1.5 text-[13px] font-extrabold"
+                  style={{ background: g.bg, color: g.color, borderColor: g.border }}
+                >
+                  {g.name}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[14px] font-bold text-[#1B2435]">{g.name}</div>
+                  <div className="mt-[3px] text-[13px] text-[#8A94A6]">{g.description}</div>
+                </div>
+                <span className="flex flex-shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/grade:opacity-100">
+                  <button
+                    type="button"
+                    disabled={i === 0 || busy}
+                    onClick={() => move(i, -1)}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4 [&_svg]:rotate-180"
+                  >
+                    <OfficeIcon name="chevDown" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={i === grades.length - 1 || busy}
+                    onClick={() => move(i, 1)}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4"
+                  >
+                    <OfficeIcon name="chevDown" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditId(g.id);
+                      setForm({
+                        name: g.name,
+                        color: g.color,
+                        bg: g.bg,
+                        border: g.border,
+                        description: g.description,
+                      });
+                    }}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] hover:bg-[#E9EBEF] [&_svg]:size-4"
+                  >
+                    <OfficeIcon name="write" />
+                  </button>
+                  {grades.length > 1 && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => deleteMut.mutate({ path: { grade_id: g.id } })}
+                      className="flex size-[26px] items-center justify-center rounded-md text-[14px] font-bold text-om-red hover:bg-om-red-bg disabled:opacity-30"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              </div>
+            )
+          )
+        )}
+        {adding ? (
+          <div className="px-[22px] py-3">
+            <GradeEditRow
+              form={form}
+              setForm={setForm}
+              busy={busy}
+              onSave={() => createMut.mutate({ body: { ...form } })}
+              onCancel={() => {
+                setAdding(false);
+                setForm(BLANK_GRADE);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="px-[22px] pb-1 pt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setForm(BLANK_GRADE);
+                setAdding(true);
+              }}
+              className="h-[34px] rounded-md border-none bg-primary px-4 text-[13px] font-bold text-white"
+            >
+              + 등급 추가
+            </button>
+          </div>
+        )}
       </div>
     </SettingsPanel>
+  );
+}
+
+function GradeEditRow({
+  form,
+  setForm,
+  busy,
+  onSave,
+  onCancel,
+}: {
+  form: GradeForm;
+  setForm: React.Dispatch<React.SetStateAction<GradeForm>>;
+  busy: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const upd = <K extends keyof GradeForm>(k: K, v: GradeForm[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-[9px] bg-[#E8F0FF] px-3 py-2.5">
+      <input
+        value={form.name}
+        onChange={(e) => upd('name', e.target.value)}
+        placeholder="등급명"
+        className="h-8 w-[110px] rounded-[7px] border-[1.5px] border-primary bg-white px-2.5 text-[14px] outline-none"
+      />
+      <label className="flex items-center gap-1 text-[12px] text-[#4A5468]">
+        글자
+        <input
+          type="color"
+          value={form.color}
+          onChange={(e) => upd('color', e.target.value)}
+          className="size-7 cursor-pointer rounded border-none bg-transparent"
+        />
+      </label>
+      <label className="flex items-center gap-1 text-[12px] text-[#4A5468]">
+        배경
+        <input
+          type="color"
+          value={form.bg}
+          onChange={(e) => upd('bg', e.target.value)}
+          className="size-7 cursor-pointer rounded border-none bg-transparent"
+        />
+      </label>
+      <label className="flex items-center gap-1 text-[12px] text-[#4A5468]">
+        테두리
+        <input
+          type="color"
+          value={form.border}
+          onChange={(e) => upd('border', e.target.value)}
+          className="size-7 cursor-pointer rounded border-none bg-transparent"
+        />
+      </label>
+      <input
+        value={form.description}
+        onChange={(e) => upd('description', e.target.value)}
+        placeholder="설명"
+        className="h-8 min-w-[140px] flex-1 rounded-[7px] border border-border bg-white px-2.5 text-[13.5px] outline-none"
+      />
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onSave}
+        className="h-8 rounded-[7px] border-none bg-primary px-3.5 text-[13px] font-bold text-white disabled:opacity-50"
+      >
+        저장
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="h-8 rounded-[7px] border border-border bg-white px-2.5 text-[13px] font-semibold text-[#4A5468]"
+      >
+        취소
+      </button>
+    </div>
   );
 }
 

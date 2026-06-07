@@ -19,12 +19,13 @@ import {
   createMemberApiV1MembersPostMutation,
   deleteMemberApiV1MembersMemberIdDeleteMutation,
   getMemberApiV1MembersMemberIdGetOptions,
+  listGradesApiV1GradesGetOptions,
   listMembersApiV1MembersGetOptions,
   memberStatsApiV1MembersStatsGetOptions,
   updateMemberApiV1MembersMemberIdPatchMutation,
 } from '@/client/@tanstack/react-query.gen';
 import { exportMembersApiV1MembersExportGet } from '@/client/sdk.gen';
-import type { MemberCreate, MemberResponse } from '@/client/types.gen';
+import type { GradeResponse, MemberCreate, MemberResponse } from '@/client/types.gen';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ScreenModule } from './types';
@@ -33,40 +34,22 @@ import type { ScreenModule } from './types';
    OfficeMate — 구성원 관리 (hey-api 생성 클라이언트 연동, 서버사이드)
    ============================================================ */
 
-type Grade = MemberCreate['grade'];
 type Member = MemberResponse;
 
-const GRADES: Grade[] = ['특급', '고급', '중급', '초급'];
 const PER_PAGE = 10;
 type SortKey = 'no' | 'name' | 'dept' | 'rank' | 'grade';
 
-/* 등급 배지 색상 (GRADE_CFG → om-* 토큰 매핑) */
-const GRADE_CFG: Record<Grade, { tag: string; chip: string; text: string; bar: string }> = {
-  특급: {
-    tag: 'bg-om-blue-bg text-primary border border-[#BBD4FF]',
-    chip: 'border-primary bg-om-blue-bg text-primary',
-    text: 'text-primary',
-    bar: 'bg-primary',
-  },
-  고급: {
-    tag: 'bg-om-green-bg text-om-green border border-[#b8eecb]',
-    chip: 'border-om-green bg-om-green-bg text-om-green',
-    text: 'text-om-green',
-    bar: 'bg-om-green',
-  },
-  중급: {
-    tag: 'bg-om-orange-bg text-om-orange border border-[#ffd9a0]',
-    chip: 'border-om-orange bg-om-orange-bg text-om-orange',
-    text: 'text-om-orange',
-    bar: 'bg-om-orange',
-  },
-  초급: {
-    tag: 'bg-[#F4F5F7] text-[#8A93A6] border border-border',
-    chip: 'border-[#8A93A6] bg-[#F4F5F7] text-[#69748A]',
-    text: 'text-[#69748A]',
-    bar: 'bg-[#8A93A6]',
-  },
-};
+const GRADE_FALLBACK = { color: '#69748A', bg: '#F4F5F7', border: '#D4D8DF' };
+
+/* 등급 목록(이름·색)을 API에서 동적 로드 — 하드코딩 GRADE_CFG 대체 */
+function useGrades(): GradeResponse[] {
+  return useQuery(listGradesApiV1GradesGetOptions()).data ?? [];
+}
+
+function gradeStyleOf(grades: GradeResponse[], name: string) {
+  const g = grades.find((x) => x.name === name);
+  return g ? { color: g.color, bg: g.bg, border: g.border } : GRADE_FALLBACK;
+}
 
 const AVATAR_PALETTE = [
   '#0066FF',
@@ -83,10 +66,6 @@ function avatarBg(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0x7fffffff;
   return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
-}
-
-function gradeCfg(grade: string) {
-  return GRADE_CFG[grade as Grade] ?? GRADE_CFG.초급;
 }
 
 function Avatar({ name, size = 34 }: { name: string; size?: number }) {
@@ -107,12 +86,12 @@ function Avatar({ name, size = 34 }: { name: string; size?: number }) {
 }
 
 function GradeTag({ grade }: { grade: string }) {
+  const grades = useGrades();
+  const s = gradeStyleOf(grades, grade);
   return (
     <span
-      className={cn(
-        'inline-flex w-[54px] items-center justify-center rounded-md py-1 text-xs font-extrabold',
-        gradeCfg(grade).tag
-      )}
+      className="inline-flex min-w-[54px] items-center justify-center rounded-md border px-1.5 py-1 text-xs font-extrabold"
+      style={{ background: s.bg, color: s.color, borderColor: s.border }}
     >
       {grade}
     </span>
@@ -129,7 +108,7 @@ function MembersScreen() {
   const [sortKey, setSortKey] = useState<SortKey>('no');
   const [sortAsc, setSortAsc] = useState(true);
   const [filterDept, setFilterDept] = useState('all');
-  const [filterGrade, setFilterGrade] = useState<'all' | Grade>('all');
+  const [filterGrade, setFilterGrade] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
 
@@ -151,6 +130,7 @@ function MembersScreen() {
   );
   const statsQuery = useQuery(memberStatsApiV1MembersStatsGetOptions());
 
+  const grades = useGrades();
   const stats = statsQuery.data;
   const depts = stats?.departments ?? [];
   const rows = listQuery.data?.items ?? [];
@@ -271,47 +251,45 @@ function MembersScreen() {
         <SummaryCard>
           <div className="text-[13px] font-bold text-[#8A93A6]">등급 분포</div>
           <div className="mt-2.5 flex items-center gap-5">
-            {GRADES.map((g) => {
-              const cnt = stats?.grade_distribution?.[g] ?? 0;
+            {grades.map((g) => {
+              const cnt = stats?.grade_distribution?.[g.name] ?? 0;
               const denom = stats?.total || 1;
               const pct = Math.round((cnt / denom) * 100);
               return (
-                <div key={g} className="flex flex-col items-center gap-1.5">
+                <div key={g.id} className="flex flex-col items-center gap-1.5">
                   <span
-                    className={cn(
-                      'font-mono text-2xl font-extrabold leading-none',
-                      GRADE_CFG[g].text
-                    )}
+                    className="font-mono text-2xl font-extrabold leading-none"
+                    style={{ color: g.color }}
                   >
                     {cnt}
                   </span>
                   <span
-                    className={cn(
-                      'rounded-[5px] px-2 py-0.5 text-[11.5px] font-extrabold',
-                      GRADE_CFG[g].tag
-                    )}
+                    className="rounded-[5px] border px-2 py-0.5 text-[11.5px] font-extrabold"
+                    style={{ background: g.bg, color: g.color, borderColor: g.border }}
                   >
-                    {g}
+                    {g.name}
                   </span>
                   <span className="text-[11.5px] font-semibold text-[#8A93A6]">{pct}%</span>
                 </div>
               );
             })}
             <div className="ml-2 flex-1">
-              {GRADES.map((g) => {
-                const cnt = stats?.grade_distribution?.[g] ?? 0;
+              {grades.map((g) => {
+                const cnt = stats?.grade_distribution?.[g.name] ?? 0;
                 const denom = stats?.total || 1;
                 const pct = Math.round((cnt / denom) * 100);
                 return (
-                  <div key={g} className="mb-[5px] last:mb-0">
+                  <div key={g.id} className="mb-[5px] last:mb-0">
                     <div className="mb-[3px] flex items-center justify-between">
-                      <span className={cn('text-[11px] font-bold', GRADE_CFG[g].text)}>{g}</span>
+                      <span className="text-[11px] font-bold" style={{ color: g.color }}>
+                        {g.name}
+                      </span>
                       <span className="font-mono text-[11px] text-[#8A93A6]">{pct}%</span>
                     </div>
                     <div className="h-[5px] overflow-hidden rounded-full bg-[#EEF0F3]">
                       <div
-                        className={cn('h-full rounded-full', GRADE_CFG[g].bar)}
-                        style={{ width: `${pct}%` }}
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, background: g.color }}
                       />
                     </div>
                   </div>
@@ -360,8 +338,9 @@ function MembersScreen() {
           </div>
 
           <div className="flex flex-shrink-0 gap-[5px]">
-            {(['all', ...GRADES] as const).map((g) => {
+            {['all', ...grades.map((g) => g.name)].map((g) => {
               const active = filterGrade === g;
+              const gs = g === 'all' ? null : gradeStyleOf(grades, g);
               return (
                 <button
                   key={g}
@@ -370,14 +349,19 @@ function MembersScreen() {
                     setFilterGrade(g);
                     setPage(1);
                   }}
-                  className={cn(
-                    'h-9 rounded-lg border px-[13px] text-[13px] font-bold transition-colors',
-                    g !== 'all' && active
-                      ? GRADE_CFG[g].chip
+                  className="h-9 rounded-lg border px-[13px] text-[13px] font-bold transition-colors data-[plain=true]:border-border data-[plain=true]:bg-white data-[plain=true]:text-[#8A93A6] data-[plain=true]:hover:border-[#D4D8DF]"
+                  data-plain={!active}
+                  style={
+                    active && gs
+                      ? { background: gs.bg, color: gs.color, borderColor: gs.border }
                       : active
-                        ? 'border-primary bg-om-blue-bg text-primary'
-                        : 'border-border bg-white text-[#8A93A6] hover:border-[#D4D8DF]'
-                  )}
+                        ? {
+                            background: 'var(--om-blue-bg, #E8F0FF)',
+                            color: '#0066FF',
+                            borderColor: '#0066FF',
+                          }
+                        : undefined
+                  }
                 >
                   {g === 'all' ? '전체' : g}
                 </button>
@@ -879,12 +863,13 @@ function MemberForm({
   onCancel: () => void;
   onSubmit: (body: MemberCreate) => void;
 }) {
+  const grades = useGrades();
   const deptOptions = depts.length > 0 ? depts : initial ? [initial.department] : [];
   const [form, setForm] = useState<MemberCreate>({
     name: initial?.name ?? '',
     department: initial?.department ?? deptOptions[0] ?? '',
     rank: initial?.rank ?? '',
-    grade: (initial?.grade as Grade) ?? '중급',
+    grade: initial?.grade ?? '중급',
     phone: initial?.phone ?? '',
     email: initial?.email ?? '',
   });
@@ -968,12 +953,12 @@ function MemberForm({
             <div className="relative">
               <select
                 value={form.grade}
-                onChange={(e) => update('grade', e.target.value as Grade)}
+                onChange={(e) => update('grade', e.target.value)}
                 className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-border bg-white px-3 pr-8 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
               >
-                {GRADES.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
+                {grades.map((g) => (
+                  <option key={g.id} value={g.name}>
+                    {g.name}
                   </option>
                 ))}
               </select>

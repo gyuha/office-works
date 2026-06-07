@@ -159,6 +159,110 @@ export type EmploymentTypeResponse = {
 };
 
 /**
+ * GradeCreate
+ *
+ * Request body for POST /grades.
+ */
+export type GradeCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Color
+     */
+    color: string;
+    /**
+     * Bg
+     */
+    bg: string;
+    /**
+     * Border
+     */
+    border: string;
+    /**
+     * Description
+     */
+    description?: string;
+};
+
+/**
+ * GradeReorder
+ *
+ * Request body for PATCH /grades/order — full ordered list of ids (low→high).
+ */
+export type GradeReorder = {
+    /**
+     * Ordered Ids
+     */
+    ordered_ids: Array<string>;
+};
+
+/**
+ * GradeResponse
+ *
+ * Single grade response body.
+ */
+export type GradeResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Color
+     */
+    color: string;
+    /**
+     * Bg
+     */
+    bg: string;
+    /**
+     * Border
+     */
+    border: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Sort Order
+     */
+    sort_order: number;
+};
+
+/**
+ * GradeUpdate
+ *
+ * Request body for PATCH /grades/{id} — partial (rename + meta).
+ */
+export type GradeUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Color
+     */
+    color?: string | null;
+    /**
+     * Bg
+     */
+    bg?: string | null;
+    /**
+     * Border
+     */
+    border?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -217,7 +321,7 @@ export type MemberCreate = {
     /**
      * Grade
      */
-    grade: '특급' | '고급' | '중급' | '초급';
+    grade: string;
     /**
      * Phone
      */
@@ -359,7 +463,7 @@ export type MemberUpdate = {
     /**
      * Grade
      */
-    grade?: '특급' | '고급' | '중급' | '초급' | null;
+    grade?: string | null;
     /**
      * Phone
      */
@@ -1676,3 +1780,133 @@ export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses = {
 };
 
 export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse = DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses[keyof DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses];
+
+export type ListGradesApiV1GradesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/grades';
+};
+
+export type ListGradesApiV1GradesGetResponses = {
+    /**
+     * Response List Grades Api V1 Grades Get
+     *
+     * Successful Response
+     */
+    200: Array<GradeResponse>;
+};
+
+export type ListGradesApiV1GradesGetResponse = ListGradesApiV1GradesGetResponses[keyof ListGradesApiV1GradesGetResponses];
+
+export type CreateGradeApiV1GradesPostData = {
+    body: GradeCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/grades';
+};
+
+export type CreateGradeApiV1GradesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateGradeApiV1GradesPostError = CreateGradeApiV1GradesPostErrors[keyof CreateGradeApiV1GradesPostErrors];
+
+export type CreateGradeApiV1GradesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: GradeResponse;
+};
+
+export type CreateGradeApiV1GradesPostResponse = CreateGradeApiV1GradesPostResponses[keyof CreateGradeApiV1GradesPostResponses];
+
+export type ReorderGradesApiV1GradesOrderPatchData = {
+    body: GradeReorder;
+    path?: never;
+    query?: never;
+    url: '/api/v1/grades/order';
+};
+
+export type ReorderGradesApiV1GradesOrderPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReorderGradesApiV1GradesOrderPatchError = ReorderGradesApiV1GradesOrderPatchErrors[keyof ReorderGradesApiV1GradesOrderPatchErrors];
+
+export type ReorderGradesApiV1GradesOrderPatchResponses = {
+    /**
+     * Response Reorder Grades Api V1 Grades Order Patch
+     *
+     * Successful Response
+     */
+    200: Array<GradeResponse>;
+};
+
+export type ReorderGradesApiV1GradesOrderPatchResponse = ReorderGradesApiV1GradesOrderPatchResponses[keyof ReorderGradesApiV1GradesOrderPatchResponses];
+
+export type DeleteGradeApiV1GradesGradeIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Grade Id
+         */
+        grade_id: string;
+    };
+    query?: never;
+    url: '/api/v1/grades/{grade_id}';
+};
+
+export type DeleteGradeApiV1GradesGradeIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteGradeApiV1GradesGradeIdDeleteError = DeleteGradeApiV1GradesGradeIdDeleteErrors[keyof DeleteGradeApiV1GradesGradeIdDeleteErrors];
+
+export type DeleteGradeApiV1GradesGradeIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteGradeApiV1GradesGradeIdDeleteResponse = DeleteGradeApiV1GradesGradeIdDeleteResponses[keyof DeleteGradeApiV1GradesGradeIdDeleteResponses];
+
+export type UpdateGradeApiV1GradesGradeIdPatchData = {
+    body: GradeUpdate;
+    path: {
+        /**
+         * Grade Id
+         */
+        grade_id: string;
+    };
+    query?: never;
+    url: '/api/v1/grades/{grade_id}';
+};
+
+export type UpdateGradeApiV1GradesGradeIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateGradeApiV1GradesGradeIdPatchError = UpdateGradeApiV1GradesGradeIdPatchErrors[keyof UpdateGradeApiV1GradesGradeIdPatchErrors];
+
+export type UpdateGradeApiV1GradesGradeIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: GradeResponse;
+};
+
+export type UpdateGradeApiV1GradesGradeIdPatchResponse = UpdateGradeApiV1GradesGradeIdPatchResponses[keyof UpdateGradeApiV1GradesGradeIdPatchResponses];
