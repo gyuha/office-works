@@ -40,6 +40,16 @@ DEFAULT_GRADES = [
 
 
 def upgrade() -> None:
+    # members.grade was varchar(8) for the old fixed 4-value enum; widen it to
+    # match grades.name(16) now that grades are a managed list with longer names.
+    op.alter_column(
+        "members",
+        "grade",
+        type_=sa.String(length=16),
+        existing_type=sa.String(length=8),
+        existing_nullable=False,
+    )
+
     op.create_table(
         "grades",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -129,5 +139,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Drop grades. org:write left in place (0003 owns it)."""
+    """Drop grades and revert members.grade width. org:write left in place (0003 owns it)."""
     op.drop_table("grades")
+    op.alter_column(
+        "members",
+        "grade",
+        type_=sa.String(length=8),
+        existing_type=sa.String(length=16),
+        existing_nullable=False,
+    )

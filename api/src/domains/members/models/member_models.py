@@ -50,7 +50,7 @@ class Member(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     department: Mapped[str] = mapped_column(String(64), nullable=False)
     rank: Mapped[str] = mapped_column(String(64), nullable=False)
-    grade: Mapped[str] = mapped_column(String(8), nullable=False)
+    grade: Mapped[str] = mapped_column(String(16), nullable=False)
     phone: Mapped[str] = mapped_column(String(32), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
