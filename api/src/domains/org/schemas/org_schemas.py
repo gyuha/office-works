@@ -142,3 +142,46 @@ class GradeResponse(BaseModel):
     border: str
     description: str
     sort_order: int
+
+
+# --- Org config singletons (GET response = PUT body, all required) -----------
+
+_TIME = r"^([01]\d|2[0-3]):[0-5]\d$"
+
+
+class WorkSettingsData(BaseModel):
+    """근무 기본값 — GET response / PUT body."""
+
+    model_config = {"from_attributes": True}
+
+    start_time: str = Field(pattern=_TIME)
+    end_time: str = Field(pattern=_TIME)
+    lunch_start: str = Field(pattern=_TIME)
+    lunch_end: str = Field(pattern=_TIME)
+    break_minutes: int = Field(ge=0, le=600)
+
+
+class LeaveSettingsData(BaseModel):
+    """연차 설정 — GET response / PUT body."""
+
+    model_config = {"from_attributes": True}
+
+    default_days: int = Field(ge=0, le=365)
+    probation_days: int = Field(ge=0, le=365)
+    add_per_year: int = Field(ge=0, le=365)
+    max_add: int = Field(ge=0, le=365)
+    expiry_months: int = Field(ge=0, le=600)
+
+
+class CompanyInfoData(BaseModel):
+    """회사 정보 — GET response / PUT body."""
+
+    model_config = {"from_attributes": True}
+
+    name: str = Field(min_length=1, max_length=255)
+    biz_no: str = Field(min_length=1, max_length=32)
+    ceo: str = Field(min_length=1, max_length=64)
+    founded: str = Field(min_length=1, max_length=10)
+    tel: str = Field(min_length=1, max_length=32)
+    email: str = Field(min_length=1, max_length=255)
+    address: str = Field(min_length=1, max_length=2000)
