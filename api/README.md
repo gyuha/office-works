@@ -390,6 +390,19 @@ curl http://localhost:8000/health
 task dev
 ```
 
+### Microsoft(Entra ID) SSO 앱 등록
+
+"Microsoft로 로그인"(single-tenant Entra ID OIDC)을 사용하려면 Azure 쪽에서 앱을 먼저 등록하고 `.env`의 `MICROSOFT_*` 4개 변수를 채워야 합니다.
+
+1. **앱 등록**: [Entra 관리센터](https://entra.microsoft.com) → App registrations → New registration → 지원 계정 유형 **"이 조직 디렉터리만(single tenant)"** 선택.
+2. **리다이렉트 URI**: 플랫폼 **Web** 추가 → `http://localhost:8000/api/v1/auth/oauth/microsoft/callback`(운영은 https 도메인). **경로 대소문자까지 정확히** 일치해야 합니다(불일치 시 AADSTS50011). `http://`는 localhost만 허용됩니다.
+3. **ID 확보**: Overview에서 **Application (client) ID** = `MICROSOFT_CLIENT_ID`, **Directory (tenant) ID** = `MICROSOFT_TENANT_ID`.
+4. **클라이언트 시크릿**: Certificates & secrets → New client secret → **Value를 즉시 복사**(이후 재표시 안 됨) = `MICROSOFT_CLIENT_SECRET`. 만료 최대 24개월(회전 정책 필요).
+5. **API 권한**: `openid profile email`은 OIDC 사용자 동의 스코프라 **관리자 동의/Graph 권한 추가가 불필요**합니다(조직 정책상 admin consent를 선호하면 1회 부여 가능). Microsoft Graph **User.Read 불필요**.
+6. **env 설정**: `MICROSOFT_REDIRECT_URI`는 2번 값과 정확히 동일하게 설정합니다.
+
+> 참고: `email` 클레임은 항상 제공되지 않습니다 → 백엔드가 `email → preferred_username → upn` 순으로 이메일을 결정합니다. 필요하면 Token configuration에서 optional claim `email`을 추가할 수 있습니다.
+
 ### Production 모드 (`--profile prod`)
 
 `docker-compose.prod.yml` 오버레이를 사용하면 프로덕션 환경을 구성할 수 있습니다.

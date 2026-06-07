@@ -1,11 +1,8 @@
 import { useState } from 'react';
+import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-type AuthStatus = 'idle' | 'loading' | 'success';
-
-interface TeamsLoginProps {
-  onAuthenticated?: () => void;
-}
+type AuthStatus = 'idle' | 'loading' | 'error';
 
 const FEATURES = [
   '구성원 및 조직 관리',
@@ -82,20 +79,23 @@ function TeamsIcon() {
   );
 }
 
-export function TeamsLogin({ onAuthenticated }: TeamsLoginProps) {
+export function TeamsLogin() {
   const [status, setStatus] = useState<AuthStatus>('idle');
 
-  const handleLogin = () => {
-    if (status !== 'idle') return;
+  const handleLogin = async () => {
+    if (status === 'loading') return;
     setStatus('loading');
 
-    // Simulate Teams SSO auth flow.
-    window.setTimeout(() => {
-      setStatus('success');
-      window.setTimeout(() => {
-        onAuthenticated?.();
-      }, 800);
-    }, 1500);
+    try {
+      const res = await apiFetch('/api/v1/auth/oauth/microsoft/login');
+      if (!res.ok) {
+        throw new Error('로그인 요청에 실패했습니다');
+      }
+      const data: { authorization_url: string } = await res.json();
+      window.location.href = data.authorization_url;
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -185,41 +185,29 @@ export function TeamsLogin({ onAuthenticated }: TeamsLoginProps) {
           <button
             type="button"
             onClick={handleLogin}
-            disabled={status !== 'idle'}
+            disabled={status === 'loading'}
             className={cn(
               'flex h-13 w-full items-center justify-center gap-3 rounded-xl text-[15px] font-bold tracking-[0.005em] text-white transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.985] disabled:cursor-not-allowed',
               'h-[52px]',
-              status === 'success'
-                ? 'bg-om-green shadow-[0_4px_14px_rgba(0,191,64,0.35)]'
-                : 'bg-[#5B5EA6] shadow-[0_4px_14px_rgba(91,94,166,0.35)] hover:bg-[#4A4D8F] hover:shadow-[0_6px_20px_rgba(91,94,166,0.45)]',
+              'bg-[#5B5EA6] shadow-[0_4px_14px_rgba(91,94,166,0.35)] hover:bg-[#4A4D8F] hover:shadow-[0_6px_20px_rgba(91,94,166,0.45)]',
               status === 'loading' && 'opacity-60'
             )}
           >
-            {status === 'idle' && (
+            {status === 'loading' ? (
+              <span className="h-[18px] w-[18px] animate-spin rounded-full border-[2.5px] border-white/35 border-t-white" />
+            ) : (
               <>
                 <TeamsIcon />
                 <span>Microsoft Teams로 로그인</span>
               </>
             )}
-            {status === 'loading' && (
-              <span className="h-[18px] w-[18px] animate-spin rounded-full border-[2.5px] border-white/35 border-t-white" />
-            )}
-            {status === 'success' && (
-              <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-                  <path
-                    d="m8.5 12 2.5 2.5 4.5-5"
-                    stroke="currentColor"
-                    strokeWidth="1.9"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>인증 완료 · 이동 중…</span>
-              </>
-            )}
           </button>
+
+          {status === 'error' && (
+            <p className="mt-3 text-center text-[13px] font-medium text-om-red">
+              로그인을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.
+            </p>
+          )}
 
           <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-om-canvas px-4 py-3.5">
             <svg

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { apiFetch } from '@/lib/api';
 import { OfficeIcon } from '../icons';
 import { useSidebarStore } from '../store/sidebar-store';
 
@@ -49,7 +50,23 @@ export function OfficeTopbar({
   const user = useAuthStore((s) => s.user);
   const clearUser = useAuthStore((s) => s.clearUser);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const { accessToken, refreshToken } = useAuthStore.getState();
+    if (accessToken && refreshToken) {
+      try {
+        await apiFetch(
+          '/api/v1/auth/logout',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          },
+          accessToken
+        );
+      } catch {
+        // Ignore server errors — local logout is guaranteed below.
+      }
+    }
     clearUser();
     navigate({ to: '/login' });
   };

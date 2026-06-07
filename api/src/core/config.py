@@ -342,6 +342,11 @@ class Settings(BaseSettings):
     naver_client_secret: SecretStr = SecretStr("")
     naver_redirect_uri: str = ""
 
+    microsoft_client_id: str = ""
+    microsoft_client_secret: SecretStr = SecretStr("")
+    microsoft_tenant_id: str = ""
+    microsoft_redirect_uri: str = ""
+
     # ── Email ─────────────────────────────────────────────────────────────────
     mail_server: str = "localhost"
     mail_port: int = 1025

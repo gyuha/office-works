@@ -19,9 +19,11 @@ GET    /auth/oauth/{provider}/callback  OAuth2 callback — exchange code
 from __future__ import annotations
 
 from typing import Annotated, Any
+from urllib.parse import urlencode
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import RedirectResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -274,7 +276,7 @@ async def oauth_login(
     """Generate an OAuth2 authorization URL for the given provider.
 
     The returned ``state`` nonce is stored in Redis for CSRF validation in the
-    callback.  Supported providers: google,kakao,naver.
+    callback.  Supported providers: google,kakao,naver,microsoft.
 
     Raises
     ------
@@ -294,8 +296,7 @@ async def oauth_login(
 
 @router.get(
     "/oauth/{provider}/callback",
-    response_model=TokenResponse,
-    summary="OAuth2 callback — exchange code for JWT",
+    summary="OAuth2 callback — exchange code and redirect to frontend",
 )
 async def oauth_callback(
     provider: str,
@@ -303,28 +304,29 @@ async def oauth_callback(
     state: Annotated[str, Query(description="CSRF state nonce")],
     redis: Redis = Depends(get_redis_dep),
     service: AuthService = Depends(_get_service),
-) -> TokenResponse:
-    """Complete the OAuth2 flow by exchanging the code for user tokens.
+) -> RedirectResponse:
+    """Complete the OAuth2 flow and hand off the app JWT pair to the SPA.
 
-    Validates the ``state`` nonce against Redis to prevent CSRF attacks.
-
-    Raises
-    ------
-    400
-        If the state is invalid or expired.
-    502
-        If the OAuth provider returns an error.
+    Validates the ``state`` nonce against Redis to prevent CSRF attacks, then
+    on success redirects (302) the browser to
+    ``{frontend_url}/auth/callback#access_token=…&refresh_token=…``.  On any
+    failure (invalid state, provider/exchange error, provisioning error) it
+    redirects to ``{frontend_url}/login?error=oauth``.
     """
+    s = get_settings()
+    frontend_url = s.frontend_url.rstrip("/")
+    failure_redirect = RedirectResponse(
+        url=f"{frontend_url}/login?error=oauth",
+        status_code=status.HTTP_302_FOUND,
+    )
+
     # CSRF state validation
     stored_provider = await redis.get(f"{_OAUTH_STATE_PREFIX}{state}")
     if stored_provider != provider:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired OAuth state.",
-        )
+        logger.warning("oauth_state_mismatch", provider=provider)
+        return failure_redirect
     await redis.delete(f"{_OAUTH_STATE_PREFIX}{state}")
 
-    s = get_settings()
     adapter: Any = _get_oauth_adapter(provider, s)
 
     try:
@@ -332,13 +334,9 @@ async def oauth_callback(
             user_info = await adapter.exchange_code(code, state)
         else:
             user_info = await adapter.exchange_code(code)
-
     except Exception as exc:
         logger.error("oauth_exchange_failed", provider=provider, error=str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"OAuth provider error: {exc!s}",
-        ) from exc
+        return failure_redirect
 
     try:
         from datetime import UTC, timedelta
@@ -359,9 +357,19 @@ async def oauth_callback(
             expires_at=expires_at,
         )
     except AppError as exc:
-        raise _app_error_to_http(exc) from exc
+        logger.error("oauth_provision_failed", provider=provider, error=str(exc))
+        return failure_redirect
 
-    return TokenResponse(**tokens)
+    fragment = urlencode(
+        {
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens["refresh_token"],
+        }
+    )
+    return RedirectResponse(
+        url=f"{frontend_url}/auth/callback#{fragment}",
+        status_code=status.HTTP_302_FOUND,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -372,7 +380,7 @@ async def oauth_callback(
 def _get_oauth_adapter(provider: str, settings: Settings) -> object:
     """Return the OAuth adapter for *provider*.
 
-    Supported providers: google,kakao,naver.
+    Supported providers: google,kakao,naver,microsoft.
 
     Raises
     ------
@@ -395,7 +403,15 @@ def _get_oauth_adapter(provider: str, settings: Settings) -> object:
 
         return NaverOAuthAdapter(settings)
 
+    if provider == "microsoft":
+        from domains.auth.oauth.microsoft import MicrosoftOAuthAdapter
+
+        return MicrosoftOAuthAdapter(settings)
+
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail=f"Unsupported OAuth provider: '{provider}'. Configured: google,kakao,naver.",
+        detail=(
+            f"Unsupported OAuth provider: '{provider}'. "
+            "Configured: google,kakao,naver,microsoft."
+        ),
     )
