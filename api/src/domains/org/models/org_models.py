@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -65,3 +65,33 @@ class EmploymentType(Base):
 
     def __repr__(self) -> str:
         return f"<EmploymentType name={self.name!r}>"
+
+
+class Grade(Base):
+    """A 등급 (competency grade) — managed list; members reference it by name.
+
+    Carries display colors (hex) mirroring the frontend badge so members
+    screens can render any grade dynamically.
+    """
+
+    __tablename__ = "grades"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
+    color: Mapped[str] = mapped_column(String(9), nullable=False)
+    bg: Mapped[str] = mapped_column(String(9), nullable=False)
+    border: Mapped[str] = mapped_column(String(9), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<Grade name={self.name!r} sort_order={self.sort_order}>"
