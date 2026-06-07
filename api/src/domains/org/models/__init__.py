@@ -1,5 +1,19 @@
 """Org-settings domain models."""
 
-from domains.org.models.org_models import EmploymentType, Grade, Position
+from domains.org.models.org_models import (
+    CompanyInfo,
+    EmploymentType,
+    Grade,
+    LeaveSettings,
+    Position,
+    WorkSettings,
+)
 
-__all__ = ["EmploymentType", "Grade", "Position"]
+__all__ = [
+    "CompanyInfo",
+    "EmploymentType",
+    "Grade",
+    "LeaveSettings",
+    "Position",
+    "WorkSettings",
+]

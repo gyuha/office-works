@@ -95,3 +95,53 @@ class Grade(Base):
 
     def __repr__(self) -> str:
         return f"<Grade name={self.name!r} sort_order={self.sort_order}>"
+
+
+class WorkSettings(Base):
+    """근무 기본값 — singleton (a single row)."""
+
+    __tablename__ = "work_settings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    start_time: Mapped[str] = mapped_column(String(5), nullable=False)
+    end_time: Mapped[str] = mapped_column(String(5), nullable=False)
+    lunch_start: Mapped[str] = mapped_column(String(5), nullable=False)
+    lunch_end: Mapped[str] = mapped_column(String(5), nullable=False)
+    break_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class LeaveSettings(Base):
+    """연차 설정 — singleton (a single row)."""
+
+    __tablename__ = "leave_settings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    default_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    probation_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    add_per_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_add: Mapped[int] = mapped_column(Integer, nullable=False)
+    expiry_months: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class CompanyInfo(Base):
+    """회사 정보 — singleton (a single row)."""
+
+    __tablename__ = "company_info"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    biz_no: Mapped[str] = mapped_column(String(32), nullable=False)
+    ceo: Mapped[str] = mapped_column(String(64), nullable=False)
+    founded: Mapped[str] = mapped_column(String(10), nullable=False)
+    tel: Mapped[str] = mapped_column(String(32), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    address: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
