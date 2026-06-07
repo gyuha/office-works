@@ -18,6 +18,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", ".superpowers", "src/routeTree.gen.ts"]
+    "ignore": ["node_modules", "dist", ".superpowers", "src/routeTree.gen.ts", "src/client"]
   }
 }

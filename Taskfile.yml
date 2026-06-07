@@ -1,0 +1,123 @@
+version: "3"
+
+# ============================================================
+# Office Works — Root Taskfile (monorepo orchestrator)
+# https://taskfile.dev
+# ============================================================
+# api/ 의 전체 Taskfile은 `api:` 네임스페이스로 포함된다 (task api:test 등).
+# web/ 은 pnpm 스크립트를 감싼다 (task web:dev 등).
+# 아래 상단 태스크는 두 패키지를 한 번에 다루는 통합 명령이다.
+#
+# Usage:
+#   task dev          → 백엔드(FastAPI) + 프론트(Vite) 동시 실행
+#   task install      → api(uv) + web(pnpm) 의존성 설치
+#   task lint         → api + web 정적 분석
+#   task typecheck    → api(mypy) + web(tsc)
+#   task test         → api 테스트 (커버리지 70% 강제)
+#   task build        → web 프로덕션 빌드
+#   task --list       → 전체 태스크 목록 (api:*, web:* 포함)
+# ============================================================
+
+includes:
+  api:
+    taskfile: ./api/Taskfile.yml
+    dir: ./api
+
+tasks:
+  default:
+    desc: Show available tasks
+    silent: true
+    cmds:
+      - task --list
+
+  # ── Web (pnpm) ───────────────────────────────────────────────────────────────
+  web:install:
+    desc: Install frontend dependencies (pnpm)
+    dir: ./web
+    cmds:
+      - pnpm install
+
+  web:dev:
+    desc: Start Vite dev server (port 3000)
+    dir: ./web
+    cmds:
+      - pnpm dev
+
+  web:build:
+    desc: Build frontend for production (tsc -b + vite build)
+    dir: ./web
+    cmds:
+      - pnpm build
+
+  web:lint:
+    desc: Lint frontend with Biome
+    dir: ./web
+    cmds:
+      - pnpm lint
+
+  web:typecheck:
+    desc: Type-check frontend (tsc --noEmit)
+    dir: ./web
+    cmds:
+      - pnpm typecheck
+
+  # ── API client codegen (hey-api) ─────────────────────────────────────────────
+  gen-api:
+    desc: "Regenerate frontend API client from FastAPI OpenAPI (export api/openapi.json → hey-api codegen)"
+    cmds:
+      - task: gen-api:export
+      - task: gen-api:codegen
+
+  gen-api:export:
+    internal: true
+    dir: ./api
+    env:
+      PYTHONPATH: src
+    cmds:
+      - uv run --python 3.12 python -c "import json; from main import app; open('openapi.json','w',encoding='utf-8').write(json.dumps(app.openapi(), ensure_ascii=False, indent=2) + '\n')"
+
+  gen-api:codegen:
+    internal: true
+    dir: ./web
+    cmds:
+      - pnpm openapi-ts
+
+  # ── Monorepo orchestration ───────────────────────────────────────────────────
+  install:
+    desc: Install all dependencies — api (uv) + web (pnpm)
+    cmds:
+      - task: api:install
+      - task: web:install
+
+  dev:
+    desc: Run backend (FastAPI) + frontend (Vite) concurrently
+    deps:
+      - api:dev
+      - web:dev
+
+  lint:
+    desc: Lint api (ruff + mypy) + web (Biome)
+    cmds:
+      - task: api:lint
+      - task: web:lint
+
+  typecheck:
+    desc: Type-check api (mypy) + web (tsc)
+    cmds:
+      - task: api:typecheck
+      - task: web:typecheck
+
+  test:
+    desc: Run api test suite (coverage 70% enforced)
+    cmds:
+      - task: api:test
+
+  build:
+    desc: Build frontend for production
+    cmds:
+      - task: web:build
+
+  clean:
+    desc: Clean api build/cache artifacts
+    cmds:
+      - task: api:clean
