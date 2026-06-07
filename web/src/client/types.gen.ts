@@ -77,6 +77,42 @@ export type ChatResponse = {
 };
 
 /**
+ * CompanyInfoData
+ *
+ * 회사 정보 — GET response / PUT body.
+ */
+export type CompanyInfoData = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Biz No
+     */
+    biz_no: string;
+    /**
+     * Ceo
+     */
+    ceo: string;
+    /**
+     * Founded
+     */
+    founded: string;
+    /**
+     * Tel
+     */
+    tel: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Address
+     */
+    address: string;
+};
+
+/**
  * ConversationCreate
  *
  * Request body for POST /chat/conversations.
@@ -270,6 +306,34 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * LeaveSettingsData
+ *
+ * 연차 설정 — GET response / PUT body.
+ */
+export type LeaveSettingsData = {
+    /**
+     * Default Days
+     */
+    default_days: number;
+    /**
+     * Probation Days
+     */
+    probation_days: number;
+    /**
+     * Add Per Year
+     */
+    add_per_year: number;
+    /**
+     * Max Add
+     */
+    max_add: number;
+    /**
+     * Expiry Months
+     */
+    expiry_months: number;
 };
 
 /**
@@ -823,6 +887,34 @@ export type VerifyEmailResponse = {
      */
     message?: string;
     user: UserResponse;
+};
+
+/**
+ * WorkSettingsData
+ *
+ * 근무 기본값 — GET response / PUT body.
+ */
+export type WorkSettingsData = {
+    /**
+     * Start Time
+     */
+    start_time: string;
+    /**
+     * End Time
+     */
+    end_time: string;
+    /**
+     * Lunch Start
+     */
+    lunch_start: string;
+    /**
+     * Lunch End
+     */
+    lunch_end: string;
+    /**
+     * Break Minutes
+     */
+    break_minutes: number;
 };
 
 export type HealthHealthGetData = {
@@ -1910,3 +2002,126 @@ export type UpdateGradeApiV1GradesGradeIdPatchResponses = {
 };
 
 export type UpdateGradeApiV1GradesGradeIdPatchResponse = UpdateGradeApiV1GradesGradeIdPatchResponses[keyof UpdateGradeApiV1GradesGradeIdPatchResponses];
+
+export type GetWorkSettingsApiV1OrgWorkSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/work-settings';
+};
+
+export type GetWorkSettingsApiV1OrgWorkSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: WorkSettingsData;
+};
+
+export type GetWorkSettingsApiV1OrgWorkSettingsGetResponse = GetWorkSettingsApiV1OrgWorkSettingsGetResponses[keyof GetWorkSettingsApiV1OrgWorkSettingsGetResponses];
+
+export type PutWorkSettingsApiV1OrgWorkSettingsPutData = {
+    body: WorkSettingsData;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/work-settings';
+};
+
+export type PutWorkSettingsApiV1OrgWorkSettingsPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PutWorkSettingsApiV1OrgWorkSettingsPutError = PutWorkSettingsApiV1OrgWorkSettingsPutErrors[keyof PutWorkSettingsApiV1OrgWorkSettingsPutErrors];
+
+export type PutWorkSettingsApiV1OrgWorkSettingsPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: WorkSettingsData;
+};
+
+export type PutWorkSettingsApiV1OrgWorkSettingsPutResponse = PutWorkSettingsApiV1OrgWorkSettingsPutResponses[keyof PutWorkSettingsApiV1OrgWorkSettingsPutResponses];
+
+export type GetLeaveSettingsApiV1OrgLeaveSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/leave-settings';
+};
+
+export type GetLeaveSettingsApiV1OrgLeaveSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LeaveSettingsData;
+};
+
+export type GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse = GetLeaveSettingsApiV1OrgLeaveSettingsGetResponses[keyof GetLeaveSettingsApiV1OrgLeaveSettingsGetResponses];
+
+export type PutLeaveSettingsApiV1OrgLeaveSettingsPutData = {
+    body: LeaveSettingsData;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/leave-settings';
+};
+
+export type PutLeaveSettingsApiV1OrgLeaveSettingsPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PutLeaveSettingsApiV1OrgLeaveSettingsPutError = PutLeaveSettingsApiV1OrgLeaveSettingsPutErrors[keyof PutLeaveSettingsApiV1OrgLeaveSettingsPutErrors];
+
+export type PutLeaveSettingsApiV1OrgLeaveSettingsPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: LeaveSettingsData;
+};
+
+export type PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse = PutLeaveSettingsApiV1OrgLeaveSettingsPutResponses[keyof PutLeaveSettingsApiV1OrgLeaveSettingsPutResponses];
+
+export type GetCompanyApiV1OrgCompanyGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/company';
+};
+
+export type GetCompanyApiV1OrgCompanyGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyInfoData;
+};
+
+export type GetCompanyApiV1OrgCompanyGetResponse = GetCompanyApiV1OrgCompanyGetResponses[keyof GetCompanyApiV1OrgCompanyGetResponses];
+
+export type PutCompanyApiV1OrgCompanyPutData = {
+    body: CompanyInfoData;
+    path?: never;
+    query?: never;
+    url: '/api/v1/org/company';
+};
+
+export type PutCompanyApiV1OrgCompanyPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PutCompanyApiV1OrgCompanyPutError = PutCompanyApiV1OrgCompanyPutErrors[keyof PutCompanyApiV1OrgCompanyPutErrors];
+
+export type PutCompanyApiV1OrgCompanyPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyInfoData;
+};
+
+export type PutCompanyApiV1OrgCompanyPutResponse = PutCompanyApiV1OrgCompanyPutResponses[keyof PutCompanyApiV1OrgCompanyPutResponses];

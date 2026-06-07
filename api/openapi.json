@@ -1883,6 +1883,216 @@
           }
         }
       }
+    },
+    "/api/v1/org/work-settings": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Get Work Settings",
+        "operationId": "get_work_settings_api_v1_org_work_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkSettingsData"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Put Work Settings",
+        "operationId": "put_work_settings_api_v1_org_work_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkSettingsData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkSettingsData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/org/leave-settings": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Get Leave Settings",
+        "operationId": "get_leave_settings_api_v1_org_leave_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveSettingsData"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Put Leave Settings",
+        "operationId": "put_leave_settings_api_v1_org_leave_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveSettingsData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveSettingsData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/org/company": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Get Company",
+        "operationId": "get_company_api_v1_org_company_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyInfoData"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Put Company",
+        "operationId": "put_company_api_v1_org_company_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyInfoData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyInfoData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1958,6 +2168,64 @@
         ],
         "title": "ChatResponse",
         "description": "Response body for the non-streaming ``/complete`` endpoint.\n\nAttributes\n----------\ncontent:\n    The model's full reply text.\nmodel:\n    Active LiteLLM model identifier, e.g. ``\"openai/gpt-4o-mini\"``.\n    Included for debugging and provider-routing verification."
+      },
+      "CompanyInfoData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "biz_no": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Biz No"
+          },
+          "ceo": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Ceo"
+          },
+          "founded": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 1,
+            "title": "Founded"
+          },
+          "tel": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Tel"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Email"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "biz_no",
+          "ceo",
+          "founded",
+          "tel",
+          "email",
+          "address"
+        ],
+        "title": "CompanyInfoData",
+        "description": "회사 정보 — GET response / PUT body."
       },
       "ConversationCreate": {
         "properties": {
@@ -2282,6 +2550,50 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "LeaveSettingsData": {
+        "properties": {
+          "default_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Default Days"
+          },
+          "probation_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Probation Days"
+          },
+          "add_per_year": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Add Per Year"
+          },
+          "max_add": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Max Add"
+          },
+          "expiry_months": {
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Expiry Months"
+          }
+        },
+        "type": "object",
+        "required": [
+          "default_days",
+          "probation_days",
+          "add_per_year",
+          "max_add",
+          "expiry_months"
+        ],
+        "title": "LeaveSettingsData",
+        "description": "연차 설정 — GET response / PUT body."
       },
       "LoginRequest": {
         "properties": {
@@ -3067,6 +3379,46 @@
         ],
         "title": "VerifyEmailResponse",
         "description": "Response body for POST /auth/verify-email/{token}."
+      },
+      "WorkSettingsData": {
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "End Time"
+          },
+          "lunch_start": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Lunch Start"
+          },
+          "lunch_end": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Lunch End"
+          },
+          "break_minutes": {
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Break Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_time",
+          "end_time",
+          "lunch_start",
+          "lunch_end",
+          "break_minutes"
+        ],
+        "title": "WorkSettingsData",
+        "description": "근무 기본값 — GET response / PUT body."
       }
     },
     "securitySchemes": {

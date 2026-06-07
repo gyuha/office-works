@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -9,12 +9,21 @@ import {
   deleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteMutation,
   deleteGradeApiV1GradesGradeIdDeleteMutation,
   deletePositionApiV1PositionsPositionIdDeleteMutation,
+  getCompanyApiV1OrgCompanyGetOptions,
+  getCompanyApiV1OrgCompanyGetQueryKey,
+  getLeaveSettingsApiV1OrgLeaveSettingsGetOptions,
+  getLeaveSettingsApiV1OrgLeaveSettingsGetQueryKey,
+  getWorkSettingsApiV1OrgWorkSettingsGetOptions,
+  getWorkSettingsApiV1OrgWorkSettingsGetQueryKey,
   listEmploymentTypesApiV1EmploymentTypesGetOptions,
   listEmploymentTypesApiV1EmploymentTypesGetQueryKey,
   listGradesApiV1GradesGetOptions,
   listGradesApiV1GradesGetQueryKey,
   listPositionsApiV1PositionsGetOptions,
   listPositionsApiV1PositionsGetQueryKey,
+  putCompanyApiV1OrgCompanyPutMutation,
+  putLeaveSettingsApiV1OrgLeaveSettingsPutMutation,
+  putWorkSettingsApiV1OrgWorkSettingsPutMutation,
   renamePositionApiV1PositionsPositionIdPatchMutation,
   reorderGradesApiV1GradesOrderPatchMutation,
   reorderPositionsApiV1PositionsOrderPatchMutation,
@@ -619,11 +628,32 @@ function toMin(t: string) {
 }
 
 function WorkTab() {
+  const queryClient = useQueryClient();
+  const q = useQuery(getWorkSettingsApiV1OrgWorkSettingsGetOptions());
   const [start, setStart] = useState('09:00');
   const [end, setEnd] = useState('18:00');
   const [lunchStart, setLunchStart] = useState('12:00');
   const [lunchEnd, setLunchEnd] = useState('13:00');
   const [breakMin, setBreakMin] = useState(10);
+
+  useEffect(() => {
+    if (q.data) {
+      setStart(q.data.start_time);
+      setEnd(q.data.end_time);
+      setLunchStart(q.data.lunch_start);
+      setLunchEnd(q.data.lunch_end);
+      setBreakMin(q.data.break_minutes);
+    }
+  }, [q.data]);
+
+  const saveMut = useMutation({
+    ...putWorkSettingsApiV1OrgWorkSettingsPutMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getWorkSettingsApiV1OrgWorkSettingsGetQueryKey() });
+      toast.success('근무 기본값이 저장되었습니다');
+    },
+    onError: () => toast.error('저장에 실패했습니다.'),
+  });
 
   let calc = '-';
   try {
@@ -695,8 +725,19 @@ function WorkTab() {
         <div className="mt-[18px] flex justify-end">
           <button
             type="button"
-            onClick={() => toast.success('근무 기본값이 저장되었습니다')}
-            className={SAVE_BTN}
+            disabled={saveMut.isPending}
+            onClick={() =>
+              saveMut.mutate({
+                body: {
+                  start_time: start,
+                  end_time: end,
+                  lunch_start: lunchStart,
+                  lunch_end: lunchEnd,
+                  break_minutes: breakMin,
+                },
+              })
+            }
+            className={cn(SAVE_BTN, 'disabled:opacity-50')}
           >
             저장
           </button>
@@ -711,11 +752,34 @@ function WorkTab() {
 ================================================================ */
 
 function LeaveTab() {
+  const queryClient = useQueryClient();
+  const q = useQuery(getLeaveSettingsApiV1OrgLeaveSettingsGetOptions());
   const [defaultDays, setDefaultDays] = useState(15);
   const [probDays, setProbDays] = useState(3);
   const [addPerYear, setAddPerYear] = useState(1);
   const [maxAdd, setMaxAdd] = useState(5);
   const [expiryMonths, setExpiryMonths] = useState(24);
+
+  useEffect(() => {
+    if (q.data) {
+      setDefaultDays(q.data.default_days);
+      setProbDays(q.data.probation_days);
+      setAddPerYear(q.data.add_per_year);
+      setMaxAdd(q.data.max_add);
+      setExpiryMonths(q.data.expiry_months);
+    }
+  }, [q.data]);
+
+  const saveMut = useMutation({
+    ...putLeaveSettingsApiV1OrgLeaveSettingsPutMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getLeaveSettingsApiV1OrgLeaveSettingsGetQueryKey(),
+      });
+      toast.success('연차 설정이 저장되었습니다');
+    },
+    onError: () => toast.error('저장에 실패했습니다.'),
+  });
 
   const NumField = ({
     label,
@@ -803,8 +867,19 @@ function LeaveTab() {
         <div className="mt-[18px] flex justify-end">
           <button
             type="button"
-            onClick={() => toast.success('연차 설정이 저장되었습니다')}
-            className={SAVE_BTN}
+            disabled={saveMut.isPending}
+            onClick={() =>
+              saveMut.mutate({
+                body: {
+                  default_days: defaultDays,
+                  probation_days: probDays,
+                  add_per_year: addPerYear,
+                  max_add: maxAdd,
+                  expiry_months: expiryMonths,
+                },
+              })
+            }
+            className={cn(SAVE_BTN, 'disabled:opacity-50')}
           >
             저장
           </button>
@@ -819,6 +894,8 @@ function LeaveTab() {
 ================================================================ */
 
 function CompanyTab() {
+  const queryClient = useQueryClient();
+  const q = useQuery(getCompanyApiV1OrgCompanyGetOptions());
   const [form, setForm] = useState({
     name: '오피스메이트 주식회사',
     bizNo: '123-45-67890',
@@ -827,6 +904,29 @@ function CompanyTab() {
     tel: '02-1234-5678',
     email: 'contact@officemate.co.kr',
     addr: '서울특별시 강남구 테헤란로 123 오피스메이트빌딩 7층',
+  });
+
+  useEffect(() => {
+    if (q.data) {
+      setForm({
+        name: q.data.name,
+        bizNo: q.data.biz_no,
+        ceo: q.data.ceo,
+        founded: q.data.founded,
+        tel: q.data.tel,
+        email: q.data.email,
+        addr: q.data.address,
+      });
+    }
+  }, [q.data]);
+
+  const saveMut = useMutation({
+    ...putCompanyApiV1OrgCompanyPutMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getCompanyApiV1OrgCompanyGetQueryKey() });
+      toast.success('회사 정보가 저장되었습니다');
+    },
+    onError: () => toast.error('저장에 실패했습니다.'),
   });
 
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -888,8 +988,21 @@ function CompanyTab() {
         <div className="mt-5 flex justify-end">
           <button
             type="button"
-            onClick={() => toast.success('회사 정보가 저장되었습니다')}
-            className={SAVE_BTN}
+            disabled={saveMut.isPending}
+            onClick={() =>
+              saveMut.mutate({
+                body: {
+                  name: form.name,
+                  biz_no: form.bizNo,
+                  ceo: form.ceo,
+                  founded: form.founded,
+                  tel: form.tel,
+                  email: form.email,
+                  address: form.addr,
+                },
+              })
+            }
+            className={cn(SAVE_BTN, 'disabled:opacity-50')}
           >
             저장
           </button>

@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createMemberApiV1MembersPost, createPositionApiV1PositionsPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deleteMemberApiV1MembersMemberIdDelete, deletePositionApiV1PositionsPositionIdDelete, exportMembersApiV1MembersExportGet, getConversationApiV1ChatConversationsConversationIdGet, getMeApiV1AuthMeGet, getMemberApiV1MembersMemberIdGet, getProviderInfoApiV1ChatProviderGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMembersApiV1MembersGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, memberStatsApiV1MembersStatsGet, myMemberApiV1MembersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateMemberApiV1MembersMemberIdPatch, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
-import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostError, CreateMemberApiV1MembersPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteError, DeleteMemberApiV1MembersMemberIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetError, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponse, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchError, UpdateMemberApiV1MembersMemberIdPatchResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
+import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createMemberApiV1MembersPost, createPositionApiV1PositionsPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deleteMemberApiV1MembersMemberIdDelete, deletePositionApiV1PositionsPositionIdDelete, exportMembersApiV1MembersExportGet, getCompanyApiV1OrgCompanyGet, getConversationApiV1ChatConversationsConversationIdGet, getLeaveSettingsApiV1OrgLeaveSettingsGet, getMeApiV1AuthMeGet, getMemberApiV1MembersMemberIdGet, getProviderInfoApiV1ChatProviderGet, getWorkSettingsApiV1OrgWorkSettingsGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMembersApiV1MembersGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, memberStatsApiV1MembersStatsGet, myMemberApiV1MembersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, putCompanyApiV1OrgCompanyPut, putLeaveSettingsApiV1OrgLeaveSettingsPut, putWorkSettingsApiV1OrgWorkSettingsPut, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateMemberApiV1MembersMemberIdPatch, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
+import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostError, CreateMemberApiV1MembersPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteError, DeleteMemberApiV1MembersMemberIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetError, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponse, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponse, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutError, PutCompanyApiV1OrgCompanyPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutError, PutWorkSettingsApiV1OrgWorkSettingsPutResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchError, UpdateMemberApiV1MembersMemberIdPatchResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -924,6 +924,111 @@ export const updateGradeApiV1GradesGradeIdPatchMutation = (options?: Partial<Opt
     const mutationOptions: UseMutationOptions<UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateGradeApiV1GradesGradeIdPatchError, Options<UpdateGradeApiV1GradesGradeIdPatchData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateGradeApiV1GradesGradeIdPatch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getWorkSettingsApiV1OrgWorkSettingsGetQueryKey = (options?: Options<GetWorkSettingsApiV1OrgWorkSettingsGetData>) => createQueryKey('getWorkSettingsApiV1OrgWorkSettingsGet', options);
+
+/**
+ * Get Work Settings
+ */
+export const getWorkSettingsApiV1OrgWorkSettingsGetOptions = (options?: Options<GetWorkSettingsApiV1OrgWorkSettingsGetData>) => queryOptions<GetWorkSettingsApiV1OrgWorkSettingsGetResponse, DefaultError, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, ReturnType<typeof getWorkSettingsApiV1OrgWorkSettingsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getWorkSettingsApiV1OrgWorkSettingsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getWorkSettingsApiV1OrgWorkSettingsGetQueryKey(options)
+});
+
+/**
+ * Put Work Settings
+ */
+export const putWorkSettingsApiV1OrgWorkSettingsPutMutation = (options?: Partial<Options<PutWorkSettingsApiV1OrgWorkSettingsPutData>>): UseMutationOptions<PutWorkSettingsApiV1OrgWorkSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutError, Options<PutWorkSettingsApiV1OrgWorkSettingsPutData>> => {
+    const mutationOptions: UseMutationOptions<PutWorkSettingsApiV1OrgWorkSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutError, Options<PutWorkSettingsApiV1OrgWorkSettingsPutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putWorkSettingsApiV1OrgWorkSettingsPut({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getLeaveSettingsApiV1OrgLeaveSettingsGetQueryKey = (options?: Options<GetLeaveSettingsApiV1OrgLeaveSettingsGetData>) => createQueryKey('getLeaveSettingsApiV1OrgLeaveSettingsGet', options);
+
+/**
+ * Get Leave Settings
+ */
+export const getLeaveSettingsApiV1OrgLeaveSettingsGetOptions = (options?: Options<GetLeaveSettingsApiV1OrgLeaveSettingsGetData>) => queryOptions<GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, DefaultError, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, ReturnType<typeof getLeaveSettingsApiV1OrgLeaveSettingsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLeaveSettingsApiV1OrgLeaveSettingsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLeaveSettingsApiV1OrgLeaveSettingsGetQueryKey(options)
+});
+
+/**
+ * Put Leave Settings
+ */
+export const putLeaveSettingsApiV1OrgLeaveSettingsPutMutation = (options?: Partial<Options<PutLeaveSettingsApiV1OrgLeaveSettingsPutData>>): UseMutationOptions<PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, Options<PutLeaveSettingsApiV1OrgLeaveSettingsPutData>> => {
+    const mutationOptions: UseMutationOptions<PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, Options<PutLeaveSettingsApiV1OrgLeaveSettingsPutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putLeaveSettingsApiV1OrgLeaveSettingsPut({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getCompanyApiV1OrgCompanyGetQueryKey = (options?: Options<GetCompanyApiV1OrgCompanyGetData>) => createQueryKey('getCompanyApiV1OrgCompanyGet', options);
+
+/**
+ * Get Company
+ */
+export const getCompanyApiV1OrgCompanyGetOptions = (options?: Options<GetCompanyApiV1OrgCompanyGetData>) => queryOptions<GetCompanyApiV1OrgCompanyGetResponse, DefaultError, GetCompanyApiV1OrgCompanyGetResponse, ReturnType<typeof getCompanyApiV1OrgCompanyGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCompanyApiV1OrgCompanyGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCompanyApiV1OrgCompanyGetQueryKey(options)
+});
+
+/**
+ * Put Company
+ */
+export const putCompanyApiV1OrgCompanyPutMutation = (options?: Partial<Options<PutCompanyApiV1OrgCompanyPutData>>): UseMutationOptions<PutCompanyApiV1OrgCompanyPutResponse, PutCompanyApiV1OrgCompanyPutError, Options<PutCompanyApiV1OrgCompanyPutData>> => {
+    const mutationOptions: UseMutationOptions<PutCompanyApiV1OrgCompanyPutResponse, PutCompanyApiV1OrgCompanyPutError, Options<PutCompanyApiV1OrgCompanyPutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putCompanyApiV1OrgCompanyPut({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
