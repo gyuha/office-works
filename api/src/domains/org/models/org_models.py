@@ -2,11 +2,12 @@
 
 Tables
 ------
-* positions — 직급 체계: ordered list of position names (low → high by sort_order).
+* positions         — 직급 체계: ordered list of position names (low → high).
+* employment_types  — 고용 형태: list of employment-type names.
 
 Import pattern::
 
-    from domains.org.models import Position
+    from domains.org.models import Position, EmploymentType
 """
 
 from __future__ import annotations
@@ -42,3 +43,25 @@ class Position(Base):
 
     def __repr__(self) -> str:
         return f"<Position name={self.name!r} sort_order={self.sort_order}>"
+
+
+class EmploymentType(Base):
+    """A 고용 형태 (employment type) — selectable when registering members."""
+
+    __tablename__ = "employment_types"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<EmploymentType name={self.name!r}>"
