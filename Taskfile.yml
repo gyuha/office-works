@@ -74,7 +74,7 @@ tasks:
     env:
       PYTHONPATH: src
     cmds:
-      - uv run --python 3.12 python -c "import json; from main import app; open('openapi.json','w',encoding='utf-8').write(json.dumps(app.openapi(), ensure_ascii=False, indent=2) + '\n')"
+      - uv run python -c "import json; from main import app; open('openapi.json','w',encoding='utf-8').write(json.dumps(app.openapi(), ensure_ascii=False, indent=2) + '\n')"
 
   gen-api:codegen:
     internal: true

@@ -2,7 +2,7 @@
 
 > Production-grade FastAPI backend with auth (JWT+OAuth+RBAC) and LLM chat proxy domains.
 
-[![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://python.org)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.14-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)](https://fastapi.tiangolo.com)
 [![uv](https://img.shields.io/badge/uv-package%20manager-purple)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/badge/linter-ruff-red)](https://github.com/astral-sh/ruff)
@@ -85,7 +85,7 @@ curl http://localhost:8000/ready
 
 | 분류 | 기술 | 버전 |
 |------|------|------|
-| 언어 | Python | >= 3.12 |
+| 언어 | Python | >= 3.14 |
 | 웹 프레임워크 | FastAPI | >= 0.115 |
 | ASGI 서버 | Uvicorn | >= 0.30 |
 | 패키지 매니저 | uv | latest |
@@ -279,7 +279,7 @@ FastAPI 앱은 **호스트 머신**에서 직접 실행하고, 인프라 서비�
 graph LR
     subgraph host["🖥️ 호스트 머신 (로컬)"]
         direction TB
-        UV["uv run uvicorn\n--reload\nPython 3.12\n:8000"]
+        UV["uv run uvicorn\n--reload\nPython 3.14\n:8000"]
     end
 
     subgraph compose["🐳 Docker Compose"]
@@ -311,7 +311,7 @@ graph LR
 |------|-----------|
 | Docker Desktop | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
 | uv | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| Python >= 3.12 | `uv python install 3.12` |
+| Python >= 3.14 | `uv python install 3.14` |
 | task | `brew install go-task` 또는 [taskfile.dev/installation](https://taskfile.dev/installation/) |
 
 ### 원클릭 부팅 (권장)

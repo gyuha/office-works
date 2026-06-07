@@ -51,7 +51,7 @@ wonder, reflect, advocate, contrarian, judge
 
 > 위 Ouroboros 블록은 `ooo` 도구가 `<!-- ooo:START/END -->` 마커 사이를 재생성하므로 **그 안쪽을 직접 수정하지 말 것**. 코드베이스 관련 내용은 이 마커 아래에만 작성한다. (모노레포 전체 가이드는 루트 `../CLAUDE.md` 참고.)
 
-`office-works`의 FastAPI 백엔드. Python 3.12 / uv 기반이며 인증(JWT + OAuth2 + 이메일 인증)과 LLM 채팅 프록시 도메인을 제공한다.
+`office-works`의 FastAPI 백엔드. Python 3.14 / uv 기반이며 인증(JWT + OAuth2 + 이메일 인증)과 LLM 채팅 프록시 도메인을 제공한다.
 
 ## 명령어
 
@@ -117,6 +117,6 @@ pytest(`asyncio_mode = auto` — async 테스트에 데코레이터 불필요). 
 
 ## 주의 사항
 
-- **Python 3.12로 개발할 것.** Python 3.14 + langchain의 `pydantic.v1`은 비호환이라 chat 도메인 테스트가 collection 단계에서 실패한다(`requires-python = ">=3.12"`).
+- **Python 3.14로 개발할 것**(`requires-python = ">=3.14"`). 과거 langchain `pydantic.v1`이 3.14에서 깨졌으나 의존성 갱신으로 해소됨(전체 테스트 642 passed on 3.14). `.python-version`은 `api/.gitignore`가 무시하므로 버전 핀은 `pyproject.toml`이 담당.
 - Alembic 리비전은 `0001_initial_schema` 하나뿐 — pyproject가 언급하는 RBAC는 스키마에 아직 미구현(계획 단계). 기존 리비전 수정 금지, 신규는 `task revision`.
 - 인프라 호스트 포트(모두 `127.0.0.1` 바인딩): PostgreSQL 5432, Redis 6379, Mailpit SMTP 1025 / UI 8025. 메일은 dev=Mailpit, prod=SMTP(env).

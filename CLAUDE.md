@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FastAPI 백엔드(`api/`) + React SPA(`web/`) 모노레포 — 프로젝트명 `office-works`.
 
-`api/`는 Python 3.12 / uv 기반 FastAPI 서버로, 인증(JWT + OAuth2 + 이메일 인증)과 LLM 채팅 프록시 도메인을 제공한다. `web/`는 React 19 + TanStack Router SPA다.
+`api/`는 Python 3.14 / uv 기반 FastAPI 서버로, 인증(JWT + OAuth2 + 이메일 인증)과 LLM 채팅 프록시 도메인을 제공한다. `web/`는 React 19 + TanStack Router SPA다.
 
 ## 명령어
 
@@ -179,7 +179,7 @@ Docker 인프라(`task infra`, 모두 `127.0.0.1` 바인딩): PostgreSQL 5432, R
 ## 주의 사항
 
 - `web/src/features/auth/lib/mock-auth-api.ts` — 프론트엔드 인증이 현재 mock API 사용 중. 실 API 미연동 상태.
-- **Python 3.12로 개발할 것.** Python 3.14 + langchain의 `pydantic.v1`은 비호환이라 chat 도메인 테스트가 collection 단계에서 실패한다(`requires-python = ">=3.12"`).
+- **Python 3.14로 개발할 것**(`requires-python = ">=3.14"`). 과거 langchain `pydantic.v1`이 3.14에서 깨졌으나 의존성 갱신으로 해소됨(전체 테스트 642 passed on 3.14, 실패 12건은 stale Makefile 테스트로 무관). `.python-version`은 `api/.gitignore`가 무시하므로 버전 핀은 `pyproject.toml`의 `requires-python`이 담당한다.
 - `Taskfile.yml`이 정식 진입점이며 `PYTHONPATH=src`를 전역 설정한다. `Justfile`은 동일 명령을 미러링하나 보조용이다.
 - 마이그레이션은 `0001_initial_schema` 하나뿐 — pyproject가 언급하는 RBAC는 아직 스키마에 미구현(계획 단계).
 - `api/CLAUDE.md`는 Ouroboros 스펙-우선 워크플로우 문서로, 이 스택 설명과 무관하다.
