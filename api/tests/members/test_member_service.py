@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from core.exceptions import ConflictError, NotFoundError
+from core.exceptions import AppError, ConflictError, NotFoundError
 from domains.members.schemas import MemberCreate, MemberUpdate
 from domains.members.service import MemberService
 
@@ -50,6 +50,11 @@ class FakeMemberRepository:
 
     def __init__(self) -> None:
         self.members: list[_FakeMember] = []
+        # Grades considered valid by grade_exists() — mirrors the seeded grades table.
+        self.valid_grades: set[str] = {"특급", "고급", "중급", "초급"}
+
+    async def grade_exists(self, name: str) -> bool:
+        return name in self.valid_grades
 
     async def list(
         self,
@@ -200,6 +205,11 @@ async def test_create_duplicate_email_raises_conflict_error(service: MemberServi
     await service.create(_payload(email="dup@example.com"))
     with pytest.raises(ConflictError):
         await service.create(_payload(email="dup@example.com"))
+
+
+async def test_create_with_unknown_grade_raises_app_error(service: MemberService) -> None:
+    with pytest.raises(AppError):
+        await service.create(_payload(email="badgrade@example.com", grade="없는등급"))
 
 
 async def test_update_email_collides_with_other_member_raises_conflict_error(

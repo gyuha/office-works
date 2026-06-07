@@ -14,15 +14,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # ---------------------------------------------------------------------------
-# Grade — fixed 4-value 인사 분류 축 (RBAC role / rank 와 무관)
+# Grade — name string validated against the org `grades` table (service layer).
+# (Previously a fixed Literal enum; now a managed list — see org domain.)
 # ---------------------------------------------------------------------------
 
-Grade = Literal["특급", "고급", "중급", "초급"]
+Grade = str
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ class MemberCreate(BaseModel):
     name: str = Field(min_length=1, max_length=128)
     department: str = Field(min_length=1, max_length=64)
     rank: str = Field(min_length=1, max_length=64)
-    grade: Grade
+    grade: str = Field(min_length=1, max_length=16)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr
 
@@ -47,7 +47,7 @@ class MemberCreate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "phone", mode="before")
+    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
     @classmethod
     def strip_required_text(cls, v: object) -> object:
         if isinstance(v, str):
@@ -64,7 +64,7 @@ class MemberUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=128)
     department: str | None = Field(default=None, min_length=1, max_length=64)
     rank: str | None = Field(default=None, min_length=1, max_length=64)
-    grade: Grade | None = None
+    grade: str | None = Field(default=None, min_length=1, max_length=16)
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     email: EmailStr | None = None
 
@@ -75,7 +75,7 @@ class MemberUpdate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "phone", mode="before")
+    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
     @classmethod
     def strip_text(cls, v: object) -> object:
         if isinstance(v, str):

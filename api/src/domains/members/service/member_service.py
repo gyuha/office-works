@@ -19,7 +19,7 @@ import uuid
 
 from sqlalchemy.exc import IntegrityError
 
-from core.exceptions import ConflictError, NotFoundError
+from core.exceptions import AppError, ConflictError, NotFoundError
 from domains.members.repository import MemberRepository
 from domains.members.schemas import (
     MemberCreate,
@@ -78,10 +78,16 @@ class MemberService:
             raise NotFoundError("Member")
         return MemberResponse.model_validate(member)
 
+    async def _validate_grade(self, grade: str) -> None:
+        """Grade must be a name present in the org `grades` table."""
+        if not await self._repo.grade_exists(grade):
+            raise AppError(f"Unknown grade '{grade}'.")
+
     async def create(self, payload: MemberCreate) -> MemberResponse:
         existing = await self._repo.get_by_email(payload.email)
         if existing is not None:
             raise ConflictError(f"A member with email '{payload.email}' already exists.")
+        await self._validate_grade(payload.grade)
 
         employee_no = await self._repo.next_employee_no()
         try:
@@ -111,6 +117,10 @@ class MemberService:
             clash = await self._repo.get_by_email(new_email)
             if clash is not None and clash.id != member.id:
                 raise ConflictError(f"A member with email '{new_email}' already exists.")
+
+        new_grade = changes.get("grade")
+        if isinstance(new_grade, str):
+            await self._validate_grade(new_grade)
 
         try:
             updated = await self._repo.update(member, changes)

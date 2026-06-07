@@ -3,6 +3,10 @@
 from domains.org.schemas.org_schemas import (
     EmploymentTypeCreate,
     EmploymentTypeResponse,
+    GradeCreate,
+    GradeReorder,
+    GradeResponse,
+    GradeUpdate,
     PositionCreate,
     PositionReorder,
     PositionResponse,
@@ -12,6 +16,10 @@ from domains.org.schemas.org_schemas import (
 __all__ = [
     "EmploymentTypeCreate",
     "EmploymentTypeResponse",
+    "GradeCreate",
+    "GradeReorder",
+    "GradeResponse",
+    "GradeUpdate",
     "PositionCreate",
     "PositionReorder",
     "PositionResponse",

@@ -17,7 +17,7 @@ import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from sqlalchemy import ColumnElement, Select, func, or_, select
+from sqlalchemy import ColumnElement, Select, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domains.members.models import Member
@@ -43,6 +43,13 @@ class MemberRepository:
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def grade_exists(self, name: str) -> bool:
+        """Whether *name* is a valid grade in the org ``grades`` table (raw SQL)."""
+        result = await self._session.execute(
+            text("SELECT 1 FROM grades WHERE name = :name LIMIT 1"), {"name": name}
+        )
+        return result.scalar_one_or_none() is not None
 
     # ── Queries ────────────────────────────────────────────────────────────
 
