@@ -1,6 +1,8 @@
 """Org-settings domain schemas."""
 
 from domains.org.schemas.org_schemas import (
+    EmploymentTypeCreate,
+    EmploymentTypeResponse,
     PositionCreate,
     PositionReorder,
     PositionResponse,
@@ -8,6 +10,8 @@ from domains.org.schemas.org_schemas import (
 )
 
 __all__ = [
+    "EmploymentTypeCreate",
+    "EmploymentTypeResponse",
     "PositionCreate",
     "PositionReorder",
     "PositionResponse",

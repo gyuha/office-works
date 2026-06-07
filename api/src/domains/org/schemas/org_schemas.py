@@ -53,3 +53,29 @@ class PositionResponse(BaseModel):
     id: uuid.UUID
     name: str
     sort_order: int
+
+
+class EmploymentTypeCreate(BaseModel):
+    """Request body for POST /employment-types."""
+
+    name: str = Field(min_length=1, max_length=64)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, v: object) -> object:
+        if isinstance(v, str):
+            stripped = v.strip()
+            if not stripped:
+                raise ValueError("Name is required.")
+            return stripped
+        return v
+
+
+class EmploymentTypeResponse(BaseModel):
+    """Single employment-type response body."""
+
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    name: str
+    sort_order: int
