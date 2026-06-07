@@ -1,6 +1,15 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  createPositionApiV1PositionsPostMutation,
+  deletePositionApiV1PositionsPositionIdDeleteMutation,
+  listPositionsApiV1PositionsGetOptions,
+  listPositionsApiV1PositionsGetQueryKey,
+  renamePositionApiV1PositionsPositionIdPatchMutation,
+  reorderPositionsApiV1PositionsOrderPatchMutation,
+} from '@/client/@tanstack/react-query.gen';
 import { cn } from '@/lib/utils';
 import { OfficeIcon, type OfficeIconName } from '../icons';
 import type { ScreenModule } from './types';
@@ -82,50 +91,74 @@ const TEXT_INPUT =
 ================================================================ */
 
 function RanksTab() {
-  const [ranks, setRanks] = useState<string[]>([
-    '사원',
-    '선임',
-    '책임',
-    '수석',
-    '실장',
-    '상무',
-    '전무',
-    '대표이사',
-  ]);
-  const [editIdx, setEditIdx] = useState(-1);
+  const queryClient = useQueryClient();
+  const positionsQuery = useQuery(listPositionsApiV1PositionsGetOptions());
+  const positions = positionsQuery.data ?? [];
+
+  const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState('');
   const [newVal, setNewVal] = useState('');
 
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: listPositionsApiV1PositionsGetQueryKey() });
+
+  const createMut = useMutation({
+    ...createPositionApiV1PositionsPostMutation(),
+    onSuccess: () => {
+      setNewVal('');
+      invalidate();
+    },
+    onError: () => toast.error('직급 추가에 실패했습니다.'),
+  });
+  const renameMut = useMutation({
+    ...renamePositionApiV1PositionsPositionIdPatchMutation(),
+    onSuccess: () => {
+      setEditId(null);
+      invalidate();
+    },
+    onError: () => toast.error('직급 수정에 실패했습니다.'),
+  });
+  const deleteMut = useMutation({
+    ...deletePositionApiV1PositionsPositionIdDeleteMutation(),
+    onSuccess: invalidate,
+    onError: () => toast.error('직급 삭제에 실패했습니다.'),
+  });
+  const reorderMut = useMutation({
+    ...reorderPositionsApiV1PositionsOrderPatchMutation(),
+    onSuccess: invalidate,
+    onError: () => toast.error('순서 변경에 실패했습니다.'),
+  });
+
+  const busy =
+    createMut.isPending || renameMut.isPending || deleteMut.isPending || reorderMut.isPending;
+
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
-    if (j < 0 || j >= ranks.length) return;
-    const next = [...ranks];
-    [next[i], next[j]] = [next[j], next[i]];
-    setRanks(next);
+    if (j < 0 || j >= positions.length) return;
+    const ids = positions.map((p) => p.id);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    reorderMut.mutate({ body: { ordered_ids: ids } });
   };
 
-  const remove = (i: number) => {
-    if (ranks.length <= 1) return;
-    setRanks(ranks.filter((_, idx) => idx !== i));
+  const remove = (id: string) => {
+    if (positions.length <= 1) return;
+    deleteMut.mutate({ path: { position_id: id } });
   };
 
-  const startEdit = (i: number) => {
-    setEditIdx(i);
-    setEditVal(ranks[i]);
+  const startEdit = (id: string, name: string) => {
+    setEditId(id);
+    setEditVal(name);
   };
 
   const saveEdit = () => {
     const v = editVal.trim();
-    if (v) setRanks(ranks.map((r, idx) => (idx === editIdx ? v : r)));
-    setEditIdx(-1);
+    if (v && editId) renameMut.mutate({ path: { position_id: editId }, body: { name: v } });
+    else setEditId(null);
   };
 
   const addRank = () => {
     const v = newVal.trim();
-    if (v && !ranks.includes(v)) {
-      setRanks([...ranks, v]);
-      setNewVal('');
-    }
+    if (v && !positions.some((p) => p.name === v)) createMut.mutate({ body: { name: v } });
   };
 
   return (
@@ -135,84 +168,94 @@ function RanksTab() {
         sub="낮은 직급 → 높은 직급 순으로 정렬합니다. 호버하여 편집하세요."
       />
       <div className="px-3.5 py-2.5">
-        {ranks.map((r, i) =>
-          editIdx === i ? (
-            <div
-              key={r}
-              className="mb-[3px] flex items-center gap-2 rounded-[9px] bg-[#E8F0FF] px-2 py-[7px]"
-            >
-              <span className="flex size-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-om-blue-bg font-mono text-[11px] font-extrabold text-primary">
-                {i + 1}
-              </span>
-              <input
-                ref={(node) => node?.focus()}
-                value={editVal}
-                onChange={(e) => setEditVal(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveEdit();
-                  if (e.key === 'Escape') setEditIdx(-1);
-                }}
-                className="h-8 flex-1 rounded-[7px] border-[1.5px] border-primary bg-white px-2.5 text-[14px] outline-none"
-              />
-              <button
-                type="button"
-                onClick={saveEdit}
-                className="h-8 rounded-[7px] border-none bg-primary px-3.5 text-[13px] font-bold text-white"
+        {positionsQuery.isPending ? (
+          <div className="py-10 text-center text-[13.5px] text-[#8A94A6]">불러오는 중…</div>
+        ) : positionsQuery.isError ? (
+          <div className="py-10 text-center text-[13.5px] text-om-red">
+            직급 목록을 불러오지 못했습니다.
+          </div>
+        ) : (
+          positions.map((p, i) =>
+            editId === p.id ? (
+              <div
+                key={p.id}
+                className="mb-[3px] flex items-center gap-2 rounded-[9px] bg-[#E8F0FF] px-2 py-[7px]"
               >
-                저장
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditIdx(-1)}
-                className="h-8 rounded-[7px] border border-border bg-white px-2.5 text-[13px] font-semibold text-[#4A5468]"
+                <span className="flex size-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-om-blue-bg font-mono text-[11px] font-extrabold text-primary">
+                  {i + 1}
+                </span>
+                <input
+                  ref={(node) => node?.focus()}
+                  value={editVal}
+                  onChange={(e) => setEditVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveEdit();
+                    if (e.key === 'Escape') setEditId(null);
+                  }}
+                  className="h-8 flex-1 rounded-[7px] border-[1.5px] border-primary bg-white px-2.5 text-[14px] outline-none"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={saveEdit}
+                  className="h-8 rounded-[7px] border-none bg-primary px-3.5 text-[13px] font-bold text-white disabled:opacity-50"
+                >
+                  저장
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditId(null)}
+                  className="h-8 rounded-[7px] border border-border bg-white px-2.5 text-[13px] font-semibold text-[#4A5468]"
+                >
+                  취소
+                </button>
+              </div>
+            ) : (
+              <div
+                key={p.id}
+                className="group/rank mb-[3px] flex items-center gap-2.5 rounded-[9px] px-2 py-[9px] transition-colors hover:bg-[#F5F6F8]"
               >
-                취소
-              </button>
-            </div>
-          ) : (
-            <div
-              key={r}
-              className="group/rank mb-[3px] flex items-center gap-2.5 rounded-[9px] px-2 py-[9px] transition-colors hover:bg-[#F5F6F8]"
-            >
-              <span className="flex size-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-[#F0F1F3] font-mono text-[11px] font-extrabold text-[#8A94A6]">
-                {i + 1}
-              </span>
-              <span className="flex-1 text-[14px] font-semibold text-[#1B2435]">{r}</span>
-              <span className="flex flex-shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/rank:opacity-100">
-                <button
-                  type="button"
-                  disabled={i === 0}
-                  onClick={() => move(i, -1)}
-                  className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4 [&_svg]:rotate-180"
-                >
-                  <OfficeIcon name="chevDown" />
-                </button>
-                <button
-                  type="button"
-                  disabled={i === ranks.length - 1}
-                  onClick={() => move(i, 1)}
-                  className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4"
-                >
-                  <OfficeIcon name="chevDown" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startEdit(i)}
-                  className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] [&_svg]:size-4"
-                >
-                  <OfficeIcon name="write" />
-                </button>
-                {ranks.length > 1 && (
+                <span className="flex size-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-[#F0F1F3] font-mono text-[11px] font-extrabold text-[#8A94A6]">
+                  {i + 1}
+                </span>
+                <span className="flex-1 text-[14px] font-semibold text-[#1B2435]">{p.name}</span>
+                <span className="flex flex-shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/rank:opacity-100">
                   <button
                     type="button"
-                    onClick={() => remove(i)}
-                    className="flex size-[26px] items-center justify-center rounded-md text-[14px] font-bold text-om-red transition-colors hover:bg-om-red-bg"
+                    disabled={i === 0 || busy}
+                    onClick={() => move(i, -1)}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4 [&_svg]:rotate-180"
                   >
-                    ✕
+                    <OfficeIcon name="chevDown" />
                   </button>
-                )}
-              </span>
-            </div>
+                  <button
+                    type="button"
+                    disabled={i === positions.length - 1 || busy}
+                    onClick={() => move(i, 1)}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] disabled:opacity-30 [&_svg]:size-4"
+                  >
+                    <OfficeIcon name="chevDown" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(p.id, p.name)}
+                    className="flex size-[26px] items-center justify-center rounded-md text-[#8A94A6] transition-colors hover:bg-[#E9EBEF] [&_svg]:size-4"
+                  >
+                    <OfficeIcon name="write" />
+                  </button>
+                  {positions.length > 1 && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => remove(p.id)}
+                      className="flex size-[26px] items-center justify-center rounded-md text-[14px] font-bold text-om-red transition-colors hover:bg-om-red-bg disabled:opacity-30"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              </div>
+            )
           )
         )}
         <div className="mt-1.5 flex gap-2 border-t border-[#EEF0F3] px-2 pb-1 pt-2.5">
@@ -225,8 +268,9 @@ function RanksTab() {
           />
           <button
             type="button"
+            disabled={busy}
             onClick={addRank}
-            className="h-[34px] rounded-md border-none bg-primary px-4 text-[13px] font-bold text-white"
+            className="h-[34px] rounded-md border-none bg-primary px-4 text-[13px] font-bold text-white disabled:opacity-50"
           >
             추가
           </button>

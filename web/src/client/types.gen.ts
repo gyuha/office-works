@@ -443,6 +443,62 @@ export type PasswordResetRequestResponse = {
 };
 
 /**
+ * PositionCreate
+ *
+ * Request body for POST /positions.
+ */
+export type PositionCreate = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * PositionReorder
+ *
+ * Request body for PATCH /positions/order — full ordered list of ids (low→high).
+ */
+export type PositionReorder = {
+    /**
+     * Ordered Ids
+     */
+    ordered_ids: Array<string>;
+};
+
+/**
+ * PositionResponse
+ *
+ * Single-position response body.
+ */
+export type PositionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Sort Order
+     */
+    sort_order: number;
+};
+
+/**
+ * PositionUpdate
+ *
+ * Request body for PATCH /positions/{id} (rename).
+ */
+export type PositionUpdate = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
  * ProviderInfoResponse
  *
  * Response body for the ``/provider`` info endpoint.
@@ -1385,3 +1441,133 @@ export type UpdateMemberApiV1MembersMemberIdPatchResponses = {
 };
 
 export type UpdateMemberApiV1MembersMemberIdPatchResponse = UpdateMemberApiV1MembersMemberIdPatchResponses[keyof UpdateMemberApiV1MembersMemberIdPatchResponses];
+
+export type ListPositionsApiV1PositionsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/positions';
+};
+
+export type ListPositionsApiV1PositionsGetResponses = {
+    /**
+     * Response List Positions Api V1 Positions Get
+     *
+     * Successful Response
+     */
+    200: Array<PositionResponse>;
+};
+
+export type ListPositionsApiV1PositionsGetResponse = ListPositionsApiV1PositionsGetResponses[keyof ListPositionsApiV1PositionsGetResponses];
+
+export type CreatePositionApiV1PositionsPostData = {
+    body: PositionCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/positions';
+};
+
+export type CreatePositionApiV1PositionsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreatePositionApiV1PositionsPostError = CreatePositionApiV1PositionsPostErrors[keyof CreatePositionApiV1PositionsPostErrors];
+
+export type CreatePositionApiV1PositionsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: PositionResponse;
+};
+
+export type CreatePositionApiV1PositionsPostResponse = CreatePositionApiV1PositionsPostResponses[keyof CreatePositionApiV1PositionsPostResponses];
+
+export type ReorderPositionsApiV1PositionsOrderPatchData = {
+    body: PositionReorder;
+    path?: never;
+    query?: never;
+    url: '/api/v1/positions/order';
+};
+
+export type ReorderPositionsApiV1PositionsOrderPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReorderPositionsApiV1PositionsOrderPatchError = ReorderPositionsApiV1PositionsOrderPatchErrors[keyof ReorderPositionsApiV1PositionsOrderPatchErrors];
+
+export type ReorderPositionsApiV1PositionsOrderPatchResponses = {
+    /**
+     * Response Reorder Positions Api V1 Positions Order Patch
+     *
+     * Successful Response
+     */
+    200: Array<PositionResponse>;
+};
+
+export type ReorderPositionsApiV1PositionsOrderPatchResponse = ReorderPositionsApiV1PositionsOrderPatchResponses[keyof ReorderPositionsApiV1PositionsOrderPatchResponses];
+
+export type DeletePositionApiV1PositionsPositionIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Position Id
+         */
+        position_id: string;
+    };
+    query?: never;
+    url: '/api/v1/positions/{position_id}';
+};
+
+export type DeletePositionApiV1PositionsPositionIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeletePositionApiV1PositionsPositionIdDeleteError = DeletePositionApiV1PositionsPositionIdDeleteErrors[keyof DeletePositionApiV1PositionsPositionIdDeleteErrors];
+
+export type DeletePositionApiV1PositionsPositionIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeletePositionApiV1PositionsPositionIdDeleteResponse = DeletePositionApiV1PositionsPositionIdDeleteResponses[keyof DeletePositionApiV1PositionsPositionIdDeleteResponses];
+
+export type RenamePositionApiV1PositionsPositionIdPatchData = {
+    body: PositionUpdate;
+    path: {
+        /**
+         * Position Id
+         */
+        position_id: string;
+    };
+    query?: never;
+    url: '/api/v1/positions/{position_id}';
+};
+
+export type RenamePositionApiV1PositionsPositionIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RenamePositionApiV1PositionsPositionIdPatchError = RenamePositionApiV1PositionsPositionIdPatchErrors[keyof RenamePositionApiV1PositionsPositionIdPatchErrors];
+
+export type RenamePositionApiV1PositionsPositionIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: PositionResponse;
+};
+
+export type RenamePositionApiV1PositionsPositionIdPatchResponse = RenamePositionApiV1PositionsPositionIdPatchResponses[keyof RenamePositionApiV1PositionsPositionIdPatchResponses];

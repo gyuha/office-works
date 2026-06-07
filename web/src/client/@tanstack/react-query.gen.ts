@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createMemberApiV1MembersPost, deleteMemberApiV1MembersMemberIdDelete, exportMembersApiV1MembersExportGet, getConversationApiV1ChatConversationsConversationIdGet, getMeApiV1AuthMeGet, getMemberApiV1MembersMemberIdGet, getProviderInfoApiV1ChatProviderGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listMembersApiV1MembersGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, memberStatsApiV1MembersStatsGet, myMemberApiV1MembersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, readyReadyGet, refreshApiV1AuthRefreshPost, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateMemberApiV1MembersMemberIdPatch, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
-import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostError, CreateMemberApiV1MembersPostResponse, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteError, DeleteMemberApiV1MembersMemberIdDeleteResponse, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetError, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponse, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchError, UpdateMemberApiV1MembersMemberIdPatchResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
+import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createMemberApiV1MembersPost, createPositionApiV1PositionsPost, deleteMemberApiV1MembersMemberIdDelete, deletePositionApiV1PositionsPositionIdDelete, exportMembersApiV1MembersExportGet, getConversationApiV1ChatConversationsConversationIdGet, getMeApiV1AuthMeGet, getMemberApiV1MembersMemberIdGet, getProviderInfoApiV1ChatProviderGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listMembersApiV1MembersGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, memberStatsApiV1MembersStatsGet, myMemberApiV1MembersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateMemberApiV1MembersMemberIdPatch, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
+import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostError, CreateMemberApiV1MembersPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteError, DeleteMemberApiV1MembersMemberIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetError, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponse, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchError, UpdateMemberApiV1MembersMemberIdPatchResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -700,6 +700,92 @@ export const updateMemberApiV1MembersMemberIdPatchMutation = (options?: Partial<
     const mutationOptions: UseMutationOptions<UpdateMemberApiV1MembersMemberIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchError, Options<UpdateMemberApiV1MembersMemberIdPatchData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateMemberApiV1MembersMemberIdPatch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listPositionsApiV1PositionsGetQueryKey = (options?: Options<ListPositionsApiV1PositionsGetData>) => createQueryKey('listPositionsApiV1PositionsGet', options);
+
+/**
+ * List positions (low→high)
+ */
+export const listPositionsApiV1PositionsGetOptions = (options?: Options<ListPositionsApiV1PositionsGetData>) => queryOptions<ListPositionsApiV1PositionsGetResponse, DefaultError, ListPositionsApiV1PositionsGetResponse, ReturnType<typeof listPositionsApiV1PositionsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listPositionsApiV1PositionsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listPositionsApiV1PositionsGetQueryKey(options)
+});
+
+/**
+ * Create a position
+ */
+export const createPositionApiV1PositionsPostMutation = (options?: Partial<Options<CreatePositionApiV1PositionsPostData>>): UseMutationOptions<CreatePositionApiV1PositionsPostResponse, CreatePositionApiV1PositionsPostError, Options<CreatePositionApiV1PositionsPostData>> => {
+    const mutationOptions: UseMutationOptions<CreatePositionApiV1PositionsPostResponse, CreatePositionApiV1PositionsPostError, Options<CreatePositionApiV1PositionsPostData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createPositionApiV1PositionsPost({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Reorder positions
+ */
+export const reorderPositionsApiV1PositionsOrderPatchMutation = (options?: Partial<Options<ReorderPositionsApiV1PositionsOrderPatchData>>): UseMutationOptions<ReorderPositionsApiV1PositionsOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchError, Options<ReorderPositionsApiV1PositionsOrderPatchData>> => {
+    const mutationOptions: UseMutationOptions<ReorderPositionsApiV1PositionsOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchError, Options<ReorderPositionsApiV1PositionsOrderPatchData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await reorderPositionsApiV1PositionsOrderPatch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a position
+ */
+export const deletePositionApiV1PositionsPositionIdDeleteMutation = (options?: Partial<Options<DeletePositionApiV1PositionsPositionIdDeleteData>>): UseMutationOptions<DeletePositionApiV1PositionsPositionIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteError, Options<DeletePositionApiV1PositionsPositionIdDeleteData>> => {
+    const mutationOptions: UseMutationOptions<DeletePositionApiV1PositionsPositionIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteError, Options<DeletePositionApiV1PositionsPositionIdDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deletePositionApiV1PositionsPositionIdDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Rename a position
+ */
+export const renamePositionApiV1PositionsPositionIdPatchMutation = (options?: Partial<Options<RenamePositionApiV1PositionsPositionIdPatchData>>): UseMutationOptions<RenamePositionApiV1PositionsPositionIdPatchResponse, RenamePositionApiV1PositionsPositionIdPatchError, Options<RenamePositionApiV1PositionsPositionIdPatchData>> => {
+    const mutationOptions: UseMutationOptions<RenamePositionApiV1PositionsPositionIdPatchResponse, RenamePositionApiV1PositionsPositionIdPatchError, Options<RenamePositionApiV1PositionsPositionIdPatchData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await renamePositionApiV1PositionsPositionIdPatch({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
