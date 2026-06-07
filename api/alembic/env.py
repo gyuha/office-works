@@ -138,6 +138,11 @@ try:
     except ImportError:
         logger.debug("chat models not found — skipping")
 
+    try:
+        from domains.members import models as _members_models  # noqa: F401
+    except ImportError:
+        logger.debug("members models not found — skipping")
+
     target_metadata = Base.metadata
 except ImportError:
     # Database module may not be created yet (bootstrapping phase).
