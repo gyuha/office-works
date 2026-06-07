@@ -247,6 +247,7 @@ class AuthService:
         if not user.is_verified:
             raise UnauthorizedError("Email verification is required before login.")
 
+        await self._link_member_if_unlinked(user)
         return await self._issue_tokens(user)
 
     # ── Refresh ───────────────────────────────────────────────────────────────
@@ -470,8 +471,36 @@ class AuthService:
             provider=provider,
             user_id=str(user.id),
         )
+        await self._link_member_if_unlinked(user)
         tokens = await self._issue_tokens(user)
         return user, tokens
+
+    # ── Member linking ─────────────────────────────────────────────────────────
+
+    async def _link_member_if_unlinked(self, user: User) -> None:
+        """Link an unlinked Member with a matching email to *user*.
+
+        Eager linking (confirmed decision Q6b): once a User is established at
+        login/OAuth provisioning, an unlinked Member whose email matches gets its
+        ``user_id`` set.  No-op when no such Member exists (open provisioning is
+        preserved — login is never gated on Member presence).
+
+        Linking failures must never break the login flow, so any exception is
+        swallowed and logged as a warning.
+        """
+        try:
+            from domains.members.repository import MemberRepository
+
+            member_repo = MemberRepository(self._repo._session)
+            linked = await member_repo.link_to_user(user.email, user.id)
+            if linked is not None:
+                logger.info(
+                    "member_linked",
+                    user_id=str(user.id),
+                    member_id=str(linked.id),
+                )
+        except Exception as exc:
+            logger.warning("member_link_failed", user_id=str(user.id), error=str(exc))
 
     # ── Internal ──────────────────────────────────────────────────────────────
 
