@@ -14,7 +14,9 @@ license = { text = "MIT" }
 authors = [
     { name = "Your Name", email = "you@example.com" },
 ]
-requires-python = ">=3.12"
+# 3.13+ 비호환: langchain의 pydantic.v1이 3.14에서 깨지고 uvicorn --reload spawn이
+# 3.12/3.14 stdlib을 섞어 크래시한다. uv가 3.12.x를 일관되게 선택하도록 상한을 둔다.
+requires-python = ">=3.12,<3.13"
 keywords = ["fastapi", "backend", "api", "auth", "jwt"]
 classifiers = [
     "Development Status :: 3 - Alpha",
