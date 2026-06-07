@@ -1,3 +1,13 @@
+import { useNavigate } from '@tanstack/react-router';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { OfficeIcon } from '../icons';
 import { useSidebarStore } from '../store/sidebar-store';
 
@@ -35,6 +45,14 @@ export function OfficeTopbar({
   subtitle: string;
 }) {
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const clearUser = useAuthStore((s) => s.clearUser);
+
+  const handleLogout = () => {
+    clearUser();
+    navigate({ to: '/login' });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-[76px] items-center gap-4 border-b border-border bg-om-canvas/85 px-7 backdrop-blur-md backdrop-saturate-150">
@@ -58,21 +76,44 @@ export function OfficeTopbar({
         <IconButton name="mail" badge={3} />
         <IconButton name="calendar" />
 
-        <button
-          type="button"
-          className="ml-1.5 flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-white py-[5px] pl-1.5 pr-2.5 transition-colors hover:bg-[#F7F8FA]"
-        >
-          <img
-            src="https://i.pravatar.cc/80?img=12"
-            alt="프로필"
-            className="size-[38px] rounded-[10px] object-cover"
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                className="ml-1.5 flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-white py-[5px] pl-1.5 pr-2.5 transition-colors hover:bg-[#F7F8FA]"
+              >
+                <img
+                  src="https://i.pravatar.cc/80?img=12"
+                  alt="프로필"
+                  className="size-[38px] rounded-[10px] object-cover"
+                />
+                <span className="text-left">
+                  <span className="block text-sm font-bold leading-tight text-[#1B2435]">
+                    {user?.name ?? '김지훈 대리'}
+                  </span>
+                  <span className="block text-xs text-[#69748A]">개발팀</span>
+                </span>
+                <OfficeIcon name="chevDown" className="size-[18px] text-[#69748A]" />
+              </button>
+            }
           />
-          <span className="text-left">
-            <span className="block text-sm font-bold leading-tight text-[#1B2435]">김지훈 대리</span>
-            <span className="block text-xs text-[#69748A]">개발팀</span>
-          </span>
-          <OfficeIcon name="chevDown" className="size-[18px] text-[#69748A]" />
-        </button>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem disabled className="flex-col items-start gap-0">
+              <span className="text-sm font-semibold text-foreground">
+                {user?.name ?? '김지훈 대리'}
+              </span>
+              {user?.email && (
+                <span className="font-mono text-xs text-muted-foreground">{user.email}</span>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <OfficeIcon name="chevL" className="size-4" />
+              로그아웃
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
