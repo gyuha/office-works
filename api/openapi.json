@@ -1547,6 +1547,121 @@
           }
         }
       }
+    },
+    "/api/v1/employment-types": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "summary": "List employment types",
+        "operationId": "list_employment_types_api_v1_employment_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EmploymentTypeResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Employment Types Api V1 Employment Types Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Create an employment type",
+        "operationId": "create_employment_type_api_v1_employment_types_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmploymentTypeCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmploymentTypeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/employment-types/{type_id}": {
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Delete an employment type",
+        "operationId": "delete_employment_type_api_v1_employment_types__type_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Type Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1720,6 +1835,47 @@
           "updated_at"
         ],
         "title": "ConversationResponse"
+      },
+      "EmploymentTypeCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "EmploymentTypeCreate",
+        "description": "Request body for POST /employment-types."
+      },
+      "EmploymentTypeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sort_order"
+        ],
+        "title": "EmploymentTypeResponse",
+        "description": "Single employment-type response body."
       },
       "HTTPValidationError": {
         "properties": {

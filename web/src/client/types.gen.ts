@@ -127,6 +127,38 @@ export type ConversationResponse = {
 };
 
 /**
+ * EmploymentTypeCreate
+ *
+ * Request body for POST /employment-types.
+ */
+export type EmploymentTypeCreate = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * EmploymentTypeResponse
+ *
+ * Single employment-type response body.
+ */
+export type EmploymentTypeResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Sort Order
+     */
+    sort_order: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -1571,3 +1603,76 @@ export type RenamePositionApiV1PositionsPositionIdPatchResponses = {
 };
 
 export type RenamePositionApiV1PositionsPositionIdPatchResponse = RenamePositionApiV1PositionsPositionIdPatchResponses[keyof RenamePositionApiV1PositionsPositionIdPatchResponses];
+
+export type ListEmploymentTypesApiV1EmploymentTypesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/employment-types';
+};
+
+export type ListEmploymentTypesApiV1EmploymentTypesGetResponses = {
+    /**
+     * Response List Employment Types Api V1 Employment Types Get
+     *
+     * Successful Response
+     */
+    200: Array<EmploymentTypeResponse>;
+};
+
+export type ListEmploymentTypesApiV1EmploymentTypesGetResponse = ListEmploymentTypesApiV1EmploymentTypesGetResponses[keyof ListEmploymentTypesApiV1EmploymentTypesGetResponses];
+
+export type CreateEmploymentTypeApiV1EmploymentTypesPostData = {
+    body: EmploymentTypeCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/employment-types';
+};
+
+export type CreateEmploymentTypeApiV1EmploymentTypesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateEmploymentTypeApiV1EmploymentTypesPostError = CreateEmploymentTypeApiV1EmploymentTypesPostErrors[keyof CreateEmploymentTypeApiV1EmploymentTypesPostErrors];
+
+export type CreateEmploymentTypeApiV1EmploymentTypesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: EmploymentTypeResponse;
+};
+
+export type CreateEmploymentTypeApiV1EmploymentTypesPostResponse = CreateEmploymentTypeApiV1EmploymentTypesPostResponses[keyof CreateEmploymentTypeApiV1EmploymentTypesPostResponses];
+
+export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Type Id
+         */
+        type_id: string;
+    };
+    query?: never;
+    url: '/api/v1/employment-types/{type_id}';
+};
+
+export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError = DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteErrors[keyof DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteErrors];
+
+export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse = DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses[keyof DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses];

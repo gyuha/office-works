@@ -3,8 +3,12 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  createEmploymentTypeApiV1EmploymentTypesPostMutation,
   createPositionApiV1PositionsPostMutation,
+  deleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteMutation,
   deletePositionApiV1PositionsPositionIdDeleteMutation,
+  listEmploymentTypesApiV1EmploymentTypesGetOptions,
+  listEmploymentTypesApiV1EmploymentTypesGetQueryKey,
   listPositionsApiV1PositionsGetOptions,
   listPositionsApiV1PositionsGetQueryKey,
   renamePositionApiV1PositionsPositionIdPatchMutation,
@@ -323,21 +327,34 @@ function GradesTab() {
 ================================================================ */
 
 function EmpTypesTab() {
-  const [types, setTypes] = useState<string[]>([
-    '정규직',
-    '계약직',
-    '파트타임',
-    '인턴',
-    '프리랜서',
-  ]);
+  const queryClient = useQueryClient();
+  const typesQuery = useQuery(listEmploymentTypesApiV1EmploymentTypesGetOptions());
+  const types = typesQuery.data ?? [];
   const [newVal, setNewVal] = useState('');
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: listEmploymentTypesApiV1EmploymentTypesGetQueryKey(),
+    });
+
+  const createMut = useMutation({
+    ...createEmploymentTypeApiV1EmploymentTypesPostMutation(),
+    onSuccess: () => {
+      setNewVal('');
+      invalidate();
+    },
+    onError: () => toast.error('고용 형태 추가에 실패했습니다.'),
+  });
+  const deleteMut = useMutation({
+    ...deleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteMutation(),
+    onSuccess: invalidate,
+    onError: () => toast.error('고용 형태 삭제에 실패했습니다.'),
+  });
+  const busy = createMut.isPending || deleteMut.isPending;
 
   const add = () => {
     const v = newVal.trim();
-    if (v && !types.includes(v)) {
-      setTypes([...types, v]);
-      setNewVal('');
-    }
+    if (v && !types.some((t) => t.name === v)) createMut.mutate({ body: { name: v } });
   };
 
   return (
@@ -345,21 +362,28 @@ function EmpTypesTab() {
       <PanelHead title="고용 형태" sub="구성원 등록 시 선택 가능한 고용 형태 유형을 관리합니다" />
       <div className="px-[22px] py-5">
         <div className="mb-[18px] flex min-h-10 flex-wrap gap-2">
-          {types.map((t, i) => (
-            <span
-              key={t}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-[#F8F9FA] px-3.5 py-[7px] text-[13.5px] font-semibold text-[#4A5468]"
-            >
-              {t}
-              <button
-                type="button"
-                onClick={() => setTypes(types.filter((_, idx) => idx !== i))}
-                className="flex size-4 items-center justify-center rounded-full text-[13px] leading-none text-[#8A94A6] transition-colors hover:bg-[#E0E2E6] hover:text-om-red"
+          {typesQuery.isPending ? (
+            <span className="text-[13.5px] text-[#8A94A6]">불러오는 중…</span>
+          ) : typesQuery.isError ? (
+            <span className="text-[13.5px] text-om-red">고용 형태를 불러오지 못했습니다.</span>
+          ) : (
+            types.map((t) => (
+              <span
+                key={t.id}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-[#F8F9FA] px-3.5 py-[7px] text-[13.5px] font-semibold text-[#4A5468]"
               >
-                ✕
-              </button>
-            </span>
-          ))}
+                {t.name}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => deleteMut.mutate({ path: { type_id: t.id } })}
+                  className="flex size-4 items-center justify-center rounded-full text-[13px] leading-none text-[#8A94A6] transition-colors hover:bg-[#E0E2E6] hover:text-om-red disabled:opacity-40"
+                >
+                  ✕
+                </button>
+              </span>
+            ))
+          )}
         </div>
         <div className="flex gap-2 border-t border-[#EEF0F3] pt-3.5">
           <input
@@ -371,8 +395,9 @@ function EmpTypesTab() {
           />
           <button
             type="button"
+            disabled={busy}
             onClick={add}
-            className="h-[34px] rounded-md border-none bg-primary px-4 text-[13px] font-bold text-white"
+            className="h-[34px] rounded-md border-none bg-primary px-4 text-[13px] font-bold text-white disabled:opacity-50"
           >
             추가
           </button>
