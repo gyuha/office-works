@@ -1,5 +1,12 @@
-"""Org-settings domain routers."""
+"""Org-settings domain routers — aggregated under one ``router``."""
 
-from domains.org.router.position_router import router
+from fastapi import APIRouter
+
+from domains.org.router.employment_type_router import router as employment_type_router
+from domains.org.router.position_router import router as position_router
+
+router = APIRouter()
+router.include_router(position_router)
+router.include_router(employment_type_router)
 
 __all__ = ["router"]
