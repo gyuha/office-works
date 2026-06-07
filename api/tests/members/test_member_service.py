@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -132,10 +133,11 @@ class FakeMemberRepository:
                 max_seq = max(max_seq, int(match.group(1)))
         return f"EMP-{max_seq + 1:03d}"
 
-    async def stats(self) -> tuple[int, int, int, dict[str, int]]:
+    async def stats(self) -> tuple[int, int, int, dict[str, int], Sequence[str]]:
         active = [m for m in self.members if m.is_active]
         total = len(active)
-        department_count = len({m.department for m in active})
+        departments = sorted({m.department for m in active})
+        department_count = len(departments)
         now = datetime.now(UTC)
         new_this_month = sum(
             1 for m in active if m.created_at.year == now.year and m.created_at.month == now.month
@@ -143,7 +145,7 @@ class FakeMemberRepository:
         grade_distribution: dict[str, int] = {}
         for m in active:
             grade_distribution[m.grade] = grade_distribution.get(m.grade, 0) + 1
-        return total, department_count, new_this_month, grade_distribution
+        return total, department_count, new_this_month, grade_distribution, departments
 
 
 @pytest.fixture
@@ -156,10 +158,12 @@ def service(repo: FakeMemberRepository) -> MemberService:
     return MemberService(repo)  # type: ignore[arg-type]
 
 
-def _payload(email: str = "alice@example.com", grade: str = "중급") -> MemberCreate:
+def _payload(
+    email: str = "alice@example.com", grade: str = "중급", department: str = "개발팀"
+) -> MemberCreate:
     return MemberCreate(
         name="홍길동",
-        department="개발팀",
+        department=department,
         rank="사원",
         grade=grade,  # type: ignore[arg-type]
         phone="010-1234-5678",
@@ -243,3 +247,19 @@ async def test_stats_grade_distribution_sums_to_active_total(service: MemberServ
     assert stats.total == 3
     assert sum(stats.grade_distribution.values()) == stats.total
     assert "초급" not in stats.grade_distribution  # soft-deleted excluded
+
+
+# ── stats departments lists distinct active departments, sorted ──────────────
+
+
+async def test_stats_departments_lists_distinct_active_sorted(service: MemberService) -> None:
+    await service.create(_payload(email="a@example.com", department="개발팀"))
+    await service.create(_payload(email="b@example.com", department="기획팀"))
+    await service.create(_payload(email="c@example.com", department="개발팀"))
+    deleted = await service.create(_payload(email="d@example.com", department="영업팀"))
+    await service.delete(deleted.id)
+
+    stats = await service.stats()
+
+    assert stats.departments == ["개발팀", "기획팀"]  # distinct, sorted, soft-deleted excluded
+    assert stats.department_count == 2

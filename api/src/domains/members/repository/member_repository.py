@@ -186,19 +186,19 @@ class MemberRepository:
 
     # ── Stats ────────────────────────────────────────────────────────────────
 
-    async def stats(self) -> tuple[int, int, int, dict[str, int]]:
-        """Return (active total, distinct departments, this-month count, grade counts)."""
+    async def stats(self) -> tuple[int, int, int, dict[str, int], Sequence[str]]:
+        """Return (active total, distinct dept count, this-month, grade counts, dept names)."""
         active = Member.is_active.is_(True)
 
         total = (
             await self._session.execute(select(func.count()).select_from(Member).where(active))
         ).scalar_one()
 
-        department_count = (
-            await self._session.execute(
-                select(func.count(func.distinct(Member.department))).where(active)
-            )
-        ).scalar_one()
+        department_rows = await self._session.execute(
+            select(func.distinct(Member.department)).where(active).order_by(Member.department)
+        )
+        departments = list(department_rows.scalars().all())
+        department_count = len(departments)
 
         now = datetime.now(UTC)
         month_start = datetime(now.year, now.month, 1, tzinfo=UTC)
@@ -215,4 +215,4 @@ class MemberRepository:
         )
         grade_distribution: dict[str, int] = {grade: count for grade, count in grade_rows.all()}  # noqa: C416
 
-        return total, department_count, new_this_month, grade_distribution
+        return total, department_count, new_this_month, grade_distribution, departments

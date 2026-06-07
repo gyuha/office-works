@@ -126,3 +126,4 @@ class MemberStatsResponse(BaseModel):
     department_count: int
     new_this_month: int
     grade_distribution: dict[str, int]
+    departments: list[str]

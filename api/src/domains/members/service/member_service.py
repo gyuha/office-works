@@ -125,12 +125,15 @@ class MemberService:
         await self._repo.soft_delete(member)
 
     async def stats(self) -> MemberStatsResponse:
-        total, department_count, new_this_month, grade_distribution = await self._repo.stats()
+        total, department_count, new_this_month, grade_distribution, departments = (
+            await self._repo.stats()
+        )
         return MemberStatsResponse(
             total=total,
             department_count=department_count,
             new_this_month=new_this_month,
             grade_distribution=grade_distribution,
+            departments=list(departments),
         )
 
 
