@@ -41,6 +41,9 @@ task typecheck          # mypy 만
 # Alembic 마이그레이션
 task migrate            # upgrade head
 task revision           # autogenerate 리비전 생성 (대화형)
+
+# 시드 (조직설정 캐노니컬 데이터셋 upsert — idempotent, migrate 후)
+task seed
 ```
 
 > 전체 검증은 단일 `check` 태스크가 없다 — `task lint && task test`로 수행한다(커버리지 게이트는 pytest가 강제).

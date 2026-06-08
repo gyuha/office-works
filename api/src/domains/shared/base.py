@@ -3,7 +3,7 @@
 Provides abstract base types for the DDD building blocks used across all
 bounded contexts:
 
-- :class:`Entity`        — has identity (UUID), equality by ``id``.
+- :class:`Entity`        — has identity (prefixed string ID), equality by ``id``.
 - :class:`AggregateRoot` — top-level entity that owns aggregate lifecycle.
 - :class:`ValueObject`   — immutable; equality by value (all fields).
 
@@ -25,9 +25,10 @@ Usage::
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+
+from core.ids import generate_id
 
 # ---------------------------------------------------------------------------
 # Entity — domain object with stable identity
@@ -38,7 +39,7 @@ from datetime import UTC, datetime
 class Entity:
     """Base class for domain entities.
 
-    Entities have a stable, globally unique identity (UUID).  Two instances
+    Entities have a stable, globally unique identity (string ID).  Two instances
     with the same ``id`` represent the same domain concept regardless of their
     other field values.
 
@@ -65,7 +66,7 @@ class Entity:
         assert hash(a) == hash(b)
     """
 
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    id: str = field(default_factory=lambda: generate_id("ent"))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Entity):

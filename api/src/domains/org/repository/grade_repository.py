@@ -6,7 +6,6 @@ between the org and members domains.
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import func, select, text
@@ -25,7 +24,7 @@ class GradeRepository:
         result = await self._session.execute(select(Grade).order_by(Grade.sort_order))
         return result.scalars().all()
 
-    async def get_by_id(self, grade_id: uuid.UUID) -> Grade | None:
+    async def get_by_id(self, grade_id: str) -> Grade | None:
         return await self._session.get(Grade, grade_id)
 
     async def get_by_name(self, name: str) -> Grade | None:
@@ -61,7 +60,7 @@ class GradeRepository:
         await self._session.delete(grade)
         await self._session.flush()
 
-    async def reorder(self, ordered_ids: Sequence[uuid.UUID]) -> Sequence[Grade]:
+    async def reorder(self, ordered_ids: Sequence[str]) -> Sequence[Grade]:
         by_id = {g.id: g for g in await self.list()}
         for order, gid in enumerate(ordered_ids, start=1):
             grade = by_id.get(gid)
@@ -71,16 +70,16 @@ class GradeRepository:
         return await self.list()
 
     async def count_members_with_grade(self, name: str) -> int:
-        """How many member rows reference this grade name (raw SQL — members table)."""
+        """How many user rows reference this grade name (raw SQL — users table)."""
         result = await self._session.execute(
-            text("SELECT count(*) FROM members WHERE grade = :name"), {"name": name}
+            text("SELECT count(*) FROM users WHERE grade = :name"), {"name": name}
         )
         return int(result.scalar_one())
 
     async def cascade_rename_members(self, old_name: str, new_name: str) -> None:
-        """Rename the grade on all member rows that reference it (raw SQL)."""
+        """Rename the grade on all user rows that reference it (raw SQL)."""
         await self._session.execute(
-            text("UPDATE members SET grade = :new WHERE grade = :old"),
+            text("UPDATE users SET grade = :new WHERE grade = :old"),
             {"new": new_name, "old": old_name},
         )
         await self._session.flush()

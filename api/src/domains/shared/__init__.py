@@ -5,7 +5,7 @@ This package provides the foundational abstractions that other bounded contexts
 
 Exports
 -------
-- :class:`Entity`         — domain object with UUID identity
+- :class:`Entity`         — domain object with prefixed string ID identity
 - :class:`AggregateRoot`  — lifecycle-owning top-level entity
 - :class:`ValueObject`    — immutable, equality-by-value concept
 - :class:`DomainEvent`    — base class for cross-domain events

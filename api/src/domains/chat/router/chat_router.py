@@ -49,7 +49,6 @@ Inject a stub factory to avoid real LLM calls::
 
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import structlog
@@ -391,7 +390,7 @@ async def list_conversations(
     summary="Get a conversation",
 )
 async def get_conversation(
-    conversation_id: uuid.UUID,
+    conversation_id: str,
     current_user: Any = Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> ConversationResponse:
@@ -409,7 +408,7 @@ async def get_conversation(
     summary="List messages in a conversation",
 )
 async def list_messages(
-    conversation_id: uuid.UUID,
+    conversation_id: str,
     current_user: Any = Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> list[MessageResponse]:
@@ -428,7 +427,7 @@ async def list_messages(
     dependencies=[Depends(require_permission("chat:write"))],
 )
 async def send_message(
-    conversation_id: uuid.UUID,
+    conversation_id: str,
     body: SendMessageRequest,
     current_user: Any = Depends(get_current_user),
     session: AsyncSession = Depends(get_async_session),
@@ -551,7 +550,7 @@ async def send_message(
 
 async def _auto_title(
     repo: ChatRepository,
-    conv_id: uuid.UUID,
+    conv_id: str,
     user_content: str,
     assistant_content: str,
     service: ChatService,

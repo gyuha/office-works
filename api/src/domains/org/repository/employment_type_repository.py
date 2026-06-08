@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import func, select
@@ -23,7 +22,7 @@ class EmploymentTypeRepository:
         )
         return result.scalars().all()
 
-    async def get_by_id(self, type_id: uuid.UUID) -> EmploymentType | None:
+    async def get_by_id(self, type_id: str) -> EmploymentType | None:
         return await self._session.get(EmploymentType, type_id)
 
     async def get_by_name(self, name: str) -> EmploymentType | None:

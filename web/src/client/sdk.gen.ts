@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostErrors, ChatCompleteApiV1ChatCompletePostResponses, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostErrors, ChatStreamApiV1ChatStreamPostResponses, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostErrors, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponses, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostErrors, CreateConversationApiV1ChatConversationsPostResponses, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostErrors, CreateEmploymentTypeApiV1EmploymentTypesPostResponses, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostErrors, CreateGradeApiV1GradesPostResponses, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostErrors, CreateMemberApiV1MembersPostResponses, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostErrors, CreatePositionApiV1PositionsPostResponses, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteErrors, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteErrors, DeleteGradeApiV1GradesGradeIdDeleteResponses, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteErrors, DeleteMemberApiV1MembersMemberIdDeleteResponses, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteErrors, DeletePositionApiV1PositionsPositionIdDeleteResponses, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetErrors, ExportMembersApiV1MembersExportGetResponses, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponses, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetErrors, GetConversationApiV1ChatConversationsConversationIdGetResponses, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponses, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponses, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetErrors, GetMemberApiV1MembersMemberIdGetResponses, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponses, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponses, HealthHealthGetData, HealthHealthGetResponses, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponses, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponses, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponses, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetErrors, ListMembersApiV1MembersGetResponses, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetErrors, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponses, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponses, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostErrors, LoginApiV1AuthLoginPostResponses, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostErrors, LogoutApiV1AuthLogoutPostResponses, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponses, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponses, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetErrors, OauthCallbackApiV1AuthOauthProviderCallbackGetResponses, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetErrors, OauthLoginApiV1AuthOauthProviderLoginGetResponses, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutErrors, PutCompanyApiV1OrgCompanyPutResponses, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutErrors, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponses, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutErrors, PutWorkSettingsApiV1OrgWorkSettingsPutResponses, ReadyReadyGetData, ReadyReadyGetResponses, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostErrors, RefreshApiV1AuthRefreshPostResponses, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchErrors, RenamePositionApiV1PositionsPositionIdPatchResponses, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchErrors, ReorderGradesApiV1GradesOrderPatchResponses, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchErrors, ReorderPositionsApiV1PositionsOrderPatchResponses, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostErrors, RequestPasswordResetApiV1AuthPasswordResetPostResponses, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostErrors, SendMessageApiV1ChatConversationsConversationIdMessagesPostResponses, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostErrors, SignupApiV1AuthSignupPostResponses, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchErrors, UpdateGradeApiV1GradesGradeIdPatchResponses, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchErrors, UpdateMemberApiV1MembersMemberIdPatchResponses, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostErrors, VerifyEmailApiV1AuthVerifyEmailTokenPostResponses } from './types.gen';
+import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostErrors, ChatCompleteApiV1ChatCompletePostResponses, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostErrors, ChatStreamApiV1ChatStreamPostResponses, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostErrors, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponses, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostErrors, CreateConversationApiV1ChatConversationsPostResponses, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostErrors, CreateEmploymentTypeApiV1EmploymentTypesPostResponses, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostErrors, CreateGradeApiV1GradesPostResponses, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostErrors, CreatePositionApiV1PositionsPostResponses, CreateUserApiV1UsersPostData, CreateUserApiV1UsersPostErrors, CreateUserApiV1UsersPostResponses, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteErrors, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponses, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteErrors, DeleteGradeApiV1GradesGradeIdDeleteResponses, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteErrors, DeletePositionApiV1PositionsPositionIdDeleteResponses, DeleteUserApiV1UsersUserIdDeleteData, DeleteUserApiV1UsersUserIdDeleteErrors, DeleteUserApiV1UsersUserIdDeleteResponses, ExportUsersApiV1UsersExportGetData, ExportUsersApiV1UsersExportGetErrors, ExportUsersApiV1UsersExportGetResponses, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponses, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetErrors, GetConversationApiV1ChatConversationsConversationIdGetResponses, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponses, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponses, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponses, GetUserApiV1UsersUserIdGetData, GetUserApiV1UsersUserIdGetErrors, GetUserApiV1UsersUserIdGetResponses, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponses, HealthHealthGetData, HealthHealthGetResponses, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponses, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponses, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponses, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetErrors, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponses, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponses, ListUsersApiV1UsersGetData, ListUsersApiV1UsersGetErrors, ListUsersApiV1UsersGetResponses, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostErrors, LoginApiV1AuthLoginPostResponses, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostErrors, LogoutApiV1AuthLogoutPostResponses, MyRecordApiV1UsersMeGetData, MyRecordApiV1UsersMeGetResponses, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetErrors, OauthCallbackApiV1AuthOauthProviderCallbackGetResponses, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetErrors, OauthLoginApiV1AuthOauthProviderLoginGetResponses, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutErrors, PutCompanyApiV1OrgCompanyPutResponses, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutErrors, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponses, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutErrors, PutWorkSettingsApiV1OrgWorkSettingsPutResponses, ReadyReadyGetData, ReadyReadyGetResponses, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostErrors, RefreshApiV1AuthRefreshPostResponses, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchErrors, RenamePositionApiV1PositionsPositionIdPatchResponses, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchErrors, ReorderGradesApiV1GradesOrderPatchResponses, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchErrors, ReorderPositionsApiV1PositionsOrderPatchResponses, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostErrors, RequestPasswordResetApiV1AuthPasswordResetPostResponses, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostErrors, SendMessageApiV1ChatConversationsConversationIdMessagesPostResponses, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostErrors, SignupApiV1AuthSignupPostResponses, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchErrors, UpdateGradeApiV1GradesGradeIdPatchResponses, UpdateUserApiV1UsersUserIdPatchData, UpdateUserApiV1UsersUserIdPatchErrors, UpdateUserApiV1UsersUserIdPatchResponses, UserStatsApiV1UsersStatsGetData, UserStatsApiV1UsersStatsGetResponses, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostErrors, VerifyEmailApiV1AuthVerifyEmailTokenPostResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -315,24 +315,24 @@ export const sendMessageApiV1ChatConversationsConversationIdMessagesPost = <Thro
 });
 
 /**
- * List members
+ * List employees
  *
- * Return a paginated, filtered, sorted list of active members.
+ * Return a paginated, filtered, sorted list of active employees.
  */
-export const listMembersApiV1MembersGet = <ThrowOnError extends boolean = false>(options?: Options<ListMembersApiV1MembersGetData, ThrowOnError>): RequestResult<ListMembersApiV1MembersGetResponses, ListMembersApiV1MembersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListMembersApiV1MembersGetResponses, ListMembersApiV1MembersGetErrors, ThrowOnError>({
+export const listUsersApiV1UsersGet = <ThrowOnError extends boolean = false>(options?: Options<ListUsersApiV1UsersGetData, ThrowOnError>): RequestResult<ListUsersApiV1UsersGetResponses, ListUsersApiV1UsersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersApiV1UsersGetResponses, ListUsersApiV1UsersGetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members',
+    url: '/api/v1/users',
     ...options
 });
 
 /**
- * Create a member
+ * Create an employee
  *
- * Create a new member. The employee number (사번) is server-generated.
+ * Create a new employee. The employee number (사번) is server-generated.
  */
-export const createMemberApiV1MembersPost = <ThrowOnError extends boolean = false>(options: Options<CreateMemberApiV1MembersPostData, ThrowOnError>): RequestResult<CreateMemberApiV1MembersPostResponses, CreateMemberApiV1MembersPostErrors, ThrowOnError> => (options.client ?? client).post<CreateMemberApiV1MembersPostResponses, CreateMemberApiV1MembersPostErrors, ThrowOnError>({
+export const createUserApiV1UsersPost = <ThrowOnError extends boolean = false>(options: Options<CreateUserApiV1UsersPostData, ThrowOnError>): RequestResult<CreateUserApiV1UsersPostResponses, CreateUserApiV1UsersPostErrors, ThrowOnError> => (options.client ?? client).post<CreateUserApiV1UsersPostResponses, CreateUserApiV1UsersPostErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members',
+    url: '/api/v1/users',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -341,68 +341,68 @@ export const createMemberApiV1MembersPost = <ThrowOnError extends boolean = fals
 });
 
 /**
- * Member summary statistics
+ * Employee summary statistics
  *
- * Return summary statistics over active members for the dashboard cards.
+ * Return summary statistics over active employees for the dashboard cards.
  */
-export const memberStatsApiV1MembersStatsGet = <ThrowOnError extends boolean = false>(options?: Options<MemberStatsApiV1MembersStatsGetData, ThrowOnError>): RequestResult<MemberStatsApiV1MembersStatsGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<MemberStatsApiV1MembersStatsGetResponses, unknown, ThrowOnError>({
+export const userStatsApiV1UsersStatsGet = <ThrowOnError extends boolean = false>(options?: Options<UserStatsApiV1UsersStatsGetData, ThrowOnError>): RequestResult<UserStatsApiV1UsersStatsGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<UserStatsApiV1UsersStatsGetResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/stats',
+    url: '/api/v1/users/stats',
     ...options
 });
 
 /**
- * Current user's linked Member
+ * Current user's directory record
  *
- * Return the Member linked to the current user, or 404 if none is linked.
+ * Return the current user's own directory record (their ``users`` row).
  */
-export const myMemberApiV1MembersMeGet = <ThrowOnError extends boolean = false>(options?: Options<MyMemberApiV1MembersMeGetData, ThrowOnError>): RequestResult<MyMemberApiV1MembersMeGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<MyMemberApiV1MembersMeGetResponses, unknown, ThrowOnError>({
+export const myRecordApiV1UsersMeGet = <ThrowOnError extends boolean = false>(options?: Options<MyRecordApiV1UsersMeGetData, ThrowOnError>): RequestResult<MyRecordApiV1UsersMeGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<MyRecordApiV1UsersMeGetResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/me',
+    url: '/api/v1/users/me',
     ...options
 });
 
 /**
- * Export members as CSV
+ * Export employees as CSV
  *
- * Stream the current filter's active members as a CSV file.
+ * Stream the current filter's active employees as a CSV file.
  */
-export const exportMembersApiV1MembersExportGet = <ThrowOnError extends boolean = false>(options?: Options<ExportMembersApiV1MembersExportGetData, ThrowOnError>): RequestResult<ExportMembersApiV1MembersExportGetResponses, ExportMembersApiV1MembersExportGetErrors, ThrowOnError> => (options?.client ?? client).get<ExportMembersApiV1MembersExportGetResponses, ExportMembersApiV1MembersExportGetErrors, ThrowOnError>({
+export const exportUsersApiV1UsersExportGet = <ThrowOnError extends boolean = false>(options?: Options<ExportUsersApiV1UsersExportGetData, ThrowOnError>): RequestResult<ExportUsersApiV1UsersExportGetResponses, ExportUsersApiV1UsersExportGetErrors, ThrowOnError> => (options?.client ?? client).get<ExportUsersApiV1UsersExportGetResponses, ExportUsersApiV1UsersExportGetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/export',
+    url: '/api/v1/users/export',
     ...options
 });
 
 /**
- * Soft-delete a member
+ * Soft-delete an employee
  *
- * Soft-delete a member (sets ``is_active=false``).
+ * Soft-delete an employee (sets ``is_active=false``).
  */
-export const deleteMemberApiV1MembersMemberIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteMemberApiV1MembersMemberIdDeleteData, ThrowOnError>): RequestResult<DeleteMemberApiV1MembersMemberIdDeleteResponses, DeleteMemberApiV1MembersMemberIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteMemberApiV1MembersMemberIdDeleteResponses, DeleteMemberApiV1MembersMemberIdDeleteErrors, ThrowOnError>({
+export const deleteUserApiV1UsersUserIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteUserApiV1UsersUserIdDeleteData, ThrowOnError>): RequestResult<DeleteUserApiV1UsersUserIdDeleteResponses, DeleteUserApiV1UsersUserIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteUserApiV1UsersUserIdDeleteResponses, DeleteUserApiV1UsersUserIdDeleteErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/{member_id}',
+    url: '/api/v1/users/{user_id}',
     ...options
 });
 
 /**
- * Member detail
+ * Directory record detail
  *
- * Return a single member by id, or 404 if not found.
+ * Return a single directory record by id, or 404 if not found.
  */
-export const getMemberApiV1MembersMemberIdGet = <ThrowOnError extends boolean = false>(options: Options<GetMemberApiV1MembersMemberIdGetData, ThrowOnError>): RequestResult<GetMemberApiV1MembersMemberIdGetResponses, GetMemberApiV1MembersMemberIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetMemberApiV1MembersMemberIdGetResponses, GetMemberApiV1MembersMemberIdGetErrors, ThrowOnError>({
+export const getUserApiV1UsersUserIdGet = <ThrowOnError extends boolean = false>(options: Options<GetUserApiV1UsersUserIdGetData, ThrowOnError>): RequestResult<GetUserApiV1UsersUserIdGetResponses, GetUserApiV1UsersUserIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetUserApiV1UsersUserIdGetResponses, GetUserApiV1UsersUserIdGetErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/{member_id}',
+    url: '/api/v1/users/{user_id}',
     ...options
 });
 
 /**
- * Update a member
+ * Update an employee
  *
- * Partially update a member.
+ * Partially update an employee directory record.
  */
-export const updateMemberApiV1MembersMemberIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateMemberApiV1MembersMemberIdPatchData, ThrowOnError>): RequestResult<UpdateMemberApiV1MembersMemberIdPatchResponses, UpdateMemberApiV1MembersMemberIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateMemberApiV1MembersMemberIdPatchResponses, UpdateMemberApiV1MembersMemberIdPatchErrors, ThrowOnError>({
+export const updateUserApiV1UsersUserIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateUserApiV1UsersUserIdPatchData, ThrowOnError>): RequestResult<UpdateUserApiV1UsersUserIdPatchResponses, UpdateUserApiV1UsersUserIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserApiV1UsersUserIdPatchResponses, UpdateUserApiV1UsersUserIdPatchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/members/{member_id}',
+    url: '/api/v1/users/{user_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

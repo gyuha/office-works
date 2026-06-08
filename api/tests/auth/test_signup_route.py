@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
@@ -44,7 +43,7 @@ class FakeSignupService:
         if self.error is not None:
             raise self.error
         return SimpleNamespace(
-            id=uuid.uuid4(),
+            id="usr_signuptest000000000000000000",
             email=email,
             display_name=display_name,
             is_verified=False,

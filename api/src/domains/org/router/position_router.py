@@ -15,8 +15,6 @@ shadowed by the path param.
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -96,7 +94,7 @@ async def reorder_positions(
     summary="Rename a position",
 )
 async def rename_position(
-    position_id: uuid.UUID,
+    position_id: str,
     payload: PositionUpdate,
     service: PositionService = Depends(_get_service),
 ) -> PositionResponse:
@@ -113,7 +111,7 @@ async def rename_position(
     summary="Delete a position",
 )
 async def delete_position(
-    position_id: uuid.UUID,
+    position_id: str,
     service: PositionService = Depends(_get_service),
 ) -> None:
     try:

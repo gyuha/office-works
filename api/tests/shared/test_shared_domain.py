@@ -30,13 +30,14 @@ from domains.shared.types import (
 
 
 class TestEntity:
-    def test_auto_generates_uuid(self) -> None:
+    def test_auto_generates_id(self) -> None:
         @dataclass(eq=False)
         class Thing(Entity):
             name: str = ""
 
         t = Thing()
-        assert isinstance(t.id, uuid.UUID)
+        assert isinstance(t.id, str)
+        assert t.id.startswith("ent_")
 
     def test_equality_by_id(self) -> None:
         # Entity subclasses MUST use eq=False so Python's @dataclass machinery

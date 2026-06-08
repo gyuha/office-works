@@ -411,7 +411,6 @@ def _get_oauth_adapter(provider: str, settings: Settings) -> object:
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=(
-            f"Unsupported OAuth provider: '{provider}'. "
-            "Configured: google,kakao,naver,microsoft."
+            f"Unsupported OAuth provider: '{provider}'. Configured: google,kakao,naver,microsoft."
         ),
     )

@@ -11,7 +11,6 @@ Naming convention:
 from __future__ import annotations
 
 import re
-import uuid
 from datetime import datetime
 from typing import Literal
 
@@ -27,7 +26,7 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     email: EmailStr
     display_name: str | None
     is_verified: bool
@@ -224,7 +223,7 @@ class OAuthLoginURLResponse(BaseModel):
 class RoleResponse(BaseModel):
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     name: str
     description: str | None
 
@@ -232,6 +231,6 @@ class RoleResponse(BaseModel):
 class PermissionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     key: str
     description: str | None

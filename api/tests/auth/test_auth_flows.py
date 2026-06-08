@@ -728,7 +728,7 @@ class TestRefresh:
         with pytest.raises(UnauthorizedError, match="not a refresh token"):
             await auth_service.refresh(tokens["access_token"])
 
-    async def test_refresh_rejects_invalid_subject_identifier(
+    async def test_refresh_rejects_missing_subject(
         self,
         auth_service: AuthService,
         fake_repo: Any,
@@ -737,7 +737,7 @@ class TestRefresh:
 
         tokens = await self._get_tokens(auth_service, fake_repo)
         payload = decode_token(tokens["refresh_token"])
-        payload["sub"] = "not-a-uuid"
+        payload["sub"] = ""
         invalid_subject_refresh = _sign_test_token(payload)
 
         with pytest.raises(UnauthorizedError, match="Invalid refresh token subject"):

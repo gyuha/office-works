@@ -240,14 +240,14 @@ def _register_routers(application: FastAPI) -> None:
     except ImportError:
         logger.debug("chat_router_not_found", note="Will be added in later phase")
 
-    # Members domain
+    # Users domain (employee directory — merged from the former members domain)
     try:
-        from domains.members.router import router as member_router
+        from domains.users.router import router as users_router
 
-        application.include_router(member_router, prefix="/api/v1")
-        logger.debug("router_registered", prefix="/api/v1/members")
+        application.include_router(users_router, prefix="/api/v1")
+        logger.debug("router_registered", prefix="/api/v1/users")
     except ImportError:
-        logger.debug("members_router_not_found", note="Will be added in later phase")
+        logger.debug("users_router_not_found", note="Will be added in later phase")
 
     # Org-settings domain
     try:

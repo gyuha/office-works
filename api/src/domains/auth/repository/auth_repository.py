@@ -13,7 +13,6 @@ Usage::
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -56,7 +55,7 @@ class AuthRepository:
 
     # ── User ─────────────────────────────────────────────────────────────────
 
-    async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
+    async def get_user_by_id(self, user_id: str) -> User | None:
         result = await self._session.execute(
             select(User)
             .where(User.id == user_id)
@@ -90,10 +89,10 @@ class AuthRepository:
         await self._session.flush()  # get the generated id before commit
         return user
 
-    async def mark_user_verified(self, user_id: uuid.UUID) -> None:
+    async def mark_user_verified(self, user_id: str) -> None:
         await self._session.execute(update(User).where(User.id == user_id).values(is_verified=True))
 
-    async def update_user_password(self, user_id: uuid.UUID, hashed_password: str) -> None:
+    async def update_user_password(self, user_id: str, hashed_password: str) -> None:
         await self._session.execute(
             update(User).where(User.id == user_id).values(hashed_password=hashed_password)
         )
@@ -113,7 +112,7 @@ class AuthRepository:
 
     async def create_refresh_token(
         self,
-        user_id: uuid.UUID,
+        user_id: str,
         jti: str,
         raw_token: str,
         family_id: str,
@@ -174,7 +173,7 @@ class AuthRepository:
             .values(revoked=True, revoked_at=revoke_time)
         )
 
-    async def revoke_all_user_refresh_tokens(self, user_id: uuid.UUID) -> None:
+    async def revoke_all_user_refresh_tokens(self, user_id: str) -> None:
         """Revoke all active refresh tokens for a user."""
         revoke_time = datetime.now(UTC)
         await self._session.execute(
@@ -183,7 +182,7 @@ class AuthRepository:
             .values(revoked=True, revoked_at=revoke_time)
         )
 
-    async def invalidate_all_user_sessions(self, user_id: uuid.UUID) -> None:
+    async def invalidate_all_user_sessions(self, user_id: str) -> None:
         """Invalidate all active auth sessions for a user after token reuse.
 
         In this lightweight template, each active refresh-token row is the
@@ -200,7 +199,7 @@ class AuthRepository:
 
     async def create_email_verification(
         self,
-        user_id: uuid.UUID,
+        user_id: str,
         raw_token: str,
         expires_at: datetime,
     ) -> EmailVerification:
@@ -221,14 +220,14 @@ class AuthRepository:
         )
         return result.scalar_one_or_none()
 
-    async def mark_email_verification_used(self, ev_id: uuid.UUID) -> None:
+    async def mark_email_verification_used(self, ev_id: str) -> None:
         await self._session.execute(
             update(EmailVerification).where(EmailVerification.id == ev_id).values(used=True)
         )
 
     # ── PasswordReset ─────────────────────────────────────────────────────────
 
-    async def mark_user_password_resets_used(self, user_id: uuid.UUID) -> None:
+    async def mark_user_password_resets_used(self, user_id: str) -> None:
         await self._session.execute(
             update(PasswordReset)
             .where(PasswordReset.user_id == user_id, PasswordReset.used.is_(False))
@@ -237,7 +236,7 @@ class AuthRepository:
 
     async def create_password_reset(
         self,
-        user_id: uuid.UUID,
+        user_id: str,
         raw_token: str,
         expires_at: datetime,
     ) -> PasswordReset:
@@ -258,7 +257,7 @@ class AuthRepository:
         )
         return result.scalar_one_or_none()
 
-    async def mark_password_reset_used(self, pr_id: uuid.UUID) -> None:
+    async def mark_password_reset_used(self, pr_id: str) -> None:
         await self._session.execute(
             update(PasswordReset).where(PasswordReset.id == pr_id).values(used=True)
         )
@@ -280,7 +279,7 @@ class AuthRepository:
 
     async def create_oauth_account(
         self,
-        user_id: uuid.UUID,
+        user_id: str,
         provider: str,
         provider_user_id: str,
         access_token: str | None = None,
@@ -301,7 +300,7 @@ class AuthRepository:
 
     async def update_oauth_account(
         self,
-        oa_id: uuid.UUID,
+        oa_id: str,
         access_token: str | None,
         refresh_token: str | None,
         expires_at: datetime | None,

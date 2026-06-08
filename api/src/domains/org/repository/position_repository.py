@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import func, select
@@ -21,7 +20,7 @@ class PositionRepository:
         result = await self._session.execute(select(Position).order_by(Position.sort_order))
         return result.scalars().all()
 
-    async def get_by_id(self, position_id: uuid.UUID) -> Position | None:
+    async def get_by_id(self, position_id: str) -> Position | None:
         return await self._session.get(Position, position_id)
 
     async def get_by_name(self, name: str) -> Position | None:
@@ -47,7 +46,7 @@ class PositionRepository:
         await self._session.delete(position)
         await self._session.flush()
 
-    async def reorder(self, ordered_ids: Sequence[uuid.UUID]) -> Sequence[Position]:
+    async def reorder(self, ordered_ids: Sequence[str]) -> Sequence[Position]:
         """Reassign sort_order 1..N following the given id order."""
         positions = {p.id: p for p in await self.list()}
         for order, pid in enumerate(ordered_ids, start=1):

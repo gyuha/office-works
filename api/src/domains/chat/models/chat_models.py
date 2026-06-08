@@ -11,15 +11,14 @@ complete turn by a background LLM summarisation call in the service layer.
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.database import Base
+from core.ids import CONVERSATION, ID_LENGTH, MESSAGE, id_column
 
 
 class Conversation(Base):
@@ -41,9 +40,9 @@ class Conversation(Base):
 
     __tablename__ = "conversations"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = id_column(CONVERSATION)
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LENGTH),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -91,9 +90,9 @@ class Message(Base):
 
     __tablename__ = "messages"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    conversation_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = id_column(MESSAGE)
+    conversation_id: Mapped[str] = mapped_column(
+        String(ID_LENGTH),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

@@ -365,180 +365,6 @@ export type LogoutRequest = {
 };
 
 /**
- * MemberCreate
- *
- * Request body for POST /members. ``employee_no`` is server-generated.
- */
-export type MemberCreate = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Department
-     */
-    department: string;
-    /**
-     * Rank
-     */
-    rank: string;
-    /**
-     * Grade
-     */
-    grade: string;
-    /**
-     * Phone
-     */
-    phone: string;
-    /**
-     * Email
-     */
-    email: string;
-};
-
-/**
- * MemberListResponse
- *
- * Paginated list envelope for GET /members.
- */
-export type MemberListResponse = {
-    /**
-     * Items
-     */
-    items: Array<MemberResponse>;
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-    /**
-     * Total Pages
-     */
-    total_pages: number;
-};
-
-/**
- * MemberResponse
- *
- * Single-member response body.
- */
-export type MemberResponse = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Employee No
-     */
-    employee_no: string;
-    /**
-     * User Id
-     */
-    user_id: string | null;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Department
-     */
-    department: string;
-    /**
-     * Rank
-     */
-    rank: string;
-    /**
-     * Grade
-     */
-    grade: string;
-    /**
-     * Phone
-     */
-    phone: string;
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Is Active
-     */
-    is_active: boolean;
-    /**
-     * Created At
-     */
-    created_at: string;
-};
-
-/**
- * MemberStatsResponse
- *
- * Summary statistics for the dashboard cards (active members only).
- */
-export type MemberStatsResponse = {
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Department Count
-     */
-    department_count: number;
-    /**
-     * New This Month
-     */
-    new_this_month: number;
-    /**
-     * Grade Distribution
-     */
-    grade_distribution: {
-        [key: string]: number;
-    };
-    /**
-     * Departments
-     */
-    departments: Array<string>;
-};
-
-/**
- * MemberUpdate
- *
- * Request body for PATCH /members/{id}. All fields optional (partial update).
- */
-export type MemberUpdate = {
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
-     * Department
-     */
-    department?: string | null;
-    /**
-     * Rank
-     */
-    rank?: string | null;
-    /**
-     * Grade
-     */
-    grade?: string | null;
-    /**
-     * Phone
-     */
-    phone?: string | null;
-    /**
-     * Email
-     */
-    email?: string | null;
-};
-
-/**
  * MessageResponse
  */
 export type MessageResponse = {
@@ -783,7 +609,7 @@ export type SignupRequest = {
  * Response body for POST /auth/signup.
  */
 export type SignupResponse = {
-    user: UserResponse;
+    user: DomainsAuthSchemasAuthSchemasUserResponse;
     /**
      * Message
      */
@@ -817,35 +643,125 @@ export type TokenResponse = {
 };
 
 /**
- * UserResponse
+ * UserCreate
  *
- * Public user representation — never includes hashed_password.
+ * Request body for POST /users. ``employee_no`` is server-generated.
  */
-export type UserResponse = {
+export type UserCreate = {
     /**
-     * Id
+     * Name
      */
-    id: string;
+    name: string;
+    /**
+     * Department
+     */
+    department: string;
+    /**
+     * Rank
+     */
+    rank: string;
+    /**
+     * Grade
+     */
+    grade: string;
+    /**
+     * Phone
+     */
+    phone: string;
     /**
      * Email
      */
     email: string;
+};
+
+/**
+ * UserListResponse
+ *
+ * Paginated list envelope for GET /users.
+ */
+export type UserListResponse = {
     /**
-     * Display Name
+     * Items
      */
-    display_name: string | null;
+    items: Array<DomainsUsersSchemasUserSchemasUserResponse>;
     /**
-     * Is Verified
+     * Total
      */
-    is_verified: boolean;
+    total: number;
     /**
-     * Is Active
+     * Page
      */
-    is_active: boolean;
+    page: number;
     /**
-     * Created At
+     * Page Size
      */
-    created_at: string;
+    page_size: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * UserStatsResponse
+ *
+ * Summary statistics for the dashboard cards (active employees only).
+ */
+export type UserStatsResponse = {
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Department Count
+     */
+    department_count: number;
+    /**
+     * New This Month
+     */
+    new_this_month: number;
+    /**
+     * Grade Distribution
+     */
+    grade_distribution: {
+        [key: string]: number;
+    };
+    /**
+     * Departments
+     */
+    departments: Array<string>;
+};
+
+/**
+ * UserUpdate
+ *
+ * Request body for PATCH /users/{id}. All fields optional (partial update).
+ */
+export type UserUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Department
+     */
+    department?: string | null;
+    /**
+     * Rank
+     */
+    rank?: string | null;
+    /**
+     * Grade
+     */
+    grade?: string | null;
+    /**
+     * Phone
+     */
+    phone?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
 };
 
 /**
@@ -886,7 +802,7 @@ export type VerifyEmailResponse = {
      * Message
      */
     message?: string;
-    user: UserResponse;
+    user: DomainsAuthSchemasAuthSchemasUserResponse;
 };
 
 /**
@@ -915,6 +831,86 @@ export type WorkSettingsData = {
      * Break Minutes
      */
     break_minutes: number;
+};
+
+/**
+ * UserResponse
+ *
+ * Public user representation — never includes hashed_password.
+ */
+export type DomainsAuthSchemasAuthSchemasUserResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Display Name
+     */
+    display_name: string | null;
+    /**
+     * Is Verified
+     */
+    is_verified: boolean;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * UserResponse
+ *
+ * Single directory-record response body (a ``users`` row with HR fields).
+ */
+export type DomainsUsersSchemasUserSchemasUserResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Employee No
+     */
+    employee_no: string | null;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Department
+     */
+    department: string | null;
+    /**
+     * Rank
+     */
+    rank: string | null;
+    /**
+     * Grade
+     */
+    grade: string | null;
+    /**
+     * Phone
+     */
+    phone: string | null;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
 };
 
 export type HealthHealthGetData = {
@@ -1148,7 +1144,7 @@ export type GetMeApiV1AuthMeGetResponses = {
     /**
      * Successful Response
      */
-    200: UserResponse;
+    200: DomainsAuthSchemasAuthSchemasUserResponse;
 };
 
 export type GetMeApiV1AuthMeGetResponse = GetMeApiV1AuthMeGetResponses[keyof GetMeApiV1AuthMeGetResponses];
@@ -1423,7 +1419,7 @@ export type SendMessageApiV1ChatConversationsConversationIdMessagesPostResponses
     200: unknown;
 };
 
-export type ListMembersApiV1MembersGetData = {
+export type ListUsersApiV1UsersGetData = {
     body?: never;
     path?: never;
     query?: {
@@ -1458,85 +1454,85 @@ export type ListMembersApiV1MembersGetData = {
          */
         page_size?: number;
     };
-    url: '/api/v1/members';
+    url: '/api/v1/users';
 };
 
-export type ListMembersApiV1MembersGetErrors = {
+export type ListUsersApiV1UsersGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ListMembersApiV1MembersGetError = ListMembersApiV1MembersGetErrors[keyof ListMembersApiV1MembersGetErrors];
+export type ListUsersApiV1UsersGetError = ListUsersApiV1UsersGetErrors[keyof ListUsersApiV1UsersGetErrors];
 
-export type ListMembersApiV1MembersGetResponses = {
+export type ListUsersApiV1UsersGetResponses = {
     /**
      * Successful Response
      */
-    200: MemberListResponse;
+    200: UserListResponse;
 };
 
-export type ListMembersApiV1MembersGetResponse = ListMembersApiV1MembersGetResponses[keyof ListMembersApiV1MembersGetResponses];
+export type ListUsersApiV1UsersGetResponse = ListUsersApiV1UsersGetResponses[keyof ListUsersApiV1UsersGetResponses];
 
-export type CreateMemberApiV1MembersPostData = {
-    body: MemberCreate;
+export type CreateUserApiV1UsersPostData = {
+    body: UserCreate;
     path?: never;
     query?: never;
-    url: '/api/v1/members';
+    url: '/api/v1/users';
 };
 
-export type CreateMemberApiV1MembersPostErrors = {
+export type CreateUserApiV1UsersPostErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type CreateMemberApiV1MembersPostError = CreateMemberApiV1MembersPostErrors[keyof CreateMemberApiV1MembersPostErrors];
+export type CreateUserApiV1UsersPostError = CreateUserApiV1UsersPostErrors[keyof CreateUserApiV1UsersPostErrors];
 
-export type CreateMemberApiV1MembersPostResponses = {
+export type CreateUserApiV1UsersPostResponses = {
     /**
      * Successful Response
      */
-    201: MemberResponse;
+    201: DomainsUsersSchemasUserSchemasUserResponse;
 };
 
-export type CreateMemberApiV1MembersPostResponse = CreateMemberApiV1MembersPostResponses[keyof CreateMemberApiV1MembersPostResponses];
+export type CreateUserApiV1UsersPostResponse = CreateUserApiV1UsersPostResponses[keyof CreateUserApiV1UsersPostResponses];
 
-export type MemberStatsApiV1MembersStatsGetData = {
+export type UserStatsApiV1UsersStatsGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/members/stats';
+    url: '/api/v1/users/stats';
 };
 
-export type MemberStatsApiV1MembersStatsGetResponses = {
+export type UserStatsApiV1UsersStatsGetResponses = {
     /**
      * Successful Response
      */
-    200: MemberStatsResponse;
+    200: UserStatsResponse;
 };
 
-export type MemberStatsApiV1MembersStatsGetResponse = MemberStatsApiV1MembersStatsGetResponses[keyof MemberStatsApiV1MembersStatsGetResponses];
+export type UserStatsApiV1UsersStatsGetResponse = UserStatsApiV1UsersStatsGetResponses[keyof UserStatsApiV1UsersStatsGetResponses];
 
-export type MyMemberApiV1MembersMeGetData = {
+export type MyRecordApiV1UsersMeGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/members/me';
+    url: '/api/v1/users/me';
 };
 
-export type MyMemberApiV1MembersMeGetResponses = {
+export type MyRecordApiV1UsersMeGetResponses = {
     /**
      * Successful Response
      */
-    200: MemberResponse;
+    200: DomainsUsersSchemasUserSchemasUserResponse;
 };
 
-export type MyMemberApiV1MembersMeGetResponse = MyMemberApiV1MembersMeGetResponses[keyof MyMemberApiV1MembersMeGetResponses];
+export type MyRecordApiV1UsersMeGetResponse = MyRecordApiV1UsersMeGetResponses[keyof MyRecordApiV1UsersMeGetResponses];
 
-export type ExportMembersApiV1MembersExportGetData = {
+export type ExportUsersApiV1UsersExportGetData = {
     body?: never;
     path?: never;
     query?: {
@@ -1561,114 +1557,114 @@ export type ExportMembersApiV1MembersExportGetData = {
          */
         order?: 'asc' | 'desc';
     };
-    url: '/api/v1/members/export';
+    url: '/api/v1/users/export';
 };
 
-export type ExportMembersApiV1MembersExportGetErrors = {
+export type ExportUsersApiV1UsersExportGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ExportMembersApiV1MembersExportGetError = ExportMembersApiV1MembersExportGetErrors[keyof ExportMembersApiV1MembersExportGetErrors];
+export type ExportUsersApiV1UsersExportGetError = ExportUsersApiV1UsersExportGetErrors[keyof ExportUsersApiV1UsersExportGetErrors];
 
-export type ExportMembersApiV1MembersExportGetResponses = {
+export type ExportUsersApiV1UsersExportGetResponses = {
     /**
      * Successful Response
      */
     200: unknown;
 };
 
-export type DeleteMemberApiV1MembersMemberIdDeleteData = {
+export type DeleteUserApiV1UsersUserIdDeleteData = {
     body?: never;
     path: {
         /**
-         * Member Id
+         * User Id
          */
-        member_id: string;
+        user_id: string;
     };
     query?: never;
-    url: '/api/v1/members/{member_id}';
+    url: '/api/v1/users/{user_id}';
 };
 
-export type DeleteMemberApiV1MembersMemberIdDeleteErrors = {
+export type DeleteUserApiV1UsersUserIdDeleteErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type DeleteMemberApiV1MembersMemberIdDeleteError = DeleteMemberApiV1MembersMemberIdDeleteErrors[keyof DeleteMemberApiV1MembersMemberIdDeleteErrors];
+export type DeleteUserApiV1UsersUserIdDeleteError = DeleteUserApiV1UsersUserIdDeleteErrors[keyof DeleteUserApiV1UsersUserIdDeleteErrors];
 
-export type DeleteMemberApiV1MembersMemberIdDeleteResponses = {
+export type DeleteUserApiV1UsersUserIdDeleteResponses = {
     /**
      * Successful Response
      */
     204: void;
 };
 
-export type DeleteMemberApiV1MembersMemberIdDeleteResponse = DeleteMemberApiV1MembersMemberIdDeleteResponses[keyof DeleteMemberApiV1MembersMemberIdDeleteResponses];
+export type DeleteUserApiV1UsersUserIdDeleteResponse = DeleteUserApiV1UsersUserIdDeleteResponses[keyof DeleteUserApiV1UsersUserIdDeleteResponses];
 
-export type GetMemberApiV1MembersMemberIdGetData = {
+export type GetUserApiV1UsersUserIdGetData = {
     body?: never;
     path: {
         /**
-         * Member Id
+         * User Id
          */
-        member_id: string;
+        user_id: string;
     };
     query?: never;
-    url: '/api/v1/members/{member_id}';
+    url: '/api/v1/users/{user_id}';
 };
 
-export type GetMemberApiV1MembersMemberIdGetErrors = {
+export type GetUserApiV1UsersUserIdGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type GetMemberApiV1MembersMemberIdGetError = GetMemberApiV1MembersMemberIdGetErrors[keyof GetMemberApiV1MembersMemberIdGetErrors];
+export type GetUserApiV1UsersUserIdGetError = GetUserApiV1UsersUserIdGetErrors[keyof GetUserApiV1UsersUserIdGetErrors];
 
-export type GetMemberApiV1MembersMemberIdGetResponses = {
+export type GetUserApiV1UsersUserIdGetResponses = {
     /**
      * Successful Response
      */
-    200: MemberResponse;
+    200: DomainsUsersSchemasUserSchemasUserResponse;
 };
 
-export type GetMemberApiV1MembersMemberIdGetResponse = GetMemberApiV1MembersMemberIdGetResponses[keyof GetMemberApiV1MembersMemberIdGetResponses];
+export type GetUserApiV1UsersUserIdGetResponse = GetUserApiV1UsersUserIdGetResponses[keyof GetUserApiV1UsersUserIdGetResponses];
 
-export type UpdateMemberApiV1MembersMemberIdPatchData = {
-    body: MemberUpdate;
+export type UpdateUserApiV1UsersUserIdPatchData = {
+    body: UserUpdate;
     path: {
         /**
-         * Member Id
+         * User Id
          */
-        member_id: string;
+        user_id: string;
     };
     query?: never;
-    url: '/api/v1/members/{member_id}';
+    url: '/api/v1/users/{user_id}';
 };
 
-export type UpdateMemberApiV1MembersMemberIdPatchErrors = {
+export type UpdateUserApiV1UsersUserIdPatchErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UpdateMemberApiV1MembersMemberIdPatchError = UpdateMemberApiV1MembersMemberIdPatchErrors[keyof UpdateMemberApiV1MembersMemberIdPatchErrors];
+export type UpdateUserApiV1UsersUserIdPatchError = UpdateUserApiV1UsersUserIdPatchErrors[keyof UpdateUserApiV1UsersUserIdPatchErrors];
 
-export type UpdateMemberApiV1MembersMemberIdPatchResponses = {
+export type UpdateUserApiV1UsersUserIdPatchResponses = {
     /**
      * Successful Response
      */
-    200: MemberResponse;
+    200: DomainsUsersSchemasUserSchemasUserResponse;
 };
 
-export type UpdateMemberApiV1MembersMemberIdPatchResponse = UpdateMemberApiV1MembersMemberIdPatchResponses[keyof UpdateMemberApiV1MembersMemberIdPatchResponses];
+export type UpdateUserApiV1UsersUserIdPatchResponse = UpdateUserApiV1UsersUserIdPatchResponses[keyof UpdateUserApiV1UsersUserIdPatchResponses];
 
 export type ListPositionsApiV1PositionsGetData = {
     body?: never;

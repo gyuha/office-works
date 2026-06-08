@@ -9,7 +9,6 @@ Usage::
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import select, update
@@ -29,7 +28,7 @@ class ChatRepository:
 
     async def create_conversation(
         self,
-        user_id: uuid.UUID,
+        user_id: str,
         title: str | None = None,
         system_prompt: str | None = None,
         model_name: str | None = None,
@@ -46,8 +45,8 @@ class ChatRepository:
 
     async def get_conversation(
         self,
-        conv_id: uuid.UUID,
-        user_id: uuid.UUID | None = None,
+        conv_id: str,
+        user_id: str | None = None,
     ) -> Conversation | None:
         """Fetch a conversation, optionally checking ownership."""
         stmt = (
@@ -60,7 +59,7 @@ class ChatRepository:
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_conversations(self, user_id: uuid.UUID) -> Sequence[Conversation]:
+    async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
         result = await self._session.execute(
             select(Conversation)
             .where(Conversation.user_id == user_id)
@@ -68,7 +67,7 @@ class ChatRepository:
         )
         return result.scalars().all()
 
-    async def update_conversation_title(self, conv_id: uuid.UUID, title: str) -> None:
+    async def update_conversation_title(self, conv_id: str, title: str) -> None:
         await self._session.execute(
             update(Conversation).where(Conversation.id == conv_id).values(title=title)
         )
@@ -77,7 +76,7 @@ class ChatRepository:
 
     async def add_message(
         self,
-        conversation_id: uuid.UUID,
+        conversation_id: str,
         role: str,
         content: str,
         token_count: int | None = None,
@@ -96,7 +95,7 @@ class ChatRepository:
 
     async def get_conversation_messages(
         self,
-        conv_id: uuid.UUID,
+        conv_id: str,
     ) -> Sequence[Message]:
         result = await self._session.execute(
             select(Message).where(Message.conversation_id == conv_id).order_by(Message.created_at)

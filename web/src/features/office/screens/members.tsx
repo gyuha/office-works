@@ -16,25 +16,30 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  createMemberApiV1MembersPostMutation,
-  deleteMemberApiV1MembersMemberIdDeleteMutation,
-  getMemberApiV1MembersMemberIdGetOptions,
+  createUserApiV1UsersPostMutation,
+  deleteUserApiV1UsersUserIdDeleteMutation,
+  getUserApiV1UsersUserIdGetOptions,
   listGradesApiV1GradesGetOptions,
-  listMembersApiV1MembersGetOptions,
-  memberStatsApiV1MembersStatsGetOptions,
-  updateMemberApiV1MembersMemberIdPatchMutation,
+  listUsersApiV1UsersGetOptions,
+  updateUserApiV1UsersUserIdPatchMutation,
+  userStatsApiV1UsersStatsGetOptions,
 } from '@/client/@tanstack/react-query.gen';
-import { exportMembersApiV1MembersExportGet } from '@/client/sdk.gen';
-import type { GradeResponse, MemberCreate, MemberResponse } from '@/client/types.gen';
+import { exportUsersApiV1UsersExportGet } from '@/client/sdk.gen';
+import type {
+  DomainsUsersSchemasUserSchemasUserResponse,
+  GradeResponse,
+  UserCreate,
+} from '@/client/types.gen';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ScreenModule } from './types';
 
 /* ============================================================
    OfficeMate — 구성원 관리 (hey-api 생성 클라이언트 연동, 서버사이드)
+   구성원 = 직급(employee_no)이 부여된 users 행 — /api/v1/users 디렉터리.
    ============================================================ */
 
-type Member = MemberResponse;
+type Member = DomainsUsersSchemasUserSchemasUserResponse;
 
 const PER_PAGE = 10;
 type SortKey = 'no' | 'name' | 'dept' | 'rank' | 'grade';
@@ -85,9 +90,9 @@ function Avatar({ name, size = 34 }: { name: string; size?: number }) {
   );
 }
 
-function GradeTag({ grade }: { grade: string }) {
+function GradeTag({ grade }: { grade: string | null }) {
   const grades = useGrades();
-  const s = gradeStyleOf(grades, grade);
+  const s = gradeStyleOf(grades, grade ?? '');
   return (
     <span
       className="inline-flex min-w-[54px] items-center justify-center rounded-md border px-1.5 py-1 text-xs font-extrabold"
@@ -124,11 +129,11 @@ function MembersScreen() {
   };
 
   const listQuery = useQuery(
-    listMembersApiV1MembersGetOptions({
+    listUsersApiV1UsersGetOptions({
       query: { ...listFilters, page, page_size: PER_PAGE },
     })
   );
-  const statsQuery = useQuery(memberStatsApiV1MembersStatsGetOptions());
+  const statsQuery = useQuery(userStatsApiV1UsersStatsGetOptions());
 
   const grades = useGrades();
   const stats = statsQuery.data;
@@ -159,7 +164,7 @@ function MembersScreen() {
   async function handleExport() {
     setExporting(true);
     try {
-      const { data } = await exportMembersApiV1MembersExportGet({
+      const { data } = await exportUsersApiV1UsersExportGet({
         query: listFilters,
         parseAs: 'blob',
         throwOnError: true,
@@ -167,7 +172,7 @@ function MembersScreen() {
       const url = URL.createObjectURL(data as Blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'members.csv';
+      a.download = 'users.csv';
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -498,7 +503,7 @@ function MembersScreen() {
                     </td>
                     <td className="border-b border-[#F0F1F3] px-3 py-[13px]">
                       <div className="flex items-center gap-2.5">
-                        <Avatar name={m.name} />
+                        <Avatar name={m.name ?? ''} />
                         <span className="whitespace-nowrap text-sm font-bold text-[#1B2435]">
                           {m.name}
                         </span>
@@ -652,11 +657,9 @@ function MemberDetail({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
-  const detailQuery = useQuery(
-    getMemberApiV1MembersMemberIdGetOptions({ path: { member_id: memberId } })
-  );
+  const detailQuery = useQuery(getUserApiV1UsersUserIdGetOptions({ path: { user_id: memberId } }));
   const deleteMut = useMutation({
-    ...deleteMemberApiV1MembersMemberIdDeleteMutation(),
+    ...deleteUserApiV1UsersUserIdDeleteMutation(),
     onSuccess: () => {
       toast.success('구성원이 삭제되었습니다.');
       onDeleted();
@@ -685,7 +688,7 @@ function MemberDetail({
             disabled={!member || deleteMut.isPending}
             onClick={() => {
               if (member && window.confirm(`${member.name} 님을 삭제하시겠습니까?`)) {
-                deleteMut.mutate({ path: { member_id: memberId } });
+                deleteMut.mutate({ path: { user_id: memberId } });
               }
             }}
           >
@@ -714,7 +717,7 @@ function MemberDetail({
       ) : (
         <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           <div className="flex items-center gap-4 border-b border-[#F0F1F3] px-7 py-6">
-            <Avatar name={member.name} size={64} />
+            <Avatar name={member.name ?? ''} size={64} />
             <div>
               <div className="flex items-center gap-2.5">
                 <span className="text-[22px] font-extrabold tracking-[-0.02em] text-[#1B2435]">
@@ -754,7 +757,7 @@ function Field({
   colSpan,
 }: {
   label: string;
-  value?: string;
+  value?: string | null;
   node?: React.ReactNode;
   mono?: boolean;
   colSpan?: boolean;
@@ -782,11 +785,9 @@ function MemberEdit({
   onCancel: () => void;
   onSaved: () => void;
 }) {
-  const detailQuery = useQuery(
-    getMemberApiV1MembersMemberIdGetOptions({ path: { member_id: memberId } })
-  );
+  const detailQuery = useQuery(getUserApiV1UsersUserIdGetOptions({ path: { user_id: memberId } }));
   const updateMut = useMutation({
-    ...updateMemberApiV1MembersMemberIdPatchMutation(),
+    ...updateUserApiV1UsersUserIdPatchMutation(),
     onSuccess: (updated) => {
       toast.success(`${updated.name} 님의 정보가 저장되었습니다.`);
       onSaved();
@@ -809,7 +810,7 @@ function MemberEdit({
       depts={depts}
       submitting={updateMut.isPending}
       onCancel={onCancel}
-      onSubmit={(body) => updateMut.mutate({ path: { member_id: memberId }, body })}
+      onSubmit={(body) => updateMut.mutate({ path: { user_id: memberId }, body })}
     />
   );
 }
@@ -828,7 +829,7 @@ function MemberAdd({
   onCreated: () => void;
 }) {
   const createMut = useMutation({
-    ...createMemberApiV1MembersPostMutation(),
+    ...createUserApiV1UsersPostMutation(),
     onSuccess: (created) => {
       toast.success(`${created.name} 님이 추가되었습니다. (사번 ${created.employee_no})`);
       onCreated();
@@ -861,11 +862,11 @@ function MemberForm({
   depts: string[];
   submitting: boolean;
   onCancel: () => void;
-  onSubmit: (body: MemberCreate) => void;
+  onSubmit: (body: UserCreate) => void;
 }) {
   const grades = useGrades();
-  const deptOptions = depts.length > 0 ? depts : initial ? [initial.department] : [];
-  const [form, setForm] = useState<MemberCreate>({
+  const deptOptions = depts.length > 0 ? depts : initial ? [initial.department ?? ''] : [];
+  const [form, setForm] = useState<UserCreate>({
     name: initial?.name ?? '',
     department: initial?.department ?? deptOptions[0] ?? '',
     rank: initial?.rank ?? '',
@@ -874,7 +875,7 @@ function MemberForm({
     email: initial?.email ?? '',
   });
 
-  function update<K extends keyof MemberCreate>(key: K, val: MemberCreate[K]) {
+  function update<K extends keyof UserCreate>(key: K, val: UserCreate[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
   }
 

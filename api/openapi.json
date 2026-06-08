@@ -365,7 +365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/domains__auth__schemas__auth_schemas__UserResponse"
                 }
               }
             }
@@ -684,7 +684,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Conversation Id"
             }
           }
@@ -733,7 +732,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Conversation Id"
             }
           }
@@ -784,7 +782,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Conversation Id"
             }
           }
@@ -823,14 +820,14 @@
         }
       }
     },
-    "/api/v1/members": {
+    "/api/v1/users": {
       "get": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "List members",
-        "description": "Return a paginated, filtered, sorted list of active members.",
-        "operationId": "list_members_api_v1_members_get",
+        "summary": "List employees",
+        "description": "Return a paginated, filtered, sorted list of active employees.",
+        "operationId": "list_users_api_v1_users_get",
         "security": [
           {
             "HTTPBearer": []
@@ -948,7 +945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberListResponse"
+                  "$ref": "#/components/schemas/UserListResponse"
                 }
               }
             }
@@ -967,11 +964,11 @@
       },
       "post": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Create a member",
-        "description": "Create a new member. The employee number (사번) is server-generated.",
-        "operationId": "create_member_api_v1_members_post",
+        "summary": "Create an employee",
+        "description": "Create a new employee. The employee number (사번) is server-generated.",
+        "operationId": "create_user_api_v1_users_post",
         "security": [
           {
             "HTTPBearer": []
@@ -982,7 +979,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberCreate"
+                "$ref": "#/components/schemas/UserCreate"
               }
             }
           }
@@ -993,7 +990,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberResponse"
+                  "$ref": "#/components/schemas/domains__users__schemas__user_schemas__UserResponse"
                 }
               }
             }
@@ -1011,21 +1008,21 @@
         }
       }
     },
-    "/api/v1/members/stats": {
+    "/api/v1/users/stats": {
       "get": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Member summary statistics",
-        "description": "Return summary statistics over active members for the dashboard cards.",
-        "operationId": "member_stats_api_v1_members_stats_get",
+        "summary": "Employee summary statistics",
+        "description": "Return summary statistics over active employees for the dashboard cards.",
+        "operationId": "user_stats_api_v1_users_stats_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberStatsResponse"
+                  "$ref": "#/components/schemas/UserStatsResponse"
                 }
               }
             }
@@ -1038,21 +1035,21 @@
         ]
       }
     },
-    "/api/v1/members/me": {
+    "/api/v1/users/me": {
       "get": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Current user's linked Member",
-        "description": "Return the Member linked to the current user, or 404 if none is linked.",
-        "operationId": "my_member_api_v1_members_me_get",
+        "summary": "Current user's directory record",
+        "description": "Return the current user's own directory record (their ``users`` row).",
+        "operationId": "my_record_api_v1_users_me_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberResponse"
+                  "$ref": "#/components/schemas/domains__users__schemas__user_schemas__UserResponse"
                 }
               }
             }
@@ -1065,14 +1062,14 @@
         ]
       }
     },
-    "/api/v1/members/export": {
+    "/api/v1/users/export": {
       "get": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Export members as CSV",
-        "description": "Stream the current filter's active members as a CSV file.",
-        "operationId": "export_members_api_v1_members_export_get",
+        "summary": "Export employees as CSV",
+        "description": "Stream the current filter's active employees as a CSV file.",
+        "operationId": "export_users_api_v1_users_export_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1181,14 +1178,14 @@
         }
       }
     },
-    "/api/v1/members/{member_id}": {
+    "/api/v1/users/{user_id}": {
       "get": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Member detail",
-        "description": "Return a single member by id, or 404 if not found.",
-        "operationId": "get_member_api_v1_members__member_id__get",
+        "summary": "Directory record detail",
+        "description": "Return a single directory record by id, or 404 if not found.",
+        "operationId": "get_user_api_v1_users__user_id__get",
         "security": [
           {
             "HTTPBearer": []
@@ -1196,13 +1193,12 @@
         ],
         "parameters": [
           {
-            "name": "member_id",
+            "name": "user_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "title": "Member Id"
+              "title": "User Id"
             }
           }
         ],
@@ -1212,7 +1208,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberResponse"
+                  "$ref": "#/components/schemas/domains__users__schemas__user_schemas__UserResponse"
                 }
               }
             }
@@ -1231,11 +1227,11 @@
       },
       "patch": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Update a member",
-        "description": "Partially update a member.",
-        "operationId": "update_member_api_v1_members__member_id__patch",
+        "summary": "Update an employee",
+        "description": "Partially update an employee directory record.",
+        "operationId": "update_user_api_v1_users__user_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -1243,13 +1239,12 @@
         ],
         "parameters": [
           {
-            "name": "member_id",
+            "name": "user_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "title": "Member Id"
+              "title": "User Id"
             }
           }
         ],
@@ -1258,7 +1253,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberUpdate"
+                "$ref": "#/components/schemas/UserUpdate"
               }
             }
           }
@@ -1269,7 +1264,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemberResponse"
+                  "$ref": "#/components/schemas/domains__users__schemas__user_schemas__UserResponse"
                 }
               }
             }
@@ -1288,11 +1283,11 @@
       },
       "delete": {
         "tags": [
-          "members"
+          "users"
         ],
-        "summary": "Soft-delete a member",
-        "description": "Soft-delete a member (sets ``is_active=false``).",
-        "operationId": "delete_member_api_v1_members__member_id__delete",
+        "summary": "Soft-delete an employee",
+        "description": "Soft-delete an employee (sets ``is_active=false``).",
+        "operationId": "delete_user_api_v1_users__user_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -1300,13 +1295,12 @@
         ],
         "parameters": [
           {
-            "name": "member_id",
+            "name": "user_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "title": "Member Id"
+              "title": "User Id"
             }
           }
         ],
@@ -1470,7 +1464,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Position Id"
             }
           }
@@ -1526,7 +1519,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Position Id"
             }
           }
@@ -1641,7 +1633,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Type Id"
             }
           }
@@ -1806,7 +1797,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Grade Id"
             }
           }
@@ -1862,7 +1852,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Grade Id"
             }
           }
@@ -2261,12 +2250,10 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
             "title": "Id"
           },
           "user_id": {
             "type": "string",
-            "format": "uuid",
             "title": "User Id"
           },
           "title": {
@@ -2345,7 +2332,6 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
             "title": "Id"
           },
           "name": {
@@ -2410,8 +2396,7 @@
         "properties": {
           "ordered_ids": {
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "type": "array",
             "minItems": 1,
@@ -2429,7 +2414,6 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
             "title": "Id"
           },
           "name": {
@@ -2630,302 +2614,14 @@
         "title": "LogoutRequest",
         "description": "Request body for POST /auth/logout."
       },
-      "MemberCreate": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "title": "Name"
-          },
-          "department": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Department"
-          },
-          "rank": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Rank"
-          },
-          "grade": {
-            "type": "string",
-            "maxLength": 16,
-            "minLength": 1,
-            "title": "Grade"
-          },
-          "phone": {
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 1,
-            "title": "Phone"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "department",
-          "rank",
-          "grade",
-          "phone",
-          "email"
-        ],
-        "title": "MemberCreate",
-        "description": "Request body for POST /members. ``employee_no`` is server-generated."
-      },
-      "MemberListResponse": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MemberResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total_pages": {
-            "type": "integer",
-            "title": "Total Pages"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size",
-          "total_pages"
-        ],
-        "title": "MemberListResponse",
-        "description": "Paginated list envelope for GET /members."
-      },
-      "MemberResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "employee_no": {
-            "type": "string",
-            "title": "Employee No"
-          },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "department": {
-            "type": "string",
-            "title": "Department"
-          },
-          "rank": {
-            "type": "string",
-            "title": "Rank"
-          },
-          "grade": {
-            "type": "string",
-            "title": "Grade"
-          },
-          "phone": {
-            "type": "string",
-            "title": "Phone"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "employee_no",
-          "user_id",
-          "name",
-          "department",
-          "rank",
-          "grade",
-          "phone",
-          "email",
-          "is_active",
-          "created_at"
-        ],
-        "title": "MemberResponse",
-        "description": "Single-member response body."
-      },
-      "MemberStatsResponse": {
-        "properties": {
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "department_count": {
-            "type": "integer",
-            "title": "Department Count"
-          },
-          "new_this_month": {
-            "type": "integer",
-            "title": "New This Month"
-          },
-          "grade_distribution": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "type": "object",
-            "title": "Grade Distribution"
-          },
-          "departments": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Departments"
-          }
-        },
-        "type": "object",
-        "required": [
-          "total",
-          "department_count",
-          "new_this_month",
-          "grade_distribution",
-          "departments"
-        ],
-        "title": "MemberStatsResponse",
-        "description": "Summary statistics for the dashboard cards (active members only)."
-      },
-      "MemberUpdate": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 128,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "department": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 64,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Department"
-          },
-          "rank": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 64,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rank"
-          },
-          "grade": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 16,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grade"
-          },
-          "phone": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 32,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Phone"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "email"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
-          }
-        },
-        "type": "object",
-        "title": "MemberUpdate",
-        "description": "Request body for PATCH /members/{id}. All fields optional (partial update)."
-      },
       "MessageResponse": {
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
             "title": "Id"
           },
           "conversation_id": {
             "type": "string",
-            "format": "uuid",
             "title": "Conversation Id"
           },
           "role": {
@@ -3075,8 +2771,7 @@
         "properties": {
           "ordered_ids": {
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "type": "array",
             "minItems": 1,
@@ -3094,7 +2789,6 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
             "title": "Id"
           },
           "name": {
@@ -3224,7 +2918,7 @@
       "SignupResponse": {
         "properties": {
           "user": {
-            "$ref": "#/components/schemas/UserResponse"
+            "$ref": "#/components/schemas/domains__auth__schemas__auth_schemas__UserResponse"
           },
           "message": {
             "type": "string",
@@ -3273,54 +2967,216 @@
         "title": "TokenResponse",
         "description": "JWT pair returned by login and refresh endpoints."
       },
-      "UserResponse": {
+      "UserCreate": {
         "properties": {
-          "id": {
+          "name": {
             "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Department"
+          },
+          "rank": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Rank"
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Grade"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Phone"
           },
           "email": {
             "type": "string",
             "format": "email",
             "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "department",
+          "rank",
+          "grade",
+          "phone",
+          "email"
+        ],
+        "title": "UserCreate",
+        "description": "Request body for POST /users. ``employee_no`` is server-generated."
+      },
+      "UserListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/domains__users__schemas__user_schemas__UserResponse"
+            },
+            "type": "array",
+            "title": "Items"
           },
-          "display_name": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "UserListResponse",
+        "description": "Paginated list envelope for GET /users."
+      },
+      "UserStatsResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "department_count": {
+            "type": "integer",
+            "title": "Department Count"
+          },
+          "new_this_month": {
+            "type": "integer",
+            "title": "New This Month"
+          },
+          "grade_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Grade Distribution"
+          },
+          "departments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Departments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "department_count",
+          "new_this_month",
+          "grade_distribution",
+          "departments"
+        ],
+        "title": "UserStatsResponse",
+        "description": "Summary statistics for the dashboard cards (active employees only)."
+      },
+      "UserUpdate": {
+        "properties": {
+          "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Name"
           },
-          "is_verified": {
-            "type": "boolean",
-            "title": "Is Verified"
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
           },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active"
+          "rank": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
           },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "display_name",
-          "is_verified",
-          "is_active",
-          "created_at"
-        ],
-        "title": "UserResponse",
-        "description": "Public user representation — never includes hashed_password."
+        "title": "UserUpdate",
+        "description": "Request body for PATCH /users/{id}. All fields optional (partial update)."
       },
       "ValidationError": {
         "properties": {
@@ -3370,7 +3226,7 @@
             "default": "Email verified successfully."
           },
           "user": {
-            "$ref": "#/components/schemas/UserResponse"
+            "$ref": "#/components/schemas/domains__auth__schemas__auth_schemas__UserResponse"
           }
         },
         "type": "object",
@@ -3419,6 +3275,157 @@
         ],
         "title": "WorkSettingsData",
         "description": "근무 기본값 — GET response / PUT body."
+      },
+      "domains__auth__schemas__auth_schemas__UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "is_verified",
+          "is_active",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "description": "Public user representation — never includes hashed_password."
+      },
+      "domains__users__schemas__user_schemas__UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "employee_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee No"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "employee_no",
+          "name",
+          "department",
+          "rank",
+          "grade",
+          "phone",
+          "email",
+          "is_active",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "description": "Single directory-record response body (a ``users`` row with HR fields)."
       }
     },
     "securitySchemes": {

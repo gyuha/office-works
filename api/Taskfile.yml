@@ -75,9 +75,10 @@ tasks:
 
   # ── Dev server ───────────────────────────────────────────────────────────────
   dev:
-    desc: "Bootstrap: install deps + start infra + FastAPI hot-reload"
+    desc: "Bootstrap: install deps + start infra + seed + FastAPI hot-reload"
     deps: [install, migrate]
     cmds:
+      - task: seed
       - |
         echo ""
         echo "🚀  Starting FastAPI at http://{{.DISPLAY_HOST}}:{{.PORT}}"
@@ -164,6 +165,12 @@ tasks:
     deps: [infra-health]
     cmds:
       - uv run alembic upgrade head
+
+  seed:
+    desc: Upsert the canonical org-settings seed dataset (idempotent; run after migrate)
+    deps: [infra-health]
+    cmds:
+      - uv run python scripts/seed.py
 
   revision:
     desc: Create a new autogenerate Alembic revision

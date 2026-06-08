@@ -19,6 +19,8 @@ from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
+from core.ids import generate_id
+
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -105,10 +107,9 @@ class FakeAuthRepository:
         hashed_password: str | None = None,
         display_name: str | None = None,
     ) -> Any:
-        import uuid
 
         user = MagicMock()
-        user.id = uuid.uuid4()
+        user.id = generate_id("usr")
         normalized_email = email.strip().lower()
         user.email = normalized_email
         user.hashed_password = hashed_password
@@ -215,12 +216,11 @@ class FakeAuthRepository:
         raw_token: str,
         expires_at: datetime,
     ) -> Any:
-        import uuid
 
         from domains.auth.security import hash_token
 
         row = MagicMock()
-        row.id = uuid.uuid4()
+        row.id = generate_id("rid")
         row.user_id = user_id
         row.token_hash = hash_token(raw_token)
         row.expires_at = expires_at
@@ -251,12 +251,11 @@ class FakeAuthRepository:
         raw_token: str,
         expires_at: datetime,
     ) -> Any:
-        import uuid
 
         from domains.auth.security import hash_token
 
         row = MagicMock()
-        row.id = uuid.uuid4()
+        row.id = generate_id("rid")
         row.user_id = user_id
         row.token_hash = hash_token(raw_token)
         row.expires_at = expires_at
@@ -287,10 +286,9 @@ class FakeAuthRepository:
         refresh_token: str | None = None,
         expires_at: datetime | None = None,
     ) -> Any:
-        import uuid
 
         row = MagicMock()
-        row.id = uuid.uuid4()
+        row.id = generate_id("rid")
         row.user_id = user_id
         row.provider = provider
         row.provider_user_id = provider_user_id

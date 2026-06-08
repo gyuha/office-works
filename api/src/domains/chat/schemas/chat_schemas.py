@@ -5,7 +5,6 @@ Request/Response models for the conversation and message endpoints.
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -18,8 +17,8 @@ from pydantic import BaseModel, Field
 class MessageResponse(BaseModel):
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
-    conversation_id: uuid.UUID
+    id: str
+    conversation_id: str
     role: str
     content: str
     token_count: int | None
@@ -42,8 +41,8 @@ class ConversationCreate(BaseModel):
 class ConversationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
-    user_id: uuid.UUID
+    id: str
+    user_id: str
     title: str | None
     system_prompt: str | None
     model_name: str | None

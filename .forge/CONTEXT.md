@@ -40,3 +40,24 @@ _Avoid_: 자동 가입, 셀프 회원가입
 **앱 JWT / IdP 토큰**:
 "앱 JWT"는 우리 백엔드가 발급해 SPA가 사용하는 access/refresh 토큰. "IdP 토큰"은 Microsoft가 발급한 id_token·access_token으로 코드 교환 단계에서만 쓰고 SPA로 넘기지 않는다. 로그인 후 앱은 앱 JWT만 사용한다.
 _Avoid_: 구분 없이 그냥 "토큰"
+
+## 구성원 / 조직
+
+**구성원(Member)**:
+조직 인사(HR) 레코드 — 사번·이름·소속·직급·등급·연락처·이메일. **HR 필드(employee_no 등)가 채워진 `users` 행**이다([[ADR-0006]]). 과거엔 User와 별개 테이블(`members`)이었으나, 단일 테넌트 사내 도구라 Teams 로그인 사용자가 전원 직원이어서 **병합됐다 — Member ≡ User**. 관리자가 임의로 **사전 등록**할 수 있고(로그인 전이면 인증 수단[비밀번호·OAuth] 없는 user 행), 로그인은 그 같은 행에 OAuth만 부착한다. 이름은 별도 컬럼이 아니라 `users.display_name`을 재사용한다. `/api/v1/users` 디렉터리가 **employee_no가 있는 user**를 구성원으로 노출(인증전용/시스템 user는 HR 필드 null이라 제외).
+_Avoid_: "User와 별개 엔티티", "`members` 테이블", "user_id로 연결"(전부 폐기된 서술)
+
+**~~구성원 연결(Member linking)~~** (폐기 — [[ADR-0006]]):
+과거 로그인 시 User를 같은 이메일의 미연결 Member에 잇던 훅(`_link_member_if_unlinked`). 병합으로 Member ≡ User가 되며 **제거됐다** — 사전 등록 직원은 이미 같은 user 행이므로, JIT가 검증 이메일로 그 행을 찾아 OAuth만 부착하면 된다(별도 연결 단계 없음). "구성원 연결"·"`Member.user_id`"라는 개념은 더 이상 존재하지 않는다.
+
+**등급(Grade)**:
+구성원의 역량/숙련 등급 — 관리자가 설정 화면(`/app/org` 등급 체계 탭)에서 CRUD·순서변경하는 **관리되는 테이블**(이름·색·설명·sort_order; 기본 시드 초급/중급/고급/특급). RBAC의 "역할(Role)"·직급(Position)과 무관한 순수 인사 분류 축이다. **`users.grade`는 이 등급을 이름 문자열로 참조**(물리 FK 아님 — [[ADR-0005]]; 병합 전엔 `members.grade`였다 — [[ADR-0006]]): 구성원 생성/수정 시 grades 테이블 존재를 서비스에서 검증하고, 등급 이름 변경(rename) 시 users.grade로 cascade되며, 참조 중인 등급은 삭제가 차단된다(409).
+_Avoid_: "고정 enum"으로 서술(이제 관리 테이블), "users.grade가 FK"라는 가정, 직급(Position)·RBAC role과 혼동
+
+**직급(Position)**:
+조직의 직위 체계 — 사원·선임·책임…대표이사처럼 **낮은→높은 순서를 갖는 관리되는 목록**(`positions` 테이블, `sort_order`로 정렬). 관리자가 설정 화면(`/app/org` 직급 체계 탭)에서 CRUD·순서변경한다. RBAC의 "역할(Role)"(엔드포인트 게이트), 등급(Grade)(역량 분류), 그리고 자유텍스트인 `users.rank`와 **모두 별개**다. 현재 `users.rank`는 자유 문자열이며 positions 테이블과 **연결돼 있지 않다(standalone)** — 직급 체계는 설정 관리용 목록일 뿐, 구성원 레코드의 rank를 제약하지 않는다.
+_Avoid_: 등급(Grade)·RBAC role과 혼동, "users.rank가 positions를 참조한다"는 가정
+
+**고용 형태(Employment type)**:
+구성원의 고용 유형 — 정규직·계약직·파트타임·인턴·프리랜서처럼 **관리되는 목록**(`employment_types` 테이블). 관리자가 설정 화면(`/app/org` 고용 형태 탭)에서 추가·삭제한다. 직급(Position)과 같은 조직 설정 축의 하나이며, 현재 `users`(구성원) 레코드와 FK로 묶여 있지 않은 독립 목록이다(구성원 등록 시 선택지로 쓰일 후보).
+_Avoid_: 직급(Position)·등급(Grade)과 혼동

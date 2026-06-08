@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -42,7 +40,7 @@ class PositionUpdate(BaseModel):
 class PositionReorder(BaseModel):
     """Request body for PATCH /positions/order — full ordered list of ids (low→high)."""
 
-    ordered_ids: list[uuid.UUID] = Field(min_length=1)
+    ordered_ids: list[str] = Field(min_length=1)
 
 
 class PositionResponse(BaseModel):
@@ -50,7 +48,7 @@ class PositionResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     name: str
     sort_order: int
 
@@ -76,7 +74,7 @@ class EmploymentTypeResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     name: str
     sort_order: int
 
@@ -127,7 +125,7 @@ class GradeUpdate(BaseModel):
 class GradeReorder(BaseModel):
     """Request body for PATCH /grades/order — full ordered list of ids (low→high)."""
 
-    ordered_ids: list[uuid.UUID] = Field(min_length=1)
+    ordered_ids: list[str] = Field(min_length=1)
 
 
 class GradeResponse(BaseModel):
@@ -135,7 +133,7 @@ class GradeResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    id: uuid.UUID
+    id: str
     name: str
     color: str
     bg: str

@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createMemberApiV1MembersPost, createPositionApiV1PositionsPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deleteMemberApiV1MembersMemberIdDelete, deletePositionApiV1PositionsPositionIdDelete, exportMembersApiV1MembersExportGet, getCompanyApiV1OrgCompanyGet, getConversationApiV1ChatConversationsConversationIdGet, getLeaveSettingsApiV1OrgLeaveSettingsGet, getMeApiV1AuthMeGet, getMemberApiV1MembersMemberIdGet, getProviderInfoApiV1ChatProviderGet, getWorkSettingsApiV1OrgWorkSettingsGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMembersApiV1MembersGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, memberStatsApiV1MembersStatsGet, myMemberApiV1MembersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, putCompanyApiV1OrgCompanyPut, putLeaveSettingsApiV1OrgLeaveSettingsPut, putWorkSettingsApiV1OrgWorkSettingsPut, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateMemberApiV1MembersMemberIdPatch, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
-import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreateMemberApiV1MembersPostData, CreateMemberApiV1MembersPostError, CreateMemberApiV1MembersPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeleteMemberApiV1MembersMemberIdDeleteData, DeleteMemberApiV1MembersMemberIdDeleteError, DeleteMemberApiV1MembersMemberIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, ExportMembersApiV1MembersExportGetData, ExportMembersApiV1MembersExportGetError, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponse, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetMemberApiV1MembersMemberIdGetData, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMembersApiV1MembersGetData, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MemberStatsApiV1MembersStatsGetData, MemberStatsApiV1MembersStatsGetResponse, MyMemberApiV1MembersMeGetData, MyMemberApiV1MembersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutError, PutCompanyApiV1OrgCompanyPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutError, PutWorkSettingsApiV1OrgWorkSettingsPutResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchData, UpdateMemberApiV1MembersMemberIdPatchError, UpdateMemberApiV1MembersMemberIdPatchResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
+import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createPositionApiV1PositionsPost, createUserApiV1UsersPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deletePositionApiV1PositionsPositionIdDelete, deleteUserApiV1UsersUserIdDelete, exportUsersApiV1UsersExportGet, getCompanyApiV1OrgCompanyGet, getConversationApiV1ChatConversationsConversationIdGet, getLeaveSettingsApiV1OrgLeaveSettingsGet, getMeApiV1AuthMeGet, getProviderInfoApiV1ChatProviderGet, getUserApiV1UsersUserIdGet, getWorkSettingsApiV1OrgWorkSettingsGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, listUsersApiV1UsersGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, myRecordApiV1UsersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, putCompanyApiV1OrgCompanyPut, putLeaveSettingsApiV1OrgLeaveSettingsPut, putWorkSettingsApiV1OrgWorkSettingsPut, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateUserApiV1UsersUserIdPatch, userStatsApiV1UsersStatsGet, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
+import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, CreateUserApiV1UsersPostData, CreateUserApiV1UsersPostError, CreateUserApiV1UsersPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, DeleteUserApiV1UsersUserIdDeleteData, DeleteUserApiV1UsersUserIdDeleteError, DeleteUserApiV1UsersUserIdDeleteResponse, ExportUsersApiV1UsersExportGetData, ExportUsersApiV1UsersExportGetError, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponse, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, GetUserApiV1UsersUserIdGetData, GetUserApiV1UsersUserIdGetError, GetUserApiV1UsersUserIdGetResponse, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, ListUsersApiV1UsersGetData, ListUsersApiV1UsersGetError, ListUsersApiV1UsersGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MyRecordApiV1UsersMeGetData, MyRecordApiV1UsersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutError, PutCompanyApiV1OrgCompanyPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutError, PutWorkSettingsApiV1OrgWorkSettingsPutResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateUserApiV1UsersUserIdPatchData, UpdateUserApiV1UsersUserIdPatchError, UpdateUserApiV1UsersUserIdPatchResponse, UserStatsApiV1UsersStatsGetData, UserStatsApiV1UsersStatsGetResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -495,16 +495,16 @@ export const sendMessageApiV1ChatConversationsConversationIdMessagesPostMutation
     return mutationOptions;
 };
 
-export const listMembersApiV1MembersGetQueryKey = (options?: Options<ListMembersApiV1MembersGetData>) => createQueryKey('listMembersApiV1MembersGet', options);
+export const listUsersApiV1UsersGetQueryKey = (options?: Options<ListUsersApiV1UsersGetData>) => createQueryKey('listUsersApiV1UsersGet', options);
 
 /**
- * List members
+ * List employees
  *
- * Return a paginated, filtered, sorted list of active members.
+ * Return a paginated, filtered, sorted list of active employees.
  */
-export const listMembersApiV1MembersGetOptions = (options?: Options<ListMembersApiV1MembersGetData>) => queryOptions<ListMembersApiV1MembersGetResponse, ListMembersApiV1MembersGetError, ListMembersApiV1MembersGetResponse, ReturnType<typeof listMembersApiV1MembersGetQueryKey>>({
+export const listUsersApiV1UsersGetOptions = (options?: Options<ListUsersApiV1UsersGetData>) => queryOptions<ListUsersApiV1UsersGetResponse, ListUsersApiV1UsersGetError, ListUsersApiV1UsersGetResponse, ReturnType<typeof listUsersApiV1UsersGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await listMembersApiV1MembersGet({
+        const { data } = await listUsersApiV1UsersGet({
             ...options,
             ...queryKey[0],
             signal,
@@ -512,7 +512,7 @@ export const listMembersApiV1MembersGetOptions = (options?: Options<ListMembersA
         });
         return data;
     },
-    queryKey: listMembersApiV1MembersGetQueryKey(options)
+    queryKey: listUsersApiV1UsersGetQueryKey(options)
 });
 
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
@@ -544,25 +544,25 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
     return params as unknown as typeof page;
 };
 
-export const listMembersApiV1MembersGetInfiniteQueryKey = (options?: Options<ListMembersApiV1MembersGetData>): QueryKey<Options<ListMembersApiV1MembersGetData>> => createQueryKey('listMembersApiV1MembersGet', options, true);
+export const listUsersApiV1UsersGetInfiniteQueryKey = (options?: Options<ListUsersApiV1UsersGetData>): QueryKey<Options<ListUsersApiV1UsersGetData>> => createQueryKey('listUsersApiV1UsersGet', options, true);
 
 /**
- * List members
+ * List employees
  *
- * Return a paginated, filtered, sorted list of active members.
+ * Return a paginated, filtered, sorted list of active employees.
  */
-export const listMembersApiV1MembersGetInfiniteOptions = (options?: Options<ListMembersApiV1MembersGetData>) => infiniteQueryOptions<ListMembersApiV1MembersGetResponse, ListMembersApiV1MembersGetError, InfiniteData<ListMembersApiV1MembersGetResponse>, QueryKey<Options<ListMembersApiV1MembersGetData>>, number | Pick<QueryKey<Options<ListMembersApiV1MembersGetData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+export const listUsersApiV1UsersGetInfiniteOptions = (options?: Options<ListUsersApiV1UsersGetData>) => infiniteQueryOptions<ListUsersApiV1UsersGetResponse, ListUsersApiV1UsersGetError, InfiniteData<ListUsersApiV1UsersGetResponse>, QueryKey<Options<ListUsersApiV1UsersGetData>>, number | Pick<QueryKey<Options<ListUsersApiV1UsersGetData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
 // @ts-ignore
 {
     queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
-        const page: Pick<QueryKey<Options<ListMembersApiV1MembersGetData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        const page: Pick<QueryKey<Options<ListUsersApiV1UsersGetData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
             query: {
                 page: pageParam
             }
         };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listMembersApiV1MembersGet({
+        const { data } = await listUsersApiV1UsersGet({
             ...options,
             ...params,
             signal,
@@ -570,18 +570,18 @@ export const listMembersApiV1MembersGetInfiniteOptions = (options?: Options<List
         });
         return data;
     },
-    queryKey: listMembersApiV1MembersGetInfiniteQueryKey(options)
+    queryKey: listUsersApiV1UsersGetInfiniteQueryKey(options)
 });
 
 /**
- * Create a member
+ * Create an employee
  *
- * Create a new member. The employee number (사번) is server-generated.
+ * Create a new employee. The employee number (사번) is server-generated.
  */
-export const createMemberApiV1MembersPostMutation = (options?: Partial<Options<CreateMemberApiV1MembersPostData>>): UseMutationOptions<CreateMemberApiV1MembersPostResponse, CreateMemberApiV1MembersPostError, Options<CreateMemberApiV1MembersPostData>> => {
-    const mutationOptions: UseMutationOptions<CreateMemberApiV1MembersPostResponse, CreateMemberApiV1MembersPostError, Options<CreateMemberApiV1MembersPostData>> = {
+export const createUserApiV1UsersPostMutation = (options?: Partial<Options<CreateUserApiV1UsersPostData>>): UseMutationOptions<CreateUserApiV1UsersPostResponse, CreateUserApiV1UsersPostError, Options<CreateUserApiV1UsersPostData>> => {
+    const mutationOptions: UseMutationOptions<CreateUserApiV1UsersPostResponse, CreateUserApiV1UsersPostError, Options<CreateUserApiV1UsersPostData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await createMemberApiV1MembersPost({
+            const { data } = await createUserApiV1UsersPost({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -592,16 +592,16 @@ export const createMemberApiV1MembersPostMutation = (options?: Partial<Options<C
     return mutationOptions;
 };
 
-export const memberStatsApiV1MembersStatsGetQueryKey = (options?: Options<MemberStatsApiV1MembersStatsGetData>) => createQueryKey('memberStatsApiV1MembersStatsGet', options);
+export const userStatsApiV1UsersStatsGetQueryKey = (options?: Options<UserStatsApiV1UsersStatsGetData>) => createQueryKey('userStatsApiV1UsersStatsGet', options);
 
 /**
- * Member summary statistics
+ * Employee summary statistics
  *
- * Return summary statistics over active members for the dashboard cards.
+ * Return summary statistics over active employees for the dashboard cards.
  */
-export const memberStatsApiV1MembersStatsGetOptions = (options?: Options<MemberStatsApiV1MembersStatsGetData>) => queryOptions<MemberStatsApiV1MembersStatsGetResponse, DefaultError, MemberStatsApiV1MembersStatsGetResponse, ReturnType<typeof memberStatsApiV1MembersStatsGetQueryKey>>({
+export const userStatsApiV1UsersStatsGetOptions = (options?: Options<UserStatsApiV1UsersStatsGetData>) => queryOptions<UserStatsApiV1UsersStatsGetResponse, DefaultError, UserStatsApiV1UsersStatsGetResponse, ReturnType<typeof userStatsApiV1UsersStatsGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await memberStatsApiV1MembersStatsGet({
+        const { data } = await userStatsApiV1UsersStatsGet({
             ...options,
             ...queryKey[0],
             signal,
@@ -609,19 +609,19 @@ export const memberStatsApiV1MembersStatsGetOptions = (options?: Options<MemberS
         });
         return data;
     },
-    queryKey: memberStatsApiV1MembersStatsGetQueryKey(options)
+    queryKey: userStatsApiV1UsersStatsGetQueryKey(options)
 });
 
-export const myMemberApiV1MembersMeGetQueryKey = (options?: Options<MyMemberApiV1MembersMeGetData>) => createQueryKey('myMemberApiV1MembersMeGet', options);
+export const myRecordApiV1UsersMeGetQueryKey = (options?: Options<MyRecordApiV1UsersMeGetData>) => createQueryKey('myRecordApiV1UsersMeGet', options);
 
 /**
- * Current user's linked Member
+ * Current user's directory record
  *
- * Return the Member linked to the current user, or 404 if none is linked.
+ * Return the current user's own directory record (their ``users`` row).
  */
-export const myMemberApiV1MembersMeGetOptions = (options?: Options<MyMemberApiV1MembersMeGetData>) => queryOptions<MyMemberApiV1MembersMeGetResponse, DefaultError, MyMemberApiV1MembersMeGetResponse, ReturnType<typeof myMemberApiV1MembersMeGetQueryKey>>({
+export const myRecordApiV1UsersMeGetOptions = (options?: Options<MyRecordApiV1UsersMeGetData>) => queryOptions<MyRecordApiV1UsersMeGetResponse, DefaultError, MyRecordApiV1UsersMeGetResponse, ReturnType<typeof myRecordApiV1UsersMeGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await myMemberApiV1MembersMeGet({
+        const { data } = await myRecordApiV1UsersMeGet({
             ...options,
             ...queryKey[0],
             signal,
@@ -629,19 +629,19 @@ export const myMemberApiV1MembersMeGetOptions = (options?: Options<MyMemberApiV1
         });
         return data;
     },
-    queryKey: myMemberApiV1MembersMeGetQueryKey(options)
+    queryKey: myRecordApiV1UsersMeGetQueryKey(options)
 });
 
-export const exportMembersApiV1MembersExportGetQueryKey = (options?: Options<ExportMembersApiV1MembersExportGetData>) => createQueryKey('exportMembersApiV1MembersExportGet', options);
+export const exportUsersApiV1UsersExportGetQueryKey = (options?: Options<ExportUsersApiV1UsersExportGetData>) => createQueryKey('exportUsersApiV1UsersExportGet', options);
 
 /**
- * Export members as CSV
+ * Export employees as CSV
  *
- * Stream the current filter's active members as a CSV file.
+ * Stream the current filter's active employees as a CSV file.
  */
-export const exportMembersApiV1MembersExportGetOptions = (options?: Options<ExportMembersApiV1MembersExportGetData>) => queryOptions<unknown, ExportMembersApiV1MembersExportGetError, unknown, ReturnType<typeof exportMembersApiV1MembersExportGetQueryKey>>({
+export const exportUsersApiV1UsersExportGetOptions = (options?: Options<ExportUsersApiV1UsersExportGetData>) => queryOptions<unknown, ExportUsersApiV1UsersExportGetError, unknown, ReturnType<typeof exportUsersApiV1UsersExportGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await exportMembersApiV1MembersExportGet({
+        const { data } = await exportUsersApiV1UsersExportGet({
             ...options,
             ...queryKey[0],
             signal,
@@ -649,18 +649,18 @@ export const exportMembersApiV1MembersExportGetOptions = (options?: Options<Expo
         });
         return data;
     },
-    queryKey: exportMembersApiV1MembersExportGetQueryKey(options)
+    queryKey: exportUsersApiV1UsersExportGetQueryKey(options)
 });
 
 /**
- * Soft-delete a member
+ * Soft-delete an employee
  *
- * Soft-delete a member (sets ``is_active=false``).
+ * Soft-delete an employee (sets ``is_active=false``).
  */
-export const deleteMemberApiV1MembersMemberIdDeleteMutation = (options?: Partial<Options<DeleteMemberApiV1MembersMemberIdDeleteData>>): UseMutationOptions<DeleteMemberApiV1MembersMemberIdDeleteResponse, DeleteMemberApiV1MembersMemberIdDeleteError, Options<DeleteMemberApiV1MembersMemberIdDeleteData>> => {
-    const mutationOptions: UseMutationOptions<DeleteMemberApiV1MembersMemberIdDeleteResponse, DeleteMemberApiV1MembersMemberIdDeleteError, Options<DeleteMemberApiV1MembersMemberIdDeleteData>> = {
+export const deleteUserApiV1UsersUserIdDeleteMutation = (options?: Partial<Options<DeleteUserApiV1UsersUserIdDeleteData>>): UseMutationOptions<DeleteUserApiV1UsersUserIdDeleteResponse, DeleteUserApiV1UsersUserIdDeleteError, Options<DeleteUserApiV1UsersUserIdDeleteData>> => {
+    const mutationOptions: UseMutationOptions<DeleteUserApiV1UsersUserIdDeleteResponse, DeleteUserApiV1UsersUserIdDeleteError, Options<DeleteUserApiV1UsersUserIdDeleteData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await deleteMemberApiV1MembersMemberIdDelete({
+            const { data } = await deleteUserApiV1UsersUserIdDelete({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -671,16 +671,16 @@ export const deleteMemberApiV1MembersMemberIdDeleteMutation = (options?: Partial
     return mutationOptions;
 };
 
-export const getMemberApiV1MembersMemberIdGetQueryKey = (options: Options<GetMemberApiV1MembersMemberIdGetData>) => createQueryKey('getMemberApiV1MembersMemberIdGet', options);
+export const getUserApiV1UsersUserIdGetQueryKey = (options: Options<GetUserApiV1UsersUserIdGetData>) => createQueryKey('getUserApiV1UsersUserIdGet', options);
 
 /**
- * Member detail
+ * Directory record detail
  *
- * Return a single member by id, or 404 if not found.
+ * Return a single directory record by id, or 404 if not found.
  */
-export const getMemberApiV1MembersMemberIdGetOptions = (options: Options<GetMemberApiV1MembersMemberIdGetData>) => queryOptions<GetMemberApiV1MembersMemberIdGetResponse, GetMemberApiV1MembersMemberIdGetError, GetMemberApiV1MembersMemberIdGetResponse, ReturnType<typeof getMemberApiV1MembersMemberIdGetQueryKey>>({
+export const getUserApiV1UsersUserIdGetOptions = (options: Options<GetUserApiV1UsersUserIdGetData>) => queryOptions<GetUserApiV1UsersUserIdGetResponse, GetUserApiV1UsersUserIdGetError, GetUserApiV1UsersUserIdGetResponse, ReturnType<typeof getUserApiV1UsersUserIdGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getMemberApiV1MembersMemberIdGet({
+        const { data } = await getUserApiV1UsersUserIdGet({
             ...options,
             ...queryKey[0],
             signal,
@@ -688,18 +688,18 @@ export const getMemberApiV1MembersMemberIdGetOptions = (options: Options<GetMemb
         });
         return data;
     },
-    queryKey: getMemberApiV1MembersMemberIdGetQueryKey(options)
+    queryKey: getUserApiV1UsersUserIdGetQueryKey(options)
 });
 
 /**
- * Update a member
+ * Update an employee
  *
- * Partially update a member.
+ * Partially update an employee directory record.
  */
-export const updateMemberApiV1MembersMemberIdPatchMutation = (options?: Partial<Options<UpdateMemberApiV1MembersMemberIdPatchData>>): UseMutationOptions<UpdateMemberApiV1MembersMemberIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchError, Options<UpdateMemberApiV1MembersMemberIdPatchData>> => {
-    const mutationOptions: UseMutationOptions<UpdateMemberApiV1MembersMemberIdPatchResponse, UpdateMemberApiV1MembersMemberIdPatchError, Options<UpdateMemberApiV1MembersMemberIdPatchData>> = {
+export const updateUserApiV1UsersUserIdPatchMutation = (options?: Partial<Options<UpdateUserApiV1UsersUserIdPatchData>>): UseMutationOptions<UpdateUserApiV1UsersUserIdPatchResponse, UpdateUserApiV1UsersUserIdPatchError, Options<UpdateUserApiV1UsersUserIdPatchData>> => {
+    const mutationOptions: UseMutationOptions<UpdateUserApiV1UsersUserIdPatchResponse, UpdateUserApiV1UsersUserIdPatchError, Options<UpdateUserApiV1UsersUserIdPatchData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await updateMemberApiV1MembersMemberIdPatch({
+            const { data } = await updateUserApiV1UsersUserIdPatch({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

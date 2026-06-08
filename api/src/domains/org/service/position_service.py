@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -29,7 +28,7 @@ class PositionService:
         except IntegrityError as exc:
             raise ConflictError(f"A position named '{name}' already exists.") from exc
 
-    async def rename(self, position_id: uuid.UUID, name: str) -> Position:
+    async def rename(self, position_id: str, name: str) -> Position:
         position = await self._repo.get_by_id(position_id)
         if position is None:
             raise NotFoundError("Position")
@@ -38,13 +37,13 @@ class PositionService:
             raise ConflictError(f"A position named '{name}' already exists.")
         return await self._repo.update_name(position, name)
 
-    async def delete(self, position_id: uuid.UUID) -> None:
+    async def delete(self, position_id: str) -> None:
         position = await self._repo.get_by_id(position_id)
         if position is None:
             raise NotFoundError("Position")
         await self._repo.delete(position)
 
-    async def reorder(self, ordered_ids: Sequence[uuid.UUID]) -> Sequence[Position]:
+    async def reorder(self, ordered_ids: Sequence[str]) -> Sequence[Position]:
         return await self._repo.reorder(ordered_ids)
 
 

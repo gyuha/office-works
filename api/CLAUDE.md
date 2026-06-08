@@ -75,6 +75,7 @@ task typecheck          # mypy 만
 
 task migrate            # alembic upgrade head
 task revision           # autogenerate 리비전 생성 (대화형)
+task seed               # 조직설정 캐노니컬 데이터셋 upsert (idempotent, migrate 후)
 ```
 
 > 통합 `check` 태스크는 없다 — 전체 검증은 `task lint && task test`.
@@ -118,5 +119,5 @@ pytest(`asyncio_mode = auto` — async 테스트에 데코레이터 불필요). 
 ## 주의 사항
 
 - **Python 3.14로 개발할 것**(`requires-python = ">=3.14"`). 과거 langchain `pydantic.v1`이 3.14에서 깨졌으나 의존성 갱신으로 해소됨(전체 테스트 642 passed on 3.14). `.python-version`은 `api/.gitignore`가 무시하므로 버전 핀은 `pyproject.toml`이 담당.
-- Alembic 리비전은 `0001_initial_schema` 하나뿐 — pyproject가 언급하는 RBAC는 스키마에 아직 미구현(계획 단계). 기존 리비전 수정 금지, 신규는 `task revision`.
+- Alembic: 기존 리비전 수정 금지, 신규는 `task revision`. **리비전 id는 ≤32자** — `alembic_version.version_num`이 `varchar(32)`라 더 길면 upgrade의 version UPDATE가 `StringDataRightTruncation`으로 실패하며 트랜잭션이 롤백된다(파일명은 길어도 되지만 파일 안의 `revision = "..."` 문자열이 ≤32자여야 함).
 - 인프라 호스트 포트(모두 `127.0.0.1` 바인딩): PostgreSQL 5432, Redis 6379, Mailpit SMTP 1025 / UI 8025. 메일은 dev=Mailpit, prod=SMTP(env).

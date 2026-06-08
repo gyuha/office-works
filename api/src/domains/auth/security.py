@@ -98,7 +98,7 @@ def _make_jti() -> str:
 
 
 def create_access_token(
-    user_id: str | uuid.UUID,
+    user_id: str,
     jti: str | None = None,
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
@@ -142,7 +142,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    user_id: str | uuid.UUID,
+    user_id: str,
     family_id: str | None = None,
 ) -> tuple[str, str, str]:
     """Create a refresh token.
@@ -352,14 +352,12 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_id_str: str = payload.get("sub", "")
-    try:
-        user_id = uuid.UUID(user_id_str)
-    except ValueError as exc:
+    user_id: str = payload.get("sub", "")
+    if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token subject.",
-        ) from exc
+        )
 
     result = await session.execute(
         select(User)

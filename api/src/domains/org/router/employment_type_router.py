@@ -9,8 +9,6 @@ DELETE /employment-types/{id}     Delete one               — org:write
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,7 +69,7 @@ async def create_employment_type(
     summary="Delete an employment type",
 )
 async def delete_employment_type(
-    type_id: uuid.UUID,
+    type_id: str,
     service: EmploymentTypeService = Depends(_get_service),
 ) -> None:
     try:

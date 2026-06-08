@@ -12,15 +12,22 @@ Import pattern::
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from core.database import Base
+from core.ids import (
+    COMPANY_INFO,
+    EMPLOYMENT_TYPE,
+    GRADE,
+    LEAVE_SETTINGS,
+    POSITION,
+    WORK_SETTINGS,
+    id_column,
+)
 
 
 class Position(Base):
@@ -28,7 +35,7 @@ class Position(Base):
 
     __tablename__ = "positions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(POSITION)
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -50,7 +57,7 @@ class EmploymentType(Base):
 
     __tablename__ = "employment_types"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(EMPLOYMENT_TYPE)
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -76,7 +83,7 @@ class Grade(Base):
 
     __tablename__ = "grades"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(GRADE)
     name: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     color: Mapped[str] = mapped_column(String(9), nullable=False)
     bg: Mapped[str] = mapped_column(String(9), nullable=False)
@@ -102,7 +109,7 @@ class WorkSettings(Base):
 
     __tablename__ = "work_settings"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(WORK_SETTINGS)
     start_time: Mapped[str] = mapped_column(String(5), nullable=False)
     end_time: Mapped[str] = mapped_column(String(5), nullable=False)
     lunch_start: Mapped[str] = mapped_column(String(5), nullable=False)
@@ -118,7 +125,7 @@ class LeaveSettings(Base):
 
     __tablename__ = "leave_settings"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(LEAVE_SETTINGS)
     default_days: Mapped[int] = mapped_column(Integer, nullable=False)
     probation_days: Mapped[int] = mapped_column(Integer, nullable=False)
     add_per_year: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -134,7 +141,7 @@ class CompanyInfo(Base):
 
     __tablename__ = "company_info"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[str] = id_column(COMPANY_INFO)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     biz_no: Mapped[str] = mapped_column(String(32), nullable=False)
     ceo: Mapped[str] = mapped_column(String(64), nullable=False)

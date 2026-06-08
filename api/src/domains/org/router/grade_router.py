@@ -14,8 +14,6 @@ the grade. ``/order`` is declared before ``/{grade_id}``.
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -93,7 +91,7 @@ async def reorder_grades(
     summary="Update a grade (rename + meta)",
 )
 async def update_grade(
-    grade_id: uuid.UUID,
+    grade_id: str,
     payload: GradeUpdate,
     service: GradeService = Depends(_get_service),
 ) -> GradeResponse:
@@ -110,7 +108,7 @@ async def update_grade(
     summary="Delete a grade (rejected if referenced)",
 )
 async def delete_grade(
-    grade_id: uuid.UUID,
+    grade_id: str,
     service: GradeService = Depends(_get_service),
 ) -> None:
     try:

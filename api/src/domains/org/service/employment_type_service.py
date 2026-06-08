@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -29,7 +28,7 @@ class EmploymentTypeService:
         except IntegrityError as exc:
             raise ConflictError(f"An employment type named '{name}' already exists.") from exc
 
-    async def delete(self, type_id: uuid.UUID) -> None:
+    async def delete(self, type_id: str) -> None:
         emp_type = await self._repo.get_by_id(type_id)
         if emp_type is None:
             raise NotFoundError("EmploymentType")

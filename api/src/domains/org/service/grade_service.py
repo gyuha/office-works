@@ -6,7 +6,6 @@ blocked while any member still references the grade.
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -38,7 +37,7 @@ class GradeService:
         except IntegrityError as exc:
             raise ConflictError(f"A grade named '{name}' already exists.") from exc
 
-    async def update(self, grade_id: uuid.UUID, payload: GradeUpdate) -> Grade:
+    async def update(self, grade_id: str, payload: GradeUpdate) -> Grade:
         grade = await self._repo.get_by_id(grade_id)
         if grade is None:
             raise NotFoundError("Grade")
@@ -60,7 +59,7 @@ class GradeService:
             description=payload.description,
         )
 
-    async def delete(self, grade_id: uuid.UUID) -> None:
+    async def delete(self, grade_id: str) -> None:
         grade = await self._repo.get_by_id(grade_id)
         if grade is None:
             raise NotFoundError("Grade")
@@ -71,7 +70,7 @@ class GradeService:
             )
         await self._repo.delete(grade)
 
-    async def reorder(self, ordered_ids: Sequence[uuid.UUID]) -> Sequence[Grade]:
+    async def reorder(self, ordered_ids: Sequence[str]) -> Sequence[Grade]:
         return await self._repo.reorder(ordered_ids)
 
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
@@ -103,7 +102,7 @@ def test_signup_request_rejects_blank_display_name(display_name: str) -> None:
 
 def test_signup_response_serializes_public_user_and_message_only() -> None:
     user = UserResponse(
-        id=uuid4(),
+        id="usr_schematest000000000000000000",
         email="alice@example.com",
         display_name="Alice",
         is_verified=False,

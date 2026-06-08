@@ -1,7 +1,7 @@
 """Grade router integration tests (real Postgres + ASGI round-trip).
 
-Covers auth gates + the risky behaviors: rename cascades to members, and
-deletion is blocked (409) while a member references the grade.
+Covers auth gates + the risky behaviors: rename cascades to users (employee
+directory rows), and deletion is blocked (409) while a user references the grade.
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ from core.database import get_async_session
 from core.exceptions import register_exception_handlers
 from domains.auth.models import Role, User, user_roles
 from domains.auth.security import get_current_user
-from domains.members.models import Member
 from domains.org.models import Grade
 from domains.org.router import router
 
@@ -76,7 +75,7 @@ async def cleanup(
             await session.execute(delete(user_roles).where(user_roles.c.user_id == uid))
             await session.execute(delete(User).where(User.id == uid))
         for email in bag["emails"]:
-            await session.execute(delete(Member).where(Member.email == email))
+            await session.execute(delete(User).where(User.email == email))
         for name in bag["grades"]:
             await session.execute(delete(Grade).where(Grade.name == name))
         await session.commit()
@@ -168,7 +167,7 @@ async def test_create_reorder_round_trips(
         assert names.index(nb) < names.index(na)
 
 
-async def test_rename_cascades_to_member_and_delete_blocked_while_referenced(
+async def test_rename_cascades_to_user_and_delete_blocked_while_referenced(
     session_factory: async_sessionmaker[AsyncSession],
     cleanup: dict[str, list],
 ) -> None:
@@ -181,7 +180,7 @@ async def test_rename_cascades_to_member_and_delete_blocked_while_referenced(
     new_name = f"등급C2-{s}"
     cleanup["grades"].extend([grade_name, new_name])
 
-    # create the grade, then a member referencing it by name
+    # create the grade, then an employee user referencing it by name
     async with _client(app) as client:
         created = await client.post(
             "/api/v1/grades",
@@ -191,18 +190,20 @@ async def test_rename_cascades_to_member_and_delete_blocked_while_referenced(
         assert created.status_code == 201
         grade_id = created.json()["id"]
 
-    email = f"grade-member-{s}@example.com"
+    email = f"grade-user-{s}@example.com"
     cleanup["emails"].append(email)
     async with session_factory() as session:
         session.add(
-            Member(
+            User(
+                email=email,
+                display_name="등급참조자",
+                is_verified=False,
+                is_active=True,
                 employee_no=f"EMP-{uuid.uuid4().int % 100000:05d}",
-                name="등급참조자",
                 department="개발팀",
                 rank="사원",
                 grade=grade_name,
                 phone="010-0000-0000",
-                email=email,
             )
         )
         await session.commit()
@@ -212,12 +213,12 @@ async def test_rename_cascades_to_member_and_delete_blocked_while_referenced(
         blocked = await client.delete(f"/api/v1/grades/{grade_id}")
         assert blocked.status_code == 409, blocked.text
 
-        # rename cascades to the member
+        # rename cascades to the referencing user
         renamed = await client.patch(f"/api/v1/grades/{grade_id}", json={"name": new_name})
         assert renamed.status_code == 200
 
     async with session_factory() as session:
-        member = (
-            await session.execute(select(Member).where(Member.email == email))
+        referencing = (
+            await session.execute(select(User).where(User.email == email))
         ).scalar_one()
-        assert member.grade == new_name  # cascaded
+        assert referencing.grade == new_name  # cascaded

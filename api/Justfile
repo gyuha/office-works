@@ -10,6 +10,7 @@
 #   just lint               → ruff check + mypy
 #   just format             → ruff format + ruff check --fix
 #   just migrate            → Apply pending Alembic migrations
+#   just seed               → Upsert the canonical org-settings seed dataset
 #   MSG="my message" just revision → Create a new Alembic autogenerate revision
 #   just install            → uv sync (install all deps incl. dev)
 #   just clean              → Remove build/cache artifacts
@@ -76,8 +77,8 @@ infra-logs:
     docker compose -f docker-compose.yml logs -f
 
 # ── Dev server ────────────────────────────────────────────────────────────────
-# Bootstrap: install deps + start infra + apply migrations + FastAPI hot-reload
-dev: install migrate
+# Bootstrap: install deps + start infra + apply migrations + seed + FastAPI hot-reload
+dev: install migrate seed
     @echo ""
     @echo "🚀  Starting FastAPI at http://localhost:8000"
     @echo "     Docs       : http://localhost:8000/docs"
@@ -147,6 +148,10 @@ typecheck:
 # Start local infra if needed, then apply all pending Alembic migrations (upgrade head)
 migrate: infra-health
     uv run alembic upgrade head
+
+# Upsert the canonical org-settings seed dataset (idempotent; run after migrate)
+seed: infra-health
+    PYTHONPATH=src uv run python scripts/seed.py
 
 # Create a new autogenerate Alembic revision. Use MSG="my message" just revision,
 # or omit MSG to be prompted interactively.
