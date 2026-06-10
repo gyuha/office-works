@@ -1,597 +1,134 @@
 ---
-last_mapped_commit: 5c5103df2b3695a9b8bd62b9c5701f2988b8e0ab
-mapped: 2026-06-05
+last_mapped_commit: 7813838ac56097621569a9ce37a8afe4f10f0b54
+mapped: 2026-06-11
 ---
 
-# Code Concerns & Tech Debt
+# 기술 부채 · 알려진 이슈 · 취약 영역
 
-## Frontend (Web)
+> 모든 항목은 2026-06-11 워킹 트리 기준으로 직접 확인한 사실이다. 커밋되지 않은 변경(메모 기능)이 포함된 상태에서 매핑했다.
 
-### 1. Mock Auth API Not Wired to Real Backend
+## 0. 진행 중(in-flight) 작업 — 커밋되지 않은 워킹 트리
 
-**Files:** `web/src/features/auth/lib/mock-auth-api.ts`, `web/src/features/auth/hooks/use-auth-mutation.ts`
+`member-memo-tiptap-editor` 작업(`.forge/done/2026-06-09-member-memo-tiptap-editor/`, `.forge/retro/2026-06-09-member-memo-tiptap-editor.md`)의 결과물이 아직 커밋되지 않았다:
 
-The frontend auth system is entirely disconnected from the real API. The login/signup flows call `mockLogin()` and `mockSignup()` instead of the FastAPI `/auth/login` and `/auth/signup` endpoints. This creates a complete disconnect:
+- 신규 마이그레이션 2건(untracked): `api/alembic/versions/0010_user_employment_type.py`, `api/alembic/versions/0011_user_memo.py`
+- 신규 공용 에디터(untracked): `web/src/components/ui/rich-text-editor.tsx` (Tiptap 기반, ADR `.forge/adr/0007-tiptap-default-rich-text-editor.md`)
+- 수정(modified): `api/src/domains/users/schemas/user_schemas.py`(memo 필드), `api/src/domains/users/repository/user_directory_repository.py`, `api/src/domains/users/service/user_directory_service.py`, `api/src/domains/auth/models/auth_models.py`, `web/src/features/office/screens/members.tsx`, `web/src/client/types.gen.ts`, `api/openapi.json`, 관련 테스트 2건
 
-- User credentials are never validated against the API
-- No JWT tokens are returned or stored
-- The auth store (`web/src/features/auth/store/auth.store.ts`) stores only the user object, not `access_token` or `refresh_token`
-- No logout mechanism exists (no token blacklisting)
-- Chat domain endpoints requiring `chat:write` permission will fail because no real auth context exists
-
-**Why it matters:** The app will not function end-to-end with real authentication. The entire auth flow must be reimplemented to call the actual API endpoints and handle JWT token lifecycle (storage, refresh, expiration).
-
----
-
-### 2. No JWT Token Storage or Management on Client
-
-**Files:** `web/src/features/auth/store/auth.store.ts`, `web/src/features/auth/types/auth.ts`, `web/src/features/auth/hooks/use-auth-mutation.ts`
-
-The frontend auth store maintains only user metadata (name, email) but has **no mechanism to store or manage JWT tokens**:
-
-- `TokenResponse` schema (from API) includes `access_token` and `refresh_token`, but the web client ignores them
-- No place in Zustand store for token persistence
-- No HTTP client configured to include `Authorization: Bearer <token>` header
-- Token refresh flow is not implemented
-
-**Why it matters:** Without token storage and automatic header injection, all protected endpoints will return 401 Unauthorized. The chat endpoints (`POST /chat/complete`, `POST /chat/stream`, etc.) require valid access tokens.
-
----
-
-### 3. No Real API HTTP Client
-
-**Files:** `web/src/features/auth/lib/mock-auth-api.ts`
-
-The mock API module has hardcoded delays and fake logic. There is no production HTTP client that:
-
-- Calls the real FastAPI backend at `http://localhost:8000/api/v1`
-- Includes Authorization header with JWT token
-- Handles 401 responses (token expired → refresh → retry)
-- Manages error responses with proper status codes
-
-**Why it matters:** All API integration is missing. Any attempt to call real endpoints will fail.
-
----
-
-## Backend (API)
-
-### 4. RBAC Schema Exists but Logic Is Incomplete
-
-**Files:** `api/alembic/versions/0001_initial_schema.py`, `api/src/domains/auth/models/auth_models.py`, `api/src/domains/auth/security.py`
-
-The database schema includes full RBAC tables (`roles`, `permissions`, `role_permissions`, `user_roles`) and the `User` model has a `has_permission()` method. However:
-
-- **No factory/seed for initial roles & permissions**: The migration creates the tables but no default roles (admin, user, etc.) or permissions (chat:write, etc.) are inserted
-- **No endpoints to assign roles to users**: Users are always created without roles, so they will always fail RBAC checks
-- **Only chat:write is used**: The auth router endpoints do not require any permissions; only chat routes check `require_permission("chat:write")`
-- **Roles table is effectively dead code**: No API to manage roles/permissions; the schema exists but is unmaintainable in production
-
-**Why it matters:** RBAC cannot be activated without a role-assignment strategy. Current chat endpoints will deny all non-admin access (or fail if no role exists). The system is schema-ready but operationally incomplete.
-
----
-
-### 5. Python 3.14 Incompatibility with LangChain
-
-**Files:** `api/pyproject.toml`
-
-The project specifies `requires-python = ">=3.12"` but langchain's use of deprecated `pydantic.v1` breaks under Python 3.14. This is documented in `CLAUDE.md`:
-
-> Python 3.14 + langchain's `pydantic.v1`はbishocompatなので chat domain test is collection stage で失敗する
-
-**Why it matters:** Any attempt to run tests or use the chat domain on Python 3.14+ will fail at test collection. The constraint `>=3.12` means tests may pass locally but fail in CI if Python version is not pinned to 3.12.x.
-
----
-
-### 6. Single Alembic Migration Only
-
-**Files:** `api/alembic/versions/0001_initial_schema.py`
-
-Only one migration exists (`0001_initial_schema`). This is problematic because:
-
-- Schema changes during development require manual `task revision` creation
-- No baseline exists for future incremental migrations
-- Any alteration to `0001_initial_schema` directly violates Alembic best practice
-- RBAC tables exist but lack initial data; no follow-up migration to seed roles
-
-**Why it matters:** The schema is frozen at initial state. No migrations for adding indexes, constraints, or test data. Any schema evolution must start from scratch.
-
----
-
-### 7. No Default Role/Permission Data Seeding
-
-**Files:** `api/src/domains/auth/models/auth_models.py`, `api/alembic/versions/0001_initial_schema.py`
-
-The database schema has `roles`, `permissions`, and `role_permissions` tables, but:
-
-- No default roles (`admin`, `user`, `moderator`) are created
-- No permissions (`chat:write`, `chat:read`, etc.) are seeded
-- Users created via `/auth/signup` have an empty `roles` list
-- Chat endpoints that call `require_permission("chat:write")` will always return 403 Forbidden
-
-**Why it matters:** The RBAC system is inert without initial role/permission rows. Production deployments would need a migration or manual script to populate these tables, creating operational complexity.
-
----
-
-### 8. OAuth Credential Storage Lacks Validation
-
-**Files:** `api/src/domains/auth/models/auth_models.py`, `api/src/domains/auth/oauth/google.py`, `api/src/domains/auth/oauth/kakao.py`, `api/src/domains/auth/oauth/naver.py`
-
-The `OAuthAccount` model stores raw `access_token` and `refresh_token` in the `Text` column:
-
-```python
-access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-```
-
-Issues:
-
-- Tokens are stored in plaintext (no encryption)
-- No validation that token values are not empty strings or malformed
-- `expires_at` can be `None`, making token rotation unpredictable
-- No refresh-token expiry enforcement on read
-
-**Why it matters:** OAuth tokens are sensitive credentials. Plaintext storage is a security risk. Expired tokens could be used if `expires_at` is not checked on every OAuth operation.
-
----
-
-### 9. Email Verification and Password Reset Tokens Stored as Hash Only
-
-**Files:** `api/src/domains/auth/models/auth_models.py`
-
-The `EmailVerification` and `PasswordReset` models store only a token hash, not the raw token:
-
-```python
-token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
-```
-
-This is correct for security, but:
-
-- No `created_at` timestamp to enforce TTL at the application layer (only `expires_at` exists)
-- No indexing on `expires_at` for efficient cleanup of stale records
-- The `used` flag is set but no `used_at` timestamp is recorded
-- No batch-delete mechanism for expired-and-unused tokens
-
-**Why it matters:** Orphaned verification/reset tokens accumulate in the database. Without periodic cleanup, these tables will grow unbounded in production.
-
----
-
-### 10. Missing Error Handling in Chat Streaming Handler
-
-**Files:** `api/src/domains/chat/router/chat_router.py` (lines 506–544)
-
-The SSE streaming generator (`_event_gen()`) has error handling, but the error event is sent only **after** the stream has already started:
-
-```python
-async def _event_gen() -> Any:
-    try:
-        async for chunk in service.stream(lc_messages):
-            collected_chunks.append(chunk)
-            yield {"data": chunk}
-    except Exception as exc:
-        logger.error("chat_stream_error", error=str(exc), exc_info=True)
-        yield {"event": "error", "data": str(exc)}  # ← Sent mid-stream
-```
-
-Issues:
-
-- If an exception occurs after the first chunk is yielded, the client has already received a 200 OK with partial data
-- The HTTP status code cannot be changed mid-stream; error event is sent as SSE data, not HTTP status
-- Client-side code must parse the event stream to detect errors (no standard HTTP error handling)
-- If an exception occurs **before** the first chunk, the error event is sent correctly, but the semantics are mixed
-
-**Why it matters:** Clients cannot reliably detect LLM provider failures mid-stream. Error recovery is ambiguous.
-
----
-
-### 11. Auto-Title Generation Silently Fails
-
-**Files:** `api/src/domains/chat/router/chat_router.py` (lines 552–581)
-
-The `_auto_title()` function catches all exceptions and logs them at `WARNING` level but does not propagate the error:
-
-```python
-async def _auto_title(...) -> None:
-    try:
-        title_result = await service.complete(title_messages)
-        ...
-    except Exception as exc:
-        logger.warning("auto_title_failed", conv_id=str(conv_id), error=str(exc))
-        # silently swallowed
-```
-
-Issues:
-
-- If title generation fails due to LLM provider issues, the user is never notified
-- The conversation is left without a title
-- Repeated failures accumulate in logs with no alerting mechanism
-- No retry logic or circuit breaker
-
-**Why it matters:** Silent failures reduce visibility. Conversations will accumulate without titles if the LLM provider is degraded.
-
----
-
-### 12. Database Session Commit Race Condition in Chat Streaming
-
-**Files:** `api/src/domains/chat/router/chat_router.py` (lines 522–536)
-
-In the streaming handler, the assistant message is persisted **inside the finally block** after the stream completes:
-
-```python
-finally:
-    if collected_chunks:
-        assistant_content = "".join(collected_chunks)
-        try:
-            await repo.add_message(...)
-            await session.commit()
-            if is_first_turn and conv.title is None:
-                await _auto_title(...)  # Logs warning but does not fail
-        except Exception as db_exc:
-            logger.error("chat_message_persist_failed", ...)
-```
-
-Issues:
-
-- If `session.commit()` fails, the user has already received all streaming data (200 OK)
-- The error is logged but not returned to the client
-- The message is not persisted; the next request will show stale history
-- Auto-title is called even if the message persistence failed
-
-**Why it matters:** Data loss is possible if the database becomes unavailable after streaming completes. The client is left in an inconsistent state.
-
----
-
-### 13. Rate Limiting Not Enforced on Chat Endpoints
-
-**Files:** `api/src/main.py` (lines 102–103), `api/src/domains/chat/router/chat_router.py`
-
-The app registers a `Limiter` instance but chat endpoints do not apply rate limits:
-
-```python
-# main.py
-limiter = Limiter(key_func=_get_user_key)
-```
-
-Chat router has no `@limiter.limit()` decorators on `/complete` or `/stream` endpoints.
-
-Issues:
-
-- Users can send unlimited requests, causing unbounded LLM API calls
-- No per-user or per-conversation rate limiting
-- No throttling for expensive operations (token streaming)
-- Cost control is absent
-
-**Why it matters:** Uncontrolled LLM API usage can result in unexpectedly high costs. A single user can exhaust the LLM provider quota.
-
----
-
-### 14. Hardcoded LLM Temperature in Chat Configuration
-
-**Files:** `api/src/infra/llm/provider_factory.py` (line 60), `api/src/core/config.py` (lines 105–109)
-
-The provider factory and config include temperature as a tunable parameter, but:
-
-- The global default is `0.7` (moderate creativity)
-- No per-user or per-conversation override mechanism in the API
-- Chat endpoints do not accept `temperature` or `max_tokens` as query/request parameters
-- The `/complete` and `/stream` endpoints have no way to request deterministic (0.0) vs. creative (2.0) responses
-
-**Why it matters:** Users cannot adjust LLM behavior for their use case (e.g., deterministic for facts, creative for ideation). The API is inflexible.
-
----
-
-### 15. Missing Pagination on Conversation/Message Listing
-
-**Files:** `api/src/domains/chat/router/chat_router.py` (lines 406–422)
-
-The `GET /chat/conversations/{conversation_id}/messages` endpoint returns all messages in a conversation:
-
-```python
-async def list_messages(...) -> list[MessageResponse]:
-    repo = ChatRepository(session)
-    msgs = await repo.get_conversation_messages(conversation_id)
-    return [MessageResponse.model_validate(m) for m in msgs]
-```
-
-Issues:
-
-- No `limit` / `offset` parameters
-- Large conversations (1000+ messages) will fetch all rows and serialize to JSON
-- Client receives gigabytes of data if a conversation is very long
-- No sorting options (newest first vs. oldest first)
-
-**Why it matters:** Performance degrades with long conversations. N+1 queries are likely if the repository does not use `selectinload` for related data.
-
----
-
-### 16. No Request Validation on Chat Request Message Count
-
-**Files:** `api/src/domains/chat/router/chat_router.py` (lines 102–115)
-
-The `ChatRequest` schema allows empty or very large message lists:
-
-```python
-class ChatRequest(BaseModel):
-    messages: list[ChatMessage]  # No min/max length constraint
-    system: str | None = None
-```
-
-Issues:
-
-- Clients can send 0 messages → service.complete() receives empty list
-- Clients can send 10,000+ messages → context-length errors from LLM
-- No validation of individual message content length (could be gigabytes)
-- No schema validation that at least one message is present
-
-**Why it matters:** Invalid inputs cause LLM errors or OOM conditions. The API should reject invalid payloads upfront.
-
----
-
-### 17. CORS Configured to Allow All Methods and Headers
-
-**Files:** `api/src/main.py` (lines 130–137)
-
-The CORS middleware is overly permissive:
-
-```python
-application.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],  # ← Allow all HTTP methods
-    allow_headers=["*"],  # ← Allow all headers
-    expose_headers=["X-Correlation-ID"],
-)
-```
-
-Issues:
-
-- `allow_methods=["*"]` allows `DELETE`, `PATCH`, etc., even if no endpoint defines them
-- `allow_headers=["*"]` allows any header, including potentially spoofed auth headers
-- This is overly permissive for production
-
-**Why it matters:** Overly permissive CORS is a security anti-pattern. Explicit allowlisting is safer.
-
----
-
-### 18. No Validation on OAuth Redirect URI
-
-**Files:** `api/src/core/config.py` (lines 333–343)
-
-OAuth redirect URIs are stored as plain strings without validation:
-
-```python
-google_redirect_uri: str = ""
-kakao_redirect_uri: str = ""
-naver_redirect_uri: str = ""
-```
-
-Issues:
-
-- No URL validation (could be malformed)
-- No enforcement that URIs match the registered values at the provider
-- No check for HTTPS in production (only dev uses http://localhost)
-- Typos in `.env` are not caught until OAuth flow fails
-
-**Why it matters:** OAuth is sensitive to redirect URI mismatches. Typos cause authentication failures or security vulnerabilities (open redirect).
-
----
-
-### 19. No Automatic Token Cleanup on Logout
-
-**Files:** `api/src/domains/auth/router/auth_router.py`, `api/src/domains/auth/service/auth_service.py`
-
-The logout endpoint (`POST /auth/logout`) blacklists the JWT but does not delete the corresponding `RefreshToken` row from the database:
-
-Issues:
-
-- `RefreshToken` rows accumulate (one per issued token)
-- Old tokens are marked `revoked=True` but never deleted
-- The database will grow unbounded with stale rows
-- No batch-cleanup mechanism for expired tokens
-
-**Why it matters:** Database bloat; refresh_tokens table will contain millions of rows in production.
-
----
-
-### 20. Password Reset Token TTL Hardcoded to 1 Hour
-
-**Files:** `api/src/domains/auth/service/auth_service.py` (line 56)
-
-```python
-PASSWORD_RESET_EXPIRE_HOURS: int = 1
-```
-
-Issues:
-
-- 1 hour is inflexible; users on slow email systems may miss the window
-- No configuration option to extend TTL
-- The value is hardcoded in source, not in `.env`
-
-**Why it matters:** Users get locked out if they don't verify within the hardcoded window. Configuration should be externalized.
-
----
-
-### 21. No Database Connection Pool Exhaustion Handling
-
-**Files:** `api/src/core/database.py` (lines 71–85)
-
-The async engine is configured with `pool_size=5, max_overflow=10` for typical web workloads:
-
-```python
-return create_async_engine(
-    settings.async_database_url,
-    ...
-    pool_size=5,
-    max_overflow=10,
-    ...
-)
-```
-
-Issues:
-
-- No monitoring of pool exhaustion
-- No fallback if all connections are busy
-- SSE streaming endpoints hold a connection for the duration of the stream (could exhaust pool)
-- Long-running chat streams may starve other requests
-
-**Why it matters:** Streaming endpoints can deadlock the connection pool if many concurrent streams exist.
-
----
-
-### 22. Missing Structured Error Response Format
-
-**Files:** `api/src/core/exceptions.py`, `api/src/domains/auth/router/auth_router.py`, `api/src/domains/chat/router/chat_router.py`
-
-The API returns `{"detail": "..."}` for all errors, without a consistent error code or category:
-
-Issues:
-
-- No `code` field (e.g., `"ERR_USER_NOT_FOUND"`)
-- No `error_type` field to classify the error (validation, auth, rate_limit, etc.)
-- Clients cannot programmatically distinguish between 400 (validation) and 409 (conflict)
-- Error messages are human-readable strings, not machine-parseable
-
-**Why it matters:** API clients must parse error messages as strings, which is fragile. A structured error format enables better error handling.
-
----
-
-### 23. No Request/Response Size Limits
-
-**Files:** `api/src/main.py`
-
-FastAPI defaults are used for request/response size limits:
-
-Issues:
-
-- No limit on request body size → clients can POST gigabytes
-- No limit on response size → large paginated responses are not throttled
-- Chat requests with very long system prompts or message history can exceed LLM context windows
-- No bandwidth protection
-
-**Why it matters:** DoS attacks can send enormous payloads. The API should reject oversized requests.
-
----
-
-## Architecture & Design
-
-### 24. No Integration Tests for Auth + Chat Flow
-
-**Files:** `api/tests/`
-
-The test suite includes unit tests for individual services, but no end-to-end integration tests that:
-
-- Register a user → verify email → login → receive JWT → call chat endpoint
-- Verify that chat endpoints enforce `chat:write` permission
-- Test that token refresh works and invalidates old tokens
-- Verify OAuth callback flow
-
-**Why it matters:** The interaction between auth and chat domains is not tested. Integration bugs only surface in manual testing.
-
----
-
-### 25. LLM Provider Failure Has No Fallback
-
-**Files:** `api/src/domains/chat/service/chat_service.py`, `api/src/domains/chat/router/chat_router.py`
-
-If the LLM provider is unavailable, the request fails immediately:
-
-Issues:
-
-- No fallback provider (e.g., Ollama if OpenAI is down)
-- No retry logic with exponential backoff (Tenacity is in dependencies but not used)
-- No circuit breaker to fail fast if provider is known to be down
-- Streaming responses fail mid-stream with no recovery
-
-**Why it matters:** Service reliability is poor. Even temporary LLM provider outages cause user-facing failures.
-
----
-
-### 26. No Audit Logging for Security Events
-
-**Files:** `api/src/domains/auth/`
-
-Security events (login success, login failure, token refresh, logout, role assignment) are not logged in a tamper-proof audit trail:
-
-Issues:
-
-- Login failures are not counted (no brute-force protection)
-- Successful logins are not tracked (no anomaly detection)
-- RBAC denials log at `WARNING` but are not sent to an audit stream
-- No retention policy for audit logs
-
-**Why it matters:** Compliance and forensics are impossible without audit trails. Security incidents cannot be investigated.
-
----
-
-## Configuration & Deployment
-
-### 27. Default Secrets in .env.example
-
-**Files:** `api/.env.example`
-
-Placeholders for critical secrets are documented but generic:
+이 문서의 일부 항목(memo 관련)은 이 미커밋 상태를 전제로 한다.
 
 ```
-SECRET_KEY=change-me-in-production-use-openssl-rand-hex-32
-JWT_SECRET_KEY=change-me-jwt-secret-key-use-openssl-rand-hex-32
+0010/0011 마이그레이션 → user_schemas.py memo 필드 → members.tsx 편집 폼 → rich-text-editor.tsx
+                                  (전부 미커밋 — 하나라도 빠지면 기능 깨짐)
 ```
 
-Issues:
+## 1. `task lint` 게이트 깨짐 — ruff 12건 (사전 존재 + 신규 혼재)
 
-- Example values may accidentally be used in production
-- No validation that secrets have been changed
-- No minimum entropy check
-- JWT_SECRET_KEY should differ from SECRET_KEY, but this is not enforced
+`api/`에서 `task lint`가 현재 실패한다(`uv run ruff check .` 12 errors). 전체 목록:
 
-**Why it matters:** If default secrets are used in production, the system is immediately compromised.
+| 파일 | 규칙 | 내용 |
+|------|------|------|
+| `api/alembic/versions/0009_string_ids.py:60` | RUF100 | 불필요한 `noqa: E501` |
+| `api/tests/auth/conftest.py:14` | I001 | import 정렬 |
+| `api/tests/auth/test_auth_flows.py:98, 129` | RUF059 | `raw_token` 미사용 언패킹 |
+| `api/tests/auth/test_auth_flows.py:195` | RUF043 | `match=` 패턴 메타문자 비이스케이프 |
+| `api/tests/auth/test_auth_flows.py:308, 321, 439, 773` | RUF059 | `user` 미사용 언패킹 |
+| `api/tests/users/test_user_service.py:15` | I001 | import 정렬 |
+| `api/tests/users/test_user_service.py:199, 206` | N802 | camelCase 테스트 함수명 (`test_create_withMemo_…`, `test_create_withoutMemo_…`) |
 
----
+N802 2건은 프로젝트 테스트 명명 규약(`test_methodUnderTest_scenario_expectation`, `CLAUDE.md`)과 ruff 기본 규칙이 충돌하는 구조적 문제다 — 같은 규약을 따르는 다른 테스트가 계속 추가되면 매번 lint가 깨진다. ruff 설정에서 tests 경로의 N802 예외 처리가 필요하다. 3건은 `--fix`로 자동 수정 가능.
 
-### 28. No Health Check for LLM Provider Connectivity
+## 2. 프론트엔드 인증 — 로그인/가입이 여전히 mock
 
-**Files:** `api/src/main.py` (lines 167–221)
+- `web/src/features/auth/lib/mock-auth-api.ts`의 `mockLogin`/`mockSignup`이 `web/src/features/auth/hooks/use-auth-mutation.ts`에서 그대로 사용된다. 로그인 폼으로는 실제 JWT를 절대 받을 수 없다.
+- 반면 토큰 인프라 자체는 존재한다: `web/src/lib/api-client.ts`가 hey-api 클라이언트에 Bearer 토큰 부착 + 401 시 세션 클리어/로그인 리다이렉트 인터셉터를 등록하고, `web/src/features/auth/store/auth.store.ts`는 `accessToken`/`refreshToken`을 persist한다.
+- 실제 토큰을 세팅하는 유일한 경로는 OAuth 콜백(`web/src/routes/auth/callback.tsx`의 `store.setTokens(tokens)`)뿐이다. 즉 **이메일/비밀번호 로그인 → API 호출** 플로우는 끝까지 연결되지 않은 상태다. mock 로그인으로 `isAuthenticated=true`가 되어도 `accessToken`이 없으므로 보호된 화면(`members`, `settings`)의 API 호출은 401 → 즉시 로그아웃 리다이렉트된다.
+- 토큰 자동 갱신(refresh)은 의도적으로 범위 밖(ADR-0004, `api-client.ts` 주석) — 401이면 무조건 재로그인.
 
-The `/ready` endpoint checks PostgreSQL, Redis, and Mailpit SMTP, but **not** LLM provider connectivity:
+```
+[로그인 폼] → mockLogin → user만 저장(토큰 없음) ─┐
+[OAuth 콜백] → setTokens(실제 JWT) ──────────────┤→ api-client 인터셉터 → Bearer 부착
+                                                  ↓ 401
+                                          세션 클리어 → /login 이동 (갱신 없음)
+```
 
-Issues:
+## 3. RBAC — 스키마·가드는 완성, 운영 데이터가 불완전
 
-- If OpenAI API is unreachable, the service reports "ready" but chat endpoints will fail
-- Load balancers cannot detect LLM provider outages
-- No way to gracefully drain chat traffic before a provider failure
+스키마(`roles`/`permissions`/`role_permissions`/`user_roles`, `api/src/domains/auth/models/auth_models.py`)와 가드(`require_permission`, `api/src/domains/auth/security.py:383`)는 동작하고, 쓰기 엔드포인트에 실제 적용돼 있다(`api/src/domains/users/router/user_router.py`의 `users:write`, `api/src/domains/org/router/config_router.py`의 `org:write`, `api/src/domains/chat/router/chat_router.py`의 `chat:write`). 그러나 시드 데이터에 구멍이 있다:
 
-**Why it matters:** The service is advertised as ready even when a critical dependency (LLM provider) is offline.
+- `api/scripts/seed.py`는 `admin` 롤과 `org:write`/`users:write` 퍼미션만 생성한다. **`chat:write` 퍼미션은 어디서도 시드되지 않는다** → chat 쓰기 엔드포인트는 전원 403.
+- `api/src/domains/auth/service/auth_service.py:166`은 회원가입 시 `"user"` 롤을 기본 부여하려 하지만, **`user` 롤 자체가 시드에 없다** → `get_role_by_name("user")`이 None을 반환하고 조용히 건너뛴다. 신규 가입자는 롤 0개.
+- 사용자에게 `admin` 롤을 부여하는 API 엔드포인트가 없다(`assign_role_to_user`는 `api/src/domains/auth/repository/auth_repository.py:106`에 있으나 가입 기본 롤 경로에서만 호출). 운영에서 쓰기 권한을 주려면 DB 직접 조작이 필요하다.
 
----
+## 4. `members.tsx` — 전체 폼 PATCH가 `exclude_unset`을 무력화 (last-write-wins)
 
-### 29. No Observability for Token Lifecycle
+`web/src/features/office/screens/members.tsx`의 편집 플로우(`MemberForm`, 872행~)는 `UserCreate` 타입의 **전체 필드 객체**를 상태로 들고, 833행에서 그대로 `updateUserApiV1UsersUserIdPatchMutation`의 body로 보낸다. 서버는 `api/src/domains/users/service/user_directory_service.py:109`에서 `payload.model_dump(exclude_unset=True)`로 부분 업데이트를 의도하지만, 클라이언트가 항상 모든 필드를 채워 보내므로 `exclude_unset`이 사실상 무의미하다. 두 사용자가 같은 구성원을 동시에 편집하면 나중 저장이 앞선 저장을 통째로 덮어쓴다(낙관적 잠금·버전 필드도 없음). PATCH의 부분 업데이트 계약을 살리려면 폼에서 dirty 필드만 전송하거나, 서버에 `updated_at` 기반 충돌 감지를 추가해야 한다.
 
-**Files:** `api/src/domains/auth/security.py`
+## 5. memo(리치텍스트) — 길이 가드·서버측 sanitize 부재
 
-JWT blacklist operations log at `DEBUG` level, but token lifecycle events should be observable:
+- **길이 가드 없음:** 백엔드는 `api/src/domains/users/schemas/user_schemas.py:39,72`에서 `max_length=100_000`을 강제하지만, `web/src/components/ui/rich-text-editor.tsx`에는 어떤 길이 제한/카운터도 없다. 초과 시 422가 떨어지고 사용자는 `members.tsx:815`의 일반 토스트("저장에 실패했습니다.")만 본다 — 원인을 알 수 없다.
+- **sanitize는 클라이언트 렌더 시점에만:** 서버는 memo HTML을 원문 그대로 저장한다(`user_schemas.py` 주석: "렌더 시 sanitize (ADR-0007)"). 현재 유일한 표시 경로인 `RichTextView`(`rich-text-editor.tsx:191`)는 DOMPurify로 sanitize하므로 안전하지만, **이 보호는 모든 미래 소비자가 RichTextView를 쓴다는 가정에 의존**한다. memo를 raw로 렌더하는 화면/이메일/외부 연동이 하나라도 생기면 stored XSS가 된다. CSV export(`api/src/domains/users/router/user_router.py:156`)는 memo 컬럼을 포함하지 않아 현재는 무관.
 
-Issues:
+## 6. 레거시 execCommand 에디터 2곳 — 공용 에디터 미이관
 
-- No structured logging for token generation vs. validation
-- No metrics for token refresh rate or blacklist hits
-- Token expiry times are not logged
-- No way to detect token leaks or unusual refresh patterns
+ADR-0007이 Tiptap(`web/src/components/ui/rich-text-editor.tsx`)을 표준으로 정했지만, 두 화면이 deprecated `document.execCommand` 기반 contenteditable 에디터를 그대로 쓴다:
 
-**Why it matters:** Suspicious auth activity cannot be detected in production. A leaked token can be used indefinitely until expiry.
+- `web/src/features/office/screens/approval.tsx:624` (결재 문서 작성기, 823행에 비-sanitize `dangerouslySetInnerHTML` — 단 입력원은 정적 템플릿)
+- `web/src/features/office/screens/projects.tsx:2026` (이슈 설명 에디터, 2009/2092행에 비-sanitize `dangerouslySetInnerHTML` — 입력원은 샘플 데이터)
 
----
+현재는 두 화면 모두 정적/샘플 데이터만 렌더하므로 실질 XSS는 아니지만, 이 화면들이 서버 데이터에 연결되는 순간 위험이 현실화된다. 이관 시 sanitize 경로(`RichTextView`)로 함께 통일해야 한다.
 
-## Summary of Critical Issues
+## 7. 화면별 API 연동 격차 — 절반이 아직 하드코딩 mock
 
-| Issue | Severity | Component | Impact |
-|-------|----------|-----------|--------|
-| Mock Auth API | **Critical** | Web | App cannot authenticate; entire system is non-functional |
-| No JWT Token Storage | **Critical** | Web | Protected endpoints will always return 401 |
-| RBAC Incomplete | **High** | API | Chat endpoints are unreachable (all users denied) |
-| Python 3.14 Incompatibility | **High** | API | Tests fail on Python 3.14+ |
-| Stream Error Handling | **High** | API | Data loss possible if DB fails mid-stream |
-| Rate Limiting Missing | **High** | API | Unbounded LLM API costs |
-| No Pagination | **Medium** | API | Large conversations cause memory exhaustion |
-| OAuth Token Plaintext | **Medium** | API | Sensitive credentials stored insecurely |
-| Token Cleanup | **Medium** | API | Database bloat over time |
-| Default Secrets | **Medium** | Config | Production compromise risk if not changed |
+API에 실제 연결된 화면은 2개뿐이다(`useQuery` 사용 기준):
 
+| 화면 | 파일 | 상태 |
+|------|------|------|
+| 구성원 관리 | `web/src/features/office/screens/members.tsx` | 실 API (users CRUD) |
+| 설정 | `web/src/features/office/screens/settings.tsx` | 실 API (positions/grades/org config) |
+| 팀 관리 (`team-list`) | `web/src/features/office/screens/teams.tsx` | **하드코딩** — 25명 `MEMBERS_DATA` 배열(34행)과 `INITIAL_NODES` 조직트리(62행). members와 같은 직원 데이터를 다루면서 users API 미연동 → 두 화면의 데이터가 서로 다르다 |
+| 근태 | `web/src/features/office/screens/attendance.tsx` | 전부 클라이언트 생성 샘플 데이터 |
+| 결재 | `web/src/features/office/screens/approval.tsx` | 샘플 문서(210행 "수신함별 샘플 문서") |
+| 프로젝트 | `web/src/features/office/screens/projects.tsx` | 샘플 데이터(82행 "sample data (projects.js)") |
+
+또한 nav id `att-analysis`는 `SCREEN_REGISTRY`(`web/src/features/office/screens/registry.ts`)에 구현이 없어 `web/src/features/office/components/app-shell.tsx:16`의 "준비 중인 화면입니다" 폴백으로 떨어진다.
+
+## 8. chat 도메인 — 운영 보호장치 미비 (사전 존재)
+
+- **레이트리밋 미적용:** `api/src/main.py:103`에 slowapi `Limiter`가 만들어지고 주석은 "routers import this to apply per-route limits"라고 하지만, `@limiter.limit` 데코레이터를 쓰는 라우트가 **코드베이스 전체에 0개**다. LLM 호출 비용 통제가 없다.
+- **메시지 목록 무페이지네이션:** `api/src/domains/chat/router/chat_router.py:410` `list_messages`가 대화의 전체 메시지를 limit 없이 반환한다(users 쪽 `list_users`는 `page`/`page_size` 페이지네이션이 있는 것과 대조적).
+- SSE 스트리밍 중 에러는 200 응답 시작 후 SSE error 이벤트로만 전달되고, 스트림 종료 후 `finally`에서의 메시지 persist 실패는 로그만 남고 클라이언트에 전달되지 않는다(스트림 핸들러 구조상 불가피하나 클라이언트 측 보정 로직이 없음).
+- 입력 길이는 메시지당 `max_length=32_000`(`api/src/domains/chat/schemas/chat_schemas.py:61`)으로 막혀 있으나 메시지 개수 제한은 없다.
+
+## 9. 백엔드 보안 잔여 이슈 (사전 존재, 재확인됨)
+
+- **OAuth 토큰 평문 저장:** `api/src/domains/auth/models/auth_models.py:355-356` — `OAuthAccount.access_token`/`refresh_token`이 암호화 없이 `Text` 컬럼에 저장된다.
+- **만료 토큰 정리 부재:** `refresh_tokens`, `email_verifications`, `password_resets` 테이블에 만료/사용 완료 행의 배치 삭제 메커니즘이 없다 — 운영에서 무한 증가.
+- CORS가 `allow_methods=["*"]`, `allow_headers=["*"]`로 광범위하다(`api/src/main.py`).
+
+## 10. 테스트 커버리지 격차
+
+- **web에 테스트 러너가 없다:** `web/package.json`에 `test` 스크립트도 vitest/jest 의존성도 없다. 그런데 `web/src/sample/` 아래에 `*.test.ts` 파일 9개가 존재한다(예: `web/src/sample/auth/sign-in-page.test.ts`) — 실행 수단이 없는 고아 테스트다. `members.tsx`(1,000줄+)의 폼/뮤테이션 로직, `api-client.ts`의 인터셉터 등 핵심 프론트 로직이 전부 무테스트.
+- API는 커버리지 70% 게이트(`--cov-fail-under=70`)가 있으나, 회원가입→이메일인증→로그인→권한 호출로 이어지는 도메인 횡단 E2E 시나리오 테스트는 없다(`api/tests/`는 도메인별 분리: `auth/`, `chat/`, `users/`, `org/`).
+
+## 11. 기타 / 소소한 부채
+
+- `web/src/sample/` — 644KB 분량의 데모/샘플 코드가 `/sample` 라우트로 프로덕션 번들에 포함된다(`web/src/routes/sample.tsx`). `web/src/routes/test/modal.tsx`라는 테스트용 라우트도 번들에 들어간다.
+- `web/src/features/office/screens/teams.tsx`와 `members.tsx`가 각각 `Member` 타입을 따로 정의한다(teams는 로컬 하드코딩 타입, members는 생성된 API 타입) — teams 이관 시 통합 필요.
+- users CSV export(`api/src/domains/users/router/user_router.py:150`)는 `page_size=10_000` 하드캡으로 전체를 한 번에 조회한다 — 직원 1만 명 초과 시 잘린다(현 규모에선 비현실적이므로 낮은 우선순위).
+- TODO/FIXME/HACK 주석은 자체 작성 코드에 사실상 없다 — 유일한 1건은 hey-api 생성 코드(`web/src/client/client/client.gen.ts:214`)로 수정 대상 아님.
+- `api/CLAUDE.md`는 현 스택과 무관한 Ouroboros 워크플로우 문서다(루트 `CLAUDE.md`에 명시) — 신규 기여자 혼동 요인.
+
+## 심각도 요약
+
+| 항목 | 심각도 | 근거 |
+|------|--------|------|
+| 프론트 로그인 mock (§2) | **높음** | 이메일/비번 로그인으로 앱 사용 불가 — E2E 단절 |
+| RBAC 시드 구멍 (§3) | **높음** | chat 전면 403, 신규 가입자 롤 0개, admin 부여 수단 없음 |
+| `task lint` 실패 (§1) | **높음** | CI/검증 게이트가 깨진 상태로 방치 — 신규 위반 검출 불가 |
+| 전체 폼 PATCH (§4) | 중간 | 동시 편집 시 조용한 데이터 덮어쓰기 |
+| memo 길이/서버 sanitize (§5) | 중간 | UX 불친절 + 미래 소비자의 XSS 잠재 위험 |
+| execCommand 에디터 (§6) | 중간 | deprecated API + 비-sanitize 렌더, 서버 데이터 연결 시 위험 |
+| chat 레이트리밋/페이지네이션 (§8) | 중간 | LLM 비용 무제한, 대화 비대 시 성능 저하 |
+| OAuth 토큰 평문·토큰 테이블 비대 (§9) | 중간 | 운영 장기화 시 보안/용량 문제 |
+| mock 화면들 (§7), web 무테스트 (§10) | 중간 | 기능 격차이지 버그는 아님 — 로드맵 항목 |
