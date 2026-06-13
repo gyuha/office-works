@@ -90,6 +90,8 @@ class UserDirectoryService:
                 department=payload.department,
                 rank=payload.rank,
                 grade=payload.grade,
+                employment_type=payload.employment_type,
+                memo=payload.memo,
                 phone=payload.phone,
                 email=payload.email,
             )

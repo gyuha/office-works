@@ -2993,6 +2993,12 @@
             "minLength": 1,
             "title": "Grade"
           },
+          "employment_type": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Employment Type"
+          },
           "phone": {
             "type": "string",
             "maxLength": 32,
@@ -3003,6 +3009,18 @@
             "type": "string",
             "format": "email",
             "title": "Email"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
           }
         },
         "type": "object",
@@ -3011,6 +3029,7 @@
           "department",
           "rank",
           "grade",
+          "employment_type",
           "phone",
           "email"
         ],
@@ -3148,6 +3167,19 @@
             ],
             "title": "Grade"
           },
+          "employment_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employment Type"
+          },
           "phone": {
             "anyOf": [
               {
@@ -3172,6 +3204,18 @@
               }
             ],
             "title": "Email"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
           }
         },
         "type": "object",
@@ -3385,6 +3429,28 @@
             ],
             "title": "Grade"
           },
+          "employment_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employment Type"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
           "phone": {
             "anyOf": [
               {
@@ -3419,6 +3485,8 @@
           "department",
           "rank",
           "grade",
+          "employment_type",
+          "memo",
           "phone",
           "email",
           "is_active",

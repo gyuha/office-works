@@ -32,8 +32,11 @@ class UserCreate(BaseModel):
     department: str = Field(min_length=1, max_length=64)
     rank: str = Field(min_length=1, max_length=64)
     grade: str = Field(min_length=1, max_length=16)
+    employment_type: str = Field(min_length=1, max_length=64)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr
+    # 리치텍스트 메모(HTML). 선택 입력 — 렌더 시 sanitize (ADR-0007).
+    memo: str | None = Field(default=None, max_length=100_000)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -42,7 +45,9 @@ class UserCreate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
+    @field_validator(
+        "name", "department", "rank", "grade", "employment_type", "phone", mode="before"
+    )
     @classmethod
     def strip_required_text(cls, v: object) -> object:
         if isinstance(v, str):
@@ -60,8 +65,11 @@ class UserUpdate(BaseModel):
     department: str | None = Field(default=None, min_length=1, max_length=64)
     rank: str | None = Field(default=None, min_length=1, max_length=64)
     grade: str | None = Field(default=None, min_length=1, max_length=16)
+    employment_type: str | None = Field(default=None, min_length=1, max_length=64)
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     email: EmailStr | None = None
+    # 리치텍스트 메모(HTML). 선택 — 렌더 시 sanitize (ADR-0007).
+    memo: str | None = Field(default=None, max_length=100_000)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -70,7 +78,9 @@ class UserUpdate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
+    @field_validator(
+        "name", "department", "rank", "grade", "employment_type", "phone", mode="before"
+    )
     @classmethod
     def strip_text(cls, v: object) -> object:
         if isinstance(v, str):
@@ -97,6 +107,8 @@ class UserResponse(BaseModel):
     department: str | None
     rank: str | None
     grade: str | None
+    employment_type: str | None
+    memo: str | None
     phone: str | None
     email: EmailStr
     is_active: bool
@@ -115,6 +127,8 @@ class UserResponse(BaseModel):
                 "department": data.department,
                 "rank": data.rank,
                 "grade": data.grade,
+                "employment_type": data.employment_type,
+                "memo": data.memo,
                 "phone": data.phone,
                 "email": data.email,
                 "is_active": data.is_active,

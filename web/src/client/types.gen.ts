@@ -665,6 +665,10 @@ export type UserCreate = {
      */
     grade: string;
     /**
+     * Employment Type
+     */
+    employment_type: string;
+    /**
      * Phone
      */
     phone: string;
@@ -672,6 +676,10 @@ export type UserCreate = {
      * Email
      */
     email: string;
+    /**
+     * Memo
+     */
+    memo?: string | null;
 };
 
 /**
@@ -755,6 +763,10 @@ export type UserUpdate = {
      */
     grade?: string | null;
     /**
+     * Employment Type
+     */
+    employment_type?: string | null;
+    /**
      * Phone
      */
     phone?: string | null;
@@ -762,6 +774,10 @@ export type UserUpdate = {
      * Email
      */
     email?: string | null;
+    /**
+     * Memo
+     */
+    memo?: string | null;
 };
 
 /**
@@ -895,6 +911,14 @@ export type DomainsUsersSchemasUserSchemasUserResponse = {
      * Grade
      */
     grade: string | null;
+    /**
+     * Employment Type
+     */
+    employment_type: string | null;
+    /**
+     * Memo
+     */
+    memo: string | null;
     /**
      * Phone
      */

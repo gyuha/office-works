@@ -200,7 +200,6 @@ async def test_rename_cascades_to_user_and_delete_blocked_while_referenced(
                 is_verified=False,
                 is_active=True,
                 employee_no=f"EMP-{uuid.uuid4().int % 100000:05d}",
-                department="개발팀",
                 rank="사원",
                 grade=grade_name,
                 phone="010-0000-0000",

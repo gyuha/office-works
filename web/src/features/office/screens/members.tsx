@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
   ArrowLeft,
   ChevronDown,
@@ -19,7 +20,9 @@ import {
   createUserApiV1UsersPostMutation,
   deleteUserApiV1UsersUserIdDeleteMutation,
   getUserApiV1UsersUserIdGetOptions,
+  listEmploymentTypesApiV1EmploymentTypesGetOptions,
   listGradesApiV1GradesGetOptions,
+  listPositionsApiV1PositionsGetOptions,
   listUsersApiV1UsersGetOptions,
   updateUserApiV1UsersUserIdPatchMutation,
   userStatsApiV1UsersStatsGetOptions,
@@ -27,10 +30,13 @@ import {
 import { exportUsersApiV1UsersExportGet } from '@/client/sdk.gen';
 import type {
   DomainsUsersSchemasUserSchemasUserResponse,
+  EmploymentTypeResponse,
   GradeResponse,
+  PositionResponse,
   UserCreate,
 } from '@/client/types.gen';
 import { Button } from '@/components/ui/button';
+import { RichTextEditor, RichTextView } from '@/components/ui/rich-text-editor';
 import { cn } from '@/lib/utils';
 import type { ScreenModule } from './types';
 
@@ -49,6 +55,20 @@ const GRADE_FALLBACK = { color: '#69748A', bg: '#F4F5F7', border: '#D4D8DF' };
 /* 등급 목록(이름·색)을 API에서 동적 로드 — 하드코딩 GRADE_CFG 대체 */
 function useGrades(): GradeResponse[] {
   return useQuery(listGradesApiV1GradesGetOptions()).data ?? [];
+}
+
+/* 직급(직급 체계)·고용형태(고용 형태) 설정 목록을 API에서 동적 로드 */
+function usePositions(): PositionResponse[] {
+  return useQuery(listPositionsApiV1PositionsGetOptions()).data ?? [];
+}
+
+function useEmploymentTypes(): EmploymentTypeResponse[] {
+  return useQuery(listEmploymentTypesApiV1EmploymentTypesGetOptions()).data ?? [];
+}
+
+/* 현재 선택값이 설정 목록에 없으면 맨 앞에 추가 — 드롭다운에서 기존 값 유실 방지 */
+function withCurrent(options: string[], current: string): string[] {
+  return current && !options.includes(current) ? [current, ...options] : options;
 }
 
 function gradeStyleOf(grades: GradeResponse[], name: string) {
@@ -117,8 +137,15 @@ function MembersScreen() {
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
 
-  const [view, setView] = useState<'list' | 'detail' | 'edit' | 'add'>('list');
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // 뷰(목록/상세/편집/추가)와 대상 id는 URL search params로 구동 — 브라우저 뒤로/앞으로 동작.
+  const navigate = useNavigate();
+  const { screenId } = useParams({ from: '/_app/app/$screenId' });
+  const search = useSearch({ from: '/_app/app/$screenId' });
+  const view = search.view ?? 'list';
+  const activeId = search.id ?? null;
+
+  const go = (next: { view?: 'detail' | 'edit' | 'add'; id?: string }) =>
+    navigate({ to: '/app/$screenId', params: { screenId }, search: next });
 
   const listFilters = {
     q: query.trim() || undefined,
@@ -157,8 +184,7 @@ function MembersScreen() {
   }
 
   function openDetail(id: string) {
-    setActiveId(id);
-    setView('detail');
+    go({ view: 'detail', id });
   }
 
   async function handleExport() {
@@ -186,12 +212,12 @@ function MembersScreen() {
     return (
       <MemberDetail
         memberId={activeId}
-        onBack={() => setView('list')}
-        onEdit={() => setView('edit')}
+        onBack={() => go({})}
+        onEdit={() => go({ view: 'edit', id: activeId })}
         onDeleted={() => {
           refresh();
           setPage(1);
-          setView('list');
+          go({});
         }}
       />
     );
@@ -202,10 +228,10 @@ function MembersScreen() {
       <MemberEdit
         memberId={activeId}
         depts={depts}
-        onCancel={() => setView('detail')}
+        onCancel={() => go({ view: 'detail', id: activeId })}
         onSaved={() => {
           refresh();
-          setView('detail');
+          go({ view: 'detail', id: activeId });
         }}
       />
     );
@@ -215,11 +241,11 @@ function MembersScreen() {
     return (
       <MemberAdd
         depts={depts}
-        onCancel={() => setView('list')}
+        onCancel={() => go({})}
         onCreated={() => {
           refresh();
           setPage(1);
-          setView('list');
+          go({});
         }}
       />
     );
@@ -386,7 +412,7 @@ function MembersScreen() {
             </Button>
             <Button
               className="h-[38px] gap-1.5 text-[13.5px] shadow-[0_2px_10px_rgba(0,102,255,0.28)] [&_svg]:size-[15px]"
-              onClick={() => setView('add')}
+              onClick={() => go({ view: 'add' })}
             >
               <Plus />
               구성원 추가
@@ -742,6 +768,7 @@ function MemberDetail({
             <Field label="등급" node={<GradeTag grade={member.grade} />} />
             <Field label="연락처" value={member.phone} mono />
             <Field label="이메일" value={member.email} colSpan />
+            <Field label="메모" node={<RichTextView html={member.memo} />} colSpan />
           </dl>
         </section>
       )}
@@ -865,15 +892,29 @@ function MemberForm({
   onSubmit: (body: UserCreate) => void;
 }) {
   const grades = useGrades();
+  const positions = usePositions();
+  const empTypes = useEmploymentTypes();
   const deptOptions = depts.length > 0 ? depts : initial ? [initial.department ?? ''] : [];
   const [form, setForm] = useState<UserCreate>({
     name: initial?.name ?? '',
     department: initial?.department ?? deptOptions[0] ?? '',
     rank: initial?.rank ?? '',
     grade: initial?.grade ?? '중급',
+    employment_type: initial?.employment_type ?? '',
     phone: initial?.phone ?? '',
     email: initial?.email ?? '',
+    memo: initial?.memo ?? '',
   });
+
+  // 설정 목록에 없는 기존 값(자유 텍스트 직급 등)도 옵션으로 보존 — 편집 시 값 유실 방지.
+  const rankOptions = withCurrent(
+    positions.map((p) => p.name),
+    form.rank
+  );
+  const empTypeOptions = withCurrent(
+    empTypes.map((t) => t.name),
+    form.employment_type
+  );
 
   function update<K extends keyof UserCreate>(key: K, val: UserCreate[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -943,12 +984,24 @@ function MemberForm({
             )}
           </EditField>
           <EditField label="직급">
-            <input
-              value={form.rank}
-              required
-              onChange={(e) => update('rank', e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
-            />
+            <div className="relative">
+              <select
+                value={form.rank}
+                required
+                onChange={(e) => update('rank', e.target.value)}
+                className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-border bg-white px-3 pr-8 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+              >
+                <option value="" disabled>
+                  직급 선택
+                </option>
+                {rankOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-[#8A93A6]" />
+            </div>
           </EditField>
           <EditField label="등급">
             <div className="relative">
@@ -960,6 +1013,26 @@ function MemberForm({
                 {grades.map((g) => (
                   <option key={g.id} value={g.name}>
                     {g.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-[#8A93A6]" />
+            </div>
+          </EditField>
+          <EditField label="고용형태">
+            <div className="relative">
+              <select
+                value={form.employment_type}
+                required
+                onChange={(e) => update('employment_type', e.target.value)}
+                className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-border bg-white px-3 pr-8 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+              >
+                <option value="" disabled>
+                  고용형태 선택
+                </option>
+                {empTypeOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
                   </option>
                 ))}
               </select>
@@ -982,6 +1055,15 @@ function MemberForm({
                 required
                 onChange={(e) => update('email', e.target.value)}
                 className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+              />
+            </EditField>
+          </div>
+          <div className="sm:col-span-2">
+            <EditField label="메모">
+              <RichTextEditor
+                value={form.memo ?? ''}
+                onChange={(html) => update('memo', html)}
+                placeholder="구성원에 대한 메모를 입력하세요"
               />
             </EditField>
           </div>
