@@ -14,10 +14,10 @@
 - 없음 — 계획 5슬라이스대로. `DetailView` 제거는 라우팅 전환으로 orphan이 된 것을 정리(계획의 "DetailView/탭바를 레이아웃·자식 라우트로 이전"에 부합).
 
 ## 현장 결정(설계 판단)
-- **draft 재초기화 = useEffect([q.data]).** 레이아웃이 마운트 유지되며 탭 전환 간 draft 보존(ADR-0008). persist→invalidate→refetch 시 q.data 변경으로 draft 재clone되어 서버와 정합.
+- **draft 재초기화 = useEffect([q.data]).** 레이아웃이 마운트 유지되며 탭 전환 간 draft 보존(ADR-0009). persist→invalidate→refetch 시 q.data 변경으로 draft 재clone되어 서버와 정합.
 - **탭바 = `<Link activeProps/inactiveProps>`.** 내부 state 대신 라우트 활성상태로 탭 하이라이트 → URL이 단일 진실원.
 - **목록 네비 = `/app/$screenId` 템플릿**(사이드바와 동일), 상세 = `/app/proj/$projectId` 신규 템플릿. 잘못된 id는 getProject 에러 → 목록 안내.
-- **편집/생성은 라우팅 안 함**(ADR-0008) — 편집은 레이아웃 라우트 내부 state, 생성은 목록 화면 다이얼로그.
+- **편집/생성은 라우팅 안 함**(ADR-0009) — 편집은 레이아웃 라우트 내부 state, 생성은 목록 화면 다이얼로그.
 
 ## 코드 리뷰 메모
 - 변경: nav.ts(매핑), projects.tsx(export + DetailView→context + ProjectsScreen 축소), 신규 라우트 3파일. 라우팅/네비게이션 구조 변경이라 회귀 리스크는 "기존 탭/편집/생성 동작 보존"에 집중 — UAT 항목으로 위임. auth/데이터 변형/마이그레이션 무관.

@@ -10,7 +10,7 @@
 - **S4 검증** — `pnpm typecheck` 통과, `pnpm build`(routeTree 재생성) 성공, 신규 라우트 biome 클린, teams.tsx 신규 lint 0(추가한 useEffect의 의도적 partial-dep은 biome-ignore로 정당화; 기존 에러 15건은 무관).
 
 ## 분기(Divergence)
-- 없음 — 계획대로(트리 형태 예외 포함). ADR-0008에 팀은 "목록→상세가 아닌 트리 노드 선택, 형태 예외"로 명시됨.
+- 없음 — 계획대로(트리 형태 예외 포함). ADR-0009에 팀은 "목록→상세가 아닌 트리 노드 선택, 형태 예외"로 명시됨.
 
 ## 현장 결정(설계 판단)
 - **단방향 동기화로 루프 방지.** 노드 클릭 → setSelectedId + navigate(nodeId) → URL 변경 → useEffect는 `nodeId===selectedId`라 no-op. 딥링크/뒤로가기 시에만 useEffect가 selectedId 갱신. 무한 루프 없음.

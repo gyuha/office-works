@@ -4,7 +4,7 @@
 실행일: 2026-06-14 · 실행 방식: 직접 순차 실행(Part 1 패턴 재사용)
 
 ## 계획대로 된 것
-- **S1 nav.ts 매핑** — 변경 불필요. `appr-sent`가 이미 screenId라 `/app/appr-sent/[docId]`는 기존 `pathToScreen`(SCREEN_LABELS 경로)이 사이드바 "상신함" 활성표시를 처리(ADR-0008의 "base가 곧 screenId인 화면" 케이스).
+- **S1 nav.ts 매핑** — 변경 불필요. `appr-sent`가 이미 screenId라 `/app/appr-sent/[docId]`는 기존 `pathToScreen`(SCREEN_LABELS 경로)이 사이드바 "상신함" 활성표시를 처리(ADR-0009의 "base가 곧 screenId인 화면" 케이스).
 - **S2 결재 문서 상세 라우트** — `src/routes/_app/app.appr-sent.$docId.tsx` 신설. `beforeLoad`에서 `APPROVAL_DATA`에 docId 없으면 `/app/appr-sent` redirect. 컴포넌트는 docId로 문서 조회 후 기존 `DocDetail` 렌더, onBack → `/app/$screenId`(appr-sent) navigate.
 - **S3 SentScreen 리와이어** — `SentView`를 `'list'|'detail'|'write'` → `'list'|'write'`로 축소, `selectedId`/`selected` 제거. `DocTable onRowClick` → `navigate({to:'/app/appr-sent/$docId'})`. `view==='detail'` 분기 제거(라우트로 이전), 작성(write)은 기존 state 유지. `APPROVAL_DATA`·`DocDetail`·`ApprovalDoc` export.
 - **S4 검증** — `pnpm typecheck` 통과, `pnpm build`(routeTree 재생성) 성공, 신규 라우트 biome 클린, approval.tsx biome 에러 0·orphan 없음.

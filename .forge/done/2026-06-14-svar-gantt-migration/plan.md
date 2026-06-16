@@ -9,7 +9,7 @@
 
 ## Source of truth
 - Glossary terms: none (도메인 용어 신규 없음 — 작업/스케줄 버전은 기존 개념)
-- Related ADRs: .forge/adr/0007-svar-gantt-render-only-custom-dialog.md (이 작업으로 신설)
+- Related ADRs: .forge/adr/0008-svar-gantt-render-only-custom-dialog.md (이 작업으로 신설)
 - Definition of Done: 일정 탭이 SVAR Gantt로 렌더되고 — 드래그 이동/리사이즈/진척 편집, 막대 더블클릭→우리 다이얼로그 편집, 부서별 5색, 일/주/월 토글이 동작하고 — 저장 히스토리가 상단 바 셀렉트로 열람·복귀되며(우측 패널 없음), `frappe-gantt` 의존성·`frappe-gantt.d.ts`가 제거되고, `pnpm typecheck && pnpm lint`가 통과한다.
 
 ## Work slices

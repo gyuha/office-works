@@ -5,12 +5,12 @@
 
 ## 계획대로 된 것
 - **S1 nav.ts 매핑** — `DETAIL_BASE_TO_SCREEN`에 `members: 'members-list'` 추가 → 상세 경로에서 사이드바 "구성원 관리" 활성표시.
-- **S2 구성원 상세 라우트** — `src/routes/_app/app.members.$memberId.tsx` 신설. route param `memberId`로 기존 `MemberDetail`(getUser 쿼리) 렌더. Part 1 프로젝트 패턴과 동일하게 **편집(MemberEdit)을 라우트 내부 `editing` state로** 처리(ADR-0008: 편집은 라우팅 안 함). depts는 `userStats` 쿼리(목록 화면과 동일 출처). onBack/onDeleted → `/app/$screenId`(members-list) navigate + invalidate.
+- **S2 구성원 상세 라우트** — `src/routes/_app/app.members.$memberId.tsx` 신설. route param `memberId`로 기존 `MemberDetail`(getUser 쿼리) 렌더. Part 1 프로젝트 패턴과 동일하게 **편집(MemberEdit)을 라우트 내부 `editing` state로** 처리(ADR-0009: 편집은 라우팅 안 함). depts는 `userStats` 쿼리(목록 화면과 동일 출처). onBack/onDeleted → `/app/$screenId`(members-list) navigate + invalidate.
 - **S3 members.tsx 리와이어** — `MembersScreen`의 `view`를 `'list'|'detail'|'edit'|'add'` → `'list'|'add'`로 축소, `activeId` 제거. `openDetail(id)` → `navigate({to:'/app/members/$memberId'})`. detail·edit 분기 제거(라우트로 이전), add는 기존 state 유지. `MemberDetail`·`MemberEdit` export.
 - **S4 검증** — `pnpm typecheck` 통과, `pnpm build`(routeTree 재생성) 성공, 신규 라우트 biome 클린(import 정렬 자동수정), members.tsx biome 에러 0·orphan 없음.
 
 ## 분기(Divergence)
-- 없음 — 계획대로. 편집을 상세 라우트의 내부 state로 둔 것은 Part 1 프로젝트 패턴·ADR-0008과 일치(목록 화면이 아닌 상세에서 편집 진입).
+- 없음 — 계획대로. 편집을 상세 라우트의 내부 state로 둔 것은 Part 1 프로젝트 패턴·ADR-0009과 일치(목록 화면이 아닌 상세에서 편집 진입).
 
 ## 현장 결정(설계 판단)
 - **편집 진입점 위치** — 원래 MembersScreen state머신은 detail↔edit를 list 화면 state로 오갔다. 라우팅 후 edit를 list 화면에 두면 상세 라우트→편집 전환이 어색해지므로, Part 1처럼 **상세 라우트가 editing state를 보유**해 자체적으로 MemberEdit를 렌더. add만 목록 화면에 남김(상세 진입 전 동작).

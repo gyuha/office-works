@@ -9,7 +9,7 @@
 - Non-goals: 구성원/결재/팀 화면(각 후속 part), 편집(EditView)·생성(다이얼로그)의 URL 라우팅(내부 state 유지), 목록 URL 리네이밍(`proj-list` 유지), 백엔드 API 변경, 탭 쿼리파라미터 방식, e2e 자동화, FE 단위 테스트(러너 없음).
 
 ## Source of truth
-- Related ADRs: `.forge/adr/0008-screen-detail-deeplink-routing.md` (라우팅 컨벤션 — 이 작업의 근거)
+- Related ADRs: `.forge/adr/0009-screen-detail-deeplink-routing.md` (라우팅 컨벤션 — 이 작업의 근거)
 - 기존 구조: `web/src/routes/_app/app.$screenId.tsx`(단일 세그먼트 디스패처), `web/src/features/office/nav.ts`(`pathToScreen`/`screenToPath`/`SCREEN_LABELS`), `web/src/features/office/screens/projects.tsx`(`ProjectsScreen` = selectedId+draft+editing state머신, `DetailView` 내부 `tab` state, `EditView`, `CreateProjectDialog`), `web/src/features/office/components/app-shell.tsx`(`pathToScreen`로 사이드바 활성/타이틀).
 - 기존 엔드포인트: `getProjectApiV1ProjectsProjectIdGetOptions`(GET /projects/{id} — 이미 존재), `updateProject…PutMutation`, `saveSchedule…`.
 - Definition of Done: 목록(`/app/proj-list`)에서 프로젝트 클릭 시 `/app/proj/[id]/info`(기본 탭)로 이동, 탭 클릭 시 URL이 `/app/proj/[id]/[tab]`로 바뀌고 새로고침/직접 진입에도 해당 탭이 열림, 미저장 draft가 탭 전환 간 유지됨, 잘못된 id는 not-found/목록 리다이렉트, 상세 경로에서 사이드바가 "프로젝트 관리"를 활성표시, 편집/생성은 기존대로 동작, `pnpm typecheck && pnpm build` 통과 + 간트/라우팅 신규 코드 biome 신규 에러 0.

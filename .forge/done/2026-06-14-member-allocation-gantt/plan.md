@@ -9,7 +9,7 @@
 
 ## Source of truth
 - Glossary terms: none (신규 도메인 용어 없음 — 투입 인력/투입 기간은 기존 개념)
-- Related ADRs: `.forge/adr/0007-svar-gantt-render-only-custom-dialog.md` (SVAR 렌더 전용 + 커스텀 다이얼로그 패턴 — 이 작업도 동일 패턴 적용)
+- Related ADRs: `.forge/adr/0008-svar-gantt-render-only-custom-dialog.md` (SVAR 렌더 전용 + 커스텀 다이얼로그 패턴 — 이 작업도 동일 패턴 적용)
 - 직전 회고 재사용: `.forge/retro/2026-06-14-svar-gantt-migration.md` — ① 부서색 = `.wx-bar[data-task-id]` 스코프 CSS 변수 주입(type 오염 없이 per-task 색), ② `columns={false as unknown as IColumnConfig[]}` 캐스트, ③ end inclusive↔exclusive ±1일 매퍼, ④ FE 테스트 러너 없음 → 단위테스트 슬라이스 금지.
 - Definition of Done: "투입 인력" 탭에서 `[테이블|간트]` 토글로 두 뷰를 오가며, 간트 뷰가 멤버 투입 기간을 등급별 4색 막대로 렌더하고 — 막대 드래그 이동/좌우 리사이즈로 투입 시작/종료가 바뀌어 `p.members`에 반영되고, 막대 더블클릭 시 기존 `MemberModal`이 열리며, 일/주/월 토글이 동작하고, 투입일 미지정 멤버는 막대에서 제외되어 카운트 안내로 표시되며, 비활성 멤버 막대는 흐리게 표시되고, `pnpm typecheck` 통과 + 간트 코드에 신규 lint 에러 0.
 

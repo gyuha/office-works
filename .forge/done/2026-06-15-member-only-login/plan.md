@@ -13,7 +13,7 @@
 
 ## Source of truth
 - Glossary terms: "로그인 자격(login eligibility)", "JIT 프로비저닝(폐기)" in .forge/branch/feature/260613-project/CONTEXT.md
-- Related ADRs: .forge/branch/feature/260613-project/adr/0009-closed-membership-login.md (후속: ADR-0003 OAuth 신원 도출, ADR-0006 병합)
+- Related ADRs: .forge/branch/feature/260613-project/adr/0010-closed-membership-login.md (후속: ADR-0003 OAuth 신원 도출, ADR-0006 병합)
 - Definition of Done: 미등록 이메일로 OAuth 로그인 시 user가 생성되지 않고 `/login?error=not_member`로 리다이렉트되어 로그인 화면에 안내 모달이 뜬다. 기존 user 이메일은 정상 로그인(OAuth 부착)된다. `POST /signup`·`POST /verify-email`는 404. `task lint && task test` 통과(커버리지 70% 유지).
 
 ## Work slices

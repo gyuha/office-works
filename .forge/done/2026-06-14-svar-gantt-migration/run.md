@@ -14,7 +14,7 @@
 - **S2 단위 테스트 미작성 (계획 대비 미달)** — 프론트엔드에 테스트 러너가 없다(vitest 미설치, `test` 스크립트 없음, `src/sample/*.test.ts`는 실행 불가 레거시). 두 순수 함수(`taskToSvar`/`applySvarChange`)를 위해 vitest 인프라(의존성+설정+CI)를 새로 세우는 것은 TDD=off·단순성 우선 신호에 반하는 범위 초과로 판단해 **보류**. 매퍼는 module-scope **export된 순수 함수**로 분리해 두어 추후 러너 도입 시 즉시 테스트 가능. 라운드트립 로직(특히 end inclusive↔exclusive ±1일, done↔progress)은 코드 검토로 정합 확인. → 실제 데이터 정합은 UAT(막대 날짜/폭)로 검증 필요.
 
 ## 현장 결정(설계 판단)
-- **부서색 = `data-task-id` 스코프 CSS 변수 주입.** SVAR 컴파일 소스 분석 결과 `.wx-bar`는 transparent이고 막대 fill·진척은 `--wx-gantt-task-fill-color`/`--wx-gantt-task-color`를 쓰는데 이 셀렉터가 `.wx-task`(타입)에 스코프돼 있다. 따라서 `type`을 부서값으로 바꾸면 fill 렌더가 깨진다. 막대 div에 `data-task-id`가 박히는 점을 이용해 `.wx-bar[data-task-id="…"]{--wx-gantt-task-*}` 를 `<style>`로 주입(타입 오염 없이 per-task 색상, 네이티브 진척 오버레이 유지). ADR-0007의 "taskTemplate/CSS" 중 CSS 변수 경로 채택.
+- **부서색 = `data-task-id` 스코프 CSS 변수 주입.** SVAR 컴파일 소스 분석 결과 `.wx-bar`는 transparent이고 막대 fill·진척은 `--wx-gantt-task-fill-color`/`--wx-gantt-task-color`를 쓰는데 이 셀렉터가 `.wx-task`(타입)에 스코프돼 있다. 따라서 `type`을 부서값으로 바꾸면 fill 렌더가 깨진다. 막대 div에 `data-task-id`가 박히는 점을 이용해 `.wx-bar[data-task-id="…"]{--wx-gantt-task-*}` 를 `<style>`로 주입(타입 오염 없이 per-task 색상, 네이티브 진척 오버레이 유지). ADR-0008의 "taskTemplate/CSS" 중 CSS 변수 경로 채택.
 - **`columns={false}` 캐스트.** 좌측 그리드 숨김은 SVAR 문서상 `columns={false}`지만, 컴포넌트 타입이 `(false|IColumnConfig[]) & IGanttColumn[]` 교차라 `false`가 타입상 거부됨. 런타임 동작 보존 위해 `false as unknown as IColumnConfig[]`로 캐스트(주석 명시).
 - **재마운트 키 전략.** 우리 변경(다이얼로그 저장/추가/삭제·히스토리 로드·복귀·뷰모드)에만 `reloadKey` 증가로 `<Gantt>` 재마운트, SVAR 자체 드래그 편집은 재마운트하지 않음(`svarTasks` 메모를 `[reloadKey]`로 스냅샷). biome `useExhaustiveDependencies`는 의도적이라 `biome-ignore`로 억제.
 - **progress 0–100 확정**(컴파일 소스 `width:${progress}%`) — 우리 `done`과 동일 스케일, 변환 불필요.

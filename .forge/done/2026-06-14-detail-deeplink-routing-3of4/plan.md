@@ -9,7 +9,7 @@
 - Non-goals: 작성(write) 모드의 URL 라우팅(내부 state 유지), 다른 결재 화면(appr-home/write/draft/inbox 류)의 드릴다운(이번 범위는 상신함 문서상세만), 목록 URL 리네이밍(`appr-sent` 유지), 백엔드 변경, FE 단위 테스트.
 
 ## Source of truth
-- Related ADRs: `.forge/adr/0008-screen-detail-deeplink-routing.md`
+- Related ADRs: `.forge/adr/0009-screen-detail-deeplink-routing.md`
 - 선행: `detail-deeplink-routing-1of4`(공통 헬퍼/패턴 — soft order)
 - 기존 구조: `web/src/features/office/screens/approval.tsx`(`SentScreen` = `SentView: 'list'|'detail'|'write'` + `selectedId` + `docs` state, `DocDetail` 컴포넌트). 결재 문서 데이터는 현재 클라이언트 mock(`APPROVAL_DATA`) — 백엔드 get-by-id 없음.
 - Definition of Done: 상신함(`/app/appr-sent`) 목록에서 문서 클릭 시 `/app/appr-sent/[docId]`로 이동, 새로고침/직접 진입 시 해당 문서상세가 열림(mock 데이터에서 docId로 조회), 미존재 docId는 목록 리다이렉트, 상세 경로에서 사이드바가 "상신함" 활성표시, 작성(write)은 기존대로, `pnpm typecheck && pnpm build` 통과 + 신규 코드 biome 신규 에러 0.

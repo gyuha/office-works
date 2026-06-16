@@ -33,9 +33,9 @@ _Avoid_: 외부 ID, sub
 IdP가 디렉터리 차원에서 보증하는 이메일. Microsoft Entra에서는 `email` 클레임(디렉터리 mail, 관리자 통제·self-service 변경 불가). `preferred_username`·`upn`은 가변·소유 미검증이라 **검증된 이메일이 아니다** — 신원 도출이나 계정 연결 키로 쓰면 계정 탈취 경로가 된다.
 _Avoid_: preferred_username·upn을 email로 취급
 
-**JIT 프로비저닝**:
-IdP 첫 로그인 시점에 앱 User를 즉석에서 생성하는 것. **생성-vs-연결 판단은 검증된 이메일 클레임으로만** 한다(일치하는 기존 User가 있으면 새로 만들지 않고 연결). 검증된 email이 없으면 가변 클레임으로 폴백하지 않고 거부한다. (이 판단은 JIT 1회용이며, 그 후 returning 사용자 재식별은 provider_user_id로 한다.)
-_Avoid_: 자동 가입, 셀프 회원가입
+**JIT 프로비저닝** (원래 동작 → 폐기, [[ADR-0010]]):
+원래는 IdP 첫 로그인 시점에 앱 User를 즉석 생성하는 동작이었다(생성-vs-연결 판단은 검증된 이메일 클레임으로만, 검증 email 없으면 거부). **현재는 폐기됐다 — [[ADR-0010]] 폐쇄형 멤버십**: OAuth 첫 로그인은 더 이상 user를 생성하지 않고, 검증된 이메일과 일치하는 **기존 user 행이 있을 때만** OAuth를 부착하며 없으면 로그인을 거부한다. 셀프 회원가입(`/signup`)도 함께 폐기됐다. (returning 사용자 재식별은 여전히 provider_user_id로 한다.)
+_Avoid_: "첫 로그인에 user가 생성된다"(폐기된 서술), 자동 가입, 셀프 회원가입
 
 **앱 JWT / IdP 토큰**:
 "앱 JWT"는 우리 백엔드가 발급해 SPA가 사용하는 access/refresh 토큰. "IdP 토큰"은 Microsoft가 발급한 id_token·access_token으로 코드 교환 단계에서만 쓰고 SPA로 넘기지 않는다. 로그인 후 앱은 앱 JWT만 사용한다.
@@ -61,3 +61,15 @@ _Avoid_: 등급(Grade)·RBAC role과 혼동, "users.rank가 positions를 참조�
 **고용 형태(Employment type)**:
 구성원의 고용 유형 — 정규직·계약직·파트타임·인턴·프리랜서처럼 **관리되는 목록**(`employment_types` 테이블). 관리자가 설정 화면(`/app/org` 고용 형태 탭)에서 추가·삭제한다. 직급(Position)과 같은 조직 설정 축의 하나이며, 현재 `users`(구성원) 레코드와 FK로 묶여 있지 않은 독립 목록이다(구성원 등록 시 선택지로 쓰일 후보).
 _Avoid_: 직급(Position)·등급(Grade)과 혼동
+
+**소속(department)**:
+한 구성원(user)이 속한 조직 단위. 값은 **팀관리 조직도(org-tree)의 노드 이름**(예 "개발1팀", "기획팀")과 같은 문자열이다. 구성원 추가/편집 폼의 소속 드롭다운이 이 노드 이름들로 채워진다. **빈 값(미지정) 허용** — 소속 없는 구성원이 존재할 수 있다.
+_Avoid_: 부서 코드, 팀 ID (소속은 노드 **이름** 문자열이지 별도 ID가 아니다)
+
+**팀 구성원(team membership)**:
+특정 팀 노드의 구성원 = **`department`가 그 노드 이름과 일치하는 user**. 별도의 멤버십 join 테이블이 없다 — 팀↔구성원 관계는 오직 `user.department` 문자열 일치로 도출된다. 따라서 한 user는 (department가 하나이므로) 한 팀에만 속한다. 팀관리에서 "구성원 추가/제거"는 그 user의 `department`를 노드 이름으로 PATCH / 비우는 것이다.
+_Avoid_: 멤버십 테이블, 다중 팀 소속 (현재 모델은 department 단일 문자열 기반)
+
+**로그인 자격(login eligibility)**:
+앱 JWT(로그인 토큰)를 발급받을 수 있는 user의 자격. **이미 존재하는 `users` 행만** 로그인할 수 있다 — 신규 신원은 로그인 시점에 user를 만들 수 없다(폐쇄형 멤버십, [[ADR-0010]]). 사전 등록은 admin이 구성원 디렉터리에서 하며, 로그인은 그 기존 행에 OAuth 신원을 부착할 뿐이다. 판별 기준은 `employee_no` 보유가 아니라 **행 존재 여부**다(따라서 employee_no 없는 admin·시스템 user도 로그인 가능).
+_Avoid_: "employee_no가 있어야 로그인" (게이트는 행 존재 기준이지 구성원 디렉터리 술어가 아니다)
