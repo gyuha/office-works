@@ -1178,6 +1178,31 @@
         }
       }
     },
+    "/api/v1/users/import-template": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Download the .xlsx bulk-import template",
+        "description": "Return a blank ``.xlsx`` with the canonical header row for bulk import.",
+        "operationId": "import_template_api_v1_users_import_template_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/{user_id}": {
       "get": {
         "tags": [
@@ -1319,6 +1344,53 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/users/import": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Bulk-create employees from an .xlsx upload (partial success)",
+        "description": "Parse the uploaded ``.xlsx`` and create each valid row.\n\nPartial success: invalid rows and duplicate emails are collected as failures\n(with their 1-based Excel row number) rather than aborting the whole upload.",
+        "operationId": "import_users_api_v1_users_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_users_api_v1_users_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/positions": {
@@ -2082,10 +2154,400 @@
           }
         ]
       }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "List projects",
+        "operationId": "list_projects_api_v1_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Projects Api V1 Projects Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Create a project",
+        "operationId": "create_project_api_v1_projects_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get a project",
+        "operationId": "get_project_api_v1_projects__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Replace a project",
+        "operationId": "update_project_api_v1_projects__project_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Delete a project",
+        "operationId": "delete_project_api_v1_projects__project_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/schedule/versions": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Save the schedule (snapshot + set current)",
+        "operationId": "save_schedule_api_v1_projects__project_id__schedule_versions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleVersionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleVersionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "List schedule history (newest first)",
+        "operationId": "list_schedule_versions_api_v1_projects__project_id__schedule_versions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleVersionListItem"
+                  },
+                  "title": "Response List Schedule Versions Api V1 Projects  Project Id  Schedule Versions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/schedule/versions/{version_id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Load one schedule version",
+        "operationId": "get_schedule_version_api_v1_projects__project_id__schedule_versions__version_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleVersionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "Body_import_users_api_v1_users_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_users_api_v1_users_import_post"
+      },
       "ChatMessage": {
         "properties": {
           "role": {
@@ -2216,6 +2678,44 @@
         "title": "CompanyInfoData",
         "description": "회사 정보 — GET response / PUT body."
       },
+      "ContractItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "default": 0
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": ""
+          },
+          "fileName": {
+            "type": "string",
+            "title": "Filename",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ContractItem"
+      },
       "ConversationCreate": {
         "properties": {
           "title": {
@@ -2311,6 +2811,34 @@
           "updated_at"
         ],
         "title": "ConversationResponse"
+      },
+      "CostItem": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "budgeted": {
+            "type": "integer",
+            "title": "Budgeted",
+            "default": 0
+          },
+          "actual": {
+            "type": "integer",
+            "title": "Actual",
+            "default": 0
+          },
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "title": "CostItem"
       },
       "EmploymentTypeCreate": {
         "properties": {
@@ -2535,6 +3063,54 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "IssueItem": {
+        "properties": {
+          "no": {
+            "type": "integer",
+            "title": "No"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": ""
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": ""
+          },
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "default": ""
+          },
+          "assignee": {
+            "type": "string",
+            "title": "Assignee",
+            "default": ""
+          },
+          "desc": {
+            "type": "string",
+            "title": "Desc",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "no",
+          "title"
+        ],
+        "title": "IssueItem"
+      },
       "LeaveSettingsData": {
         "properties": {
           "default_days": {
@@ -2613,6 +3189,54 @@
         ],
         "title": "LogoutRequest",
         "description": "Request body for POST /auth/logout."
+      },
+      "MemberItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rank": {
+            "type": "string",
+            "title": "Rank",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": ""
+          },
+          "grade": {
+            "type": "string",
+            "title": "Grade",
+            "default": ""
+          },
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "default": ""
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "default": ""
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "MemberItem"
       },
       "MessageResponse": {
         "properties": {
@@ -2825,6 +3449,293 @@
         "title": "PositionUpdate",
         "description": "Request body for PATCH /positions/{id} (rename)."
       },
+      "ProjectCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "client": {
+            "type": "string",
+            "title": "Client",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "대기"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "default": 0
+          },
+          "pm": {
+            "type": "string",
+            "title": "Pm",
+            "default": ""
+          },
+          "startDate": {
+            "type": "string",
+            "title": "Startdate",
+            "default": ""
+          },
+          "endDate": {
+            "type": "string",
+            "title": "Enddate",
+            "default": ""
+          },
+          "budget": {
+            "type": "integer",
+            "title": "Budget",
+            "default": 0
+          },
+          "spent": {
+            "type": "integer",
+            "title": "Spent",
+            "default": 0
+          },
+          "desc": {
+            "type": "string",
+            "title": "Desc",
+            "default": ""
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberItem"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "contracts": {
+            "items": {
+              "$ref": "#/components/schemas/ContractItem"
+            },
+            "type": "array",
+            "title": "Contracts"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueItem"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostItem"
+            },
+            "type": "array",
+            "title": "Costs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProjectCreate",
+        "description": "Payload to create a project (server generates the id)."
+      },
+      "ProjectResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "client": {
+            "type": "string",
+            "title": "Client",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "대기"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "default": 0
+          },
+          "pm": {
+            "type": "string",
+            "title": "Pm",
+            "default": ""
+          },
+          "startDate": {
+            "type": "string",
+            "title": "Startdate",
+            "default": ""
+          },
+          "endDate": {
+            "type": "string",
+            "title": "Enddate",
+            "default": ""
+          },
+          "budget": {
+            "type": "integer",
+            "title": "Budget",
+            "default": 0
+          },
+          "spent": {
+            "type": "integer",
+            "title": "Spent",
+            "default": 0
+          },
+          "desc": {
+            "type": "string",
+            "title": "Desc",
+            "default": ""
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberItem"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "contracts": {
+            "items": {
+              "$ref": "#/components/schemas/ContractItem"
+            },
+            "type": "array",
+            "title": "Contracts"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueItem"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostItem"
+            },
+            "type": "array",
+            "title": "Costs"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id"
+        ],
+        "title": "ProjectResponse",
+        "description": "A project as returned by the API — includes its id."
+      },
+      "ProjectUpdate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "client": {
+            "type": "string",
+            "title": "Client",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "대기"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress",
+            "default": 0
+          },
+          "pm": {
+            "type": "string",
+            "title": "Pm",
+            "default": ""
+          },
+          "startDate": {
+            "type": "string",
+            "title": "Startdate",
+            "default": ""
+          },
+          "endDate": {
+            "type": "string",
+            "title": "Enddate",
+            "default": ""
+          },
+          "budget": {
+            "type": "integer",
+            "title": "Budget",
+            "default": 0
+          },
+          "spent": {
+            "type": "integer",
+            "title": "Spent",
+            "default": 0
+          },
+          "desc": {
+            "type": "string",
+            "title": "Desc",
+            "default": ""
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberItem"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "contracts": {
+            "items": {
+              "$ref": "#/components/schemas/ContractItem"
+            },
+            "type": "array",
+            "title": "Contracts"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueItem"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostItem"
+            },
+            "type": "array",
+            "title": "Costs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProjectUpdate",
+        "description": "Payload to replace a project's editable fields wholesale (PUT)."
+      },
       "ProviderInfoResponse": {
         "properties": {
           "provider": {
@@ -2863,6 +3774,98 @@
         ],
         "title": "RefreshRequest",
         "description": "Request body for POST /auth/refresh."
+      },
+      "ScheduleVersionCreate": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ScheduleVersionCreate",
+        "description": "Save the current schedule — snapshots ``tasks`` and updates the project."
+      },
+      "ScheduleVersionListItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "task_count": {
+            "type": "integer",
+            "title": "Task Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "note",
+          "task_count",
+          "created_at"
+        ],
+        "title": "ScheduleVersionListItem",
+        "description": "Lightweight history-list entry (no task payload)."
+      },
+      "ScheduleVersionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "note",
+          "tasks",
+          "created_at"
+        ],
+        "title": "ScheduleVersionResponse",
+        "description": "A full schedule snapshot — loadable back into the Gantt view."
       },
       "SendMessageRequest": {
         "properties": {
@@ -2932,6 +3935,44 @@
         ],
         "title": "SignupResponse",
         "description": "Response body for POST /auth/signup."
+      },
+      "TaskItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "default": ""
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "default": ""
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done",
+            "default": 0
+          },
+          "dept": {
+            "type": "string",
+            "title": "Dept",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "TaskItem"
       },
       "TokenResponse": {
         "properties": {
@@ -3003,6 +4044,18 @@
             "type": "string",
             "format": "email",
             "title": "Email"
+          },
+          "employee_no": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee No"
           }
         },
         "type": "object",
@@ -3015,7 +4068,48 @@
           "email"
         ],
         "title": "UserCreate",
-        "description": "Request body for POST /users. ``employee_no`` is server-generated."
+        "description": "Request body for POST /users. ``employee_no`` optional — blank ⇒ server-generated."
+      },
+      "UserImportResult": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created"
+          },
+          "failed": {
+            "items": {
+              "$ref": "#/components/schemas/UserImportRowError"
+            },
+            "type": "array",
+            "title": "Failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "failed"
+        ],
+        "title": "UserImportResult",
+        "description": "Outcome of POST /users/import — partial success: some rows may fail."
+      },
+      "UserImportRowError": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "title": "Row"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row",
+          "reason"
+        ],
+        "title": "UserImportRowError",
+        "description": "A single failed row from an Excel bulk import (1-based Excel row number)."
       },
       "UserListResponse": {
         "properties": {
@@ -3172,6 +4266,19 @@
               }
             ],
             "title": "Email"
+          },
+          "employee_no": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee No"
           }
         },
         "type": "object",

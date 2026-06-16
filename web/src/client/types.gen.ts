@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_import_users_api_v1_users_import_post
+ */
+export type BodyImportUsersApiV1UsersImportPost = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * ChatMessage
  *
  * A single message in a conversation turn.
@@ -113,6 +123,36 @@ export type CompanyInfoData = {
 };
 
 /**
+ * ContractItem
+ */
+export type ContractItem = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Date
+     */
+    date?: string;
+    /**
+     * Amount
+     */
+    amount?: number;
+    /**
+     * Type
+     */
+    type?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Filename
+     */
+    fileName?: string;
+};
+
+/**
  * ConversationCreate
  *
  * Request body for POST /chat/conversations.
@@ -160,6 +200,28 @@ export type ConversationResponse = {
      * Updated At
      */
     updated_at: string;
+};
+
+/**
+ * CostItem
+ */
+export type CostItem = {
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Budgeted
+     */
+    budgeted?: number;
+    /**
+     * Actual
+     */
+    actual?: number;
+    /**
+     * Date
+     */
+    date?: string;
 };
 
 /**
@@ -309,6 +371,44 @@ export type HttpValidationError = {
 };
 
 /**
+ * IssueItem
+ */
+export type IssueItem = {
+    /**
+     * No
+     */
+    no: number;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Type
+     */
+    type?: string;
+    /**
+     * Priority
+     */
+    priority?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Date
+     */
+    date?: string;
+    /**
+     * Assignee
+     */
+    assignee?: string;
+    /**
+     * Desc
+     */
+    desc?: string;
+};
+
+/**
  * LeaveSettingsData
  *
  * 연차 설정 — GET response / PUT body.
@@ -362,6 +462,44 @@ export type LogoutRequest = {
      * Refresh Token
      */
     refresh_token: string;
+};
+
+/**
+ * MemberItem
+ */
+export type MemberItem = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Rank
+     */
+    rank?: string;
+    /**
+     * Role
+     */
+    role?: string;
+    /**
+     * Grade
+     */
+    grade?: string;
+    /**
+     * Start
+     */
+    start?: string;
+    /**
+     * End
+     */
+    end?: string;
+    /**
+     * Active
+     */
+    active?: boolean;
 };
 
 /**
@@ -525,6 +663,214 @@ export type PositionUpdate = {
 };
 
 /**
+ * ProjectCreate
+ *
+ * Payload to create a project (server generates the id).
+ */
+export type ProjectCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Client
+     */
+    client?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Progress
+     */
+    progress?: number;
+    /**
+     * Pm
+     */
+    pm?: string;
+    /**
+     * Startdate
+     */
+    startDate?: string;
+    /**
+     * Enddate
+     */
+    endDate?: string;
+    /**
+     * Budget
+     */
+    budget?: number;
+    /**
+     * Spent
+     */
+    spent?: number;
+    /**
+     * Desc
+     */
+    desc?: string;
+    /**
+     * Members
+     */
+    members?: Array<MemberItem>;
+    /**
+     * Tasks
+     */
+    tasks?: Array<TaskItem>;
+    /**
+     * Contracts
+     */
+    contracts?: Array<ContractItem>;
+    /**
+     * Issues
+     */
+    issues?: Array<IssueItem>;
+    /**
+     * Costs
+     */
+    costs?: Array<CostItem>;
+};
+
+/**
+ * ProjectResponse
+ *
+ * A project as returned by the API — includes its id.
+ */
+export type ProjectResponse = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Client
+     */
+    client?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Progress
+     */
+    progress?: number;
+    /**
+     * Pm
+     */
+    pm?: string;
+    /**
+     * Startdate
+     */
+    startDate?: string;
+    /**
+     * Enddate
+     */
+    endDate?: string;
+    /**
+     * Budget
+     */
+    budget?: number;
+    /**
+     * Spent
+     */
+    spent?: number;
+    /**
+     * Desc
+     */
+    desc?: string;
+    /**
+     * Members
+     */
+    members?: Array<MemberItem>;
+    /**
+     * Tasks
+     */
+    tasks?: Array<TaskItem>;
+    /**
+     * Contracts
+     */
+    contracts?: Array<ContractItem>;
+    /**
+     * Issues
+     */
+    issues?: Array<IssueItem>;
+    /**
+     * Costs
+     */
+    costs?: Array<CostItem>;
+    /**
+     * Id
+     */
+    id: string;
+};
+
+/**
+ * ProjectUpdate
+ *
+ * Payload to replace a project's editable fields wholesale (PUT).
+ */
+export type ProjectUpdate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Client
+     */
+    client?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Progress
+     */
+    progress?: number;
+    /**
+     * Pm
+     */
+    pm?: string;
+    /**
+     * Startdate
+     */
+    startDate?: string;
+    /**
+     * Enddate
+     */
+    endDate?: string;
+    /**
+     * Budget
+     */
+    budget?: number;
+    /**
+     * Spent
+     */
+    spent?: number;
+    /**
+     * Desc
+     */
+    desc?: string;
+    /**
+     * Members
+     */
+    members?: Array<MemberItem>;
+    /**
+     * Tasks
+     */
+    tasks?: Array<TaskItem>;
+    /**
+     * Contracts
+     */
+    contracts?: Array<ContractItem>;
+    /**
+     * Issues
+     */
+    issues?: Array<IssueItem>;
+    /**
+     * Costs
+     */
+    costs?: Array<CostItem>;
+};
+
+/**
  * ProviderInfoResponse
  *
  * Response body for the ``/provider`` info endpoint.
@@ -563,6 +909,78 @@ export type RefreshRequest = {
      * Refresh Token
      */
     refresh_token: string;
+};
+
+/**
+ * ScheduleVersionCreate
+ *
+ * Save the current schedule — snapshots ``tasks`` and updates the project.
+ */
+export type ScheduleVersionCreate = {
+    /**
+     * Tasks
+     */
+    tasks?: Array<TaskItem>;
+    /**
+     * Note
+     */
+    note?: string;
+};
+
+/**
+ * ScheduleVersionListItem
+ *
+ * Lightweight history-list entry (no task payload).
+ */
+export type ScheduleVersionListItem = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Note
+     */
+    note: string;
+    /**
+     * Task Count
+     */
+    task_count: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * ScheduleVersionResponse
+ *
+ * A full schedule snapshot — loadable back into the Gantt view.
+ */
+export type ScheduleVersionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Note
+     */
+    note: string;
+    /**
+     * Tasks
+     */
+    tasks: Array<TaskItem>;
+    /**
+     * Created At
+     */
+    created_at: string;
 };
 
 /**
@@ -617,6 +1035,36 @@ export type SignupResponse = {
 };
 
 /**
+ * TaskItem
+ */
+export type TaskItem = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Start
+     */
+    start?: string;
+    /**
+     * End
+     */
+    end?: string;
+    /**
+     * Done
+     */
+    done?: number;
+    /**
+     * Dept
+     */
+    dept?: string;
+};
+
+/**
  * TokenResponse
  *
  * JWT pair returned by login and refresh endpoints.
@@ -645,7 +1093,7 @@ export type TokenResponse = {
 /**
  * UserCreate
  *
- * Request body for POST /users. ``employee_no`` is server-generated.
+ * Request body for POST /users. ``employee_no`` optional — blank ⇒ server-generated.
  */
 export type UserCreate = {
     /**
@@ -672,6 +1120,42 @@ export type UserCreate = {
      * Email
      */
     email: string;
+    /**
+     * Employee No
+     */
+    employee_no?: string | null;
+};
+
+/**
+ * UserImportResult
+ *
+ * Outcome of POST /users/import — partial success: some rows may fail.
+ */
+export type UserImportResult = {
+    /**
+     * Created
+     */
+    created: number;
+    /**
+     * Failed
+     */
+    failed: Array<UserImportRowError>;
+};
+
+/**
+ * UserImportRowError
+ *
+ * A single failed row from an Excel bulk import (1-based Excel row number).
+ */
+export type UserImportRowError = {
+    /**
+     * Row
+     */
+    row: number;
+    /**
+     * Reason
+     */
+    reason: string;
 };
 
 /**
@@ -762,6 +1246,10 @@ export type UserUpdate = {
      * Email
      */
     email?: string | null;
+    /**
+     * Employee No
+     */
+    employee_no?: string | null;
 };
 
 /**
@@ -1576,6 +2064,20 @@ export type ExportUsersApiV1UsersExportGetResponses = {
     200: unknown;
 };
 
+export type ImportTemplateApiV1UsersImportTemplateGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/import-template';
+};
+
+export type ImportTemplateApiV1UsersImportTemplateGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type DeleteUserApiV1UsersUserIdDeleteData = {
     body?: never;
     path: {
@@ -1665,6 +2167,31 @@ export type UpdateUserApiV1UsersUserIdPatchResponses = {
 };
 
 export type UpdateUserApiV1UsersUserIdPatchResponse = UpdateUserApiV1UsersUserIdPatchResponses[keyof UpdateUserApiV1UsersUserIdPatchResponses];
+
+export type ImportUsersApiV1UsersImportPostData = {
+    body: BodyImportUsersApiV1UsersImportPost;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/import';
+};
+
+export type ImportUsersApiV1UsersImportPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ImportUsersApiV1UsersImportPostError = ImportUsersApiV1UsersImportPostErrors[keyof ImportUsersApiV1UsersImportPostErrors];
+
+export type ImportUsersApiV1UsersImportPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserImportResult;
+};
+
+export type ImportUsersApiV1UsersImportPostResponse = ImportUsersApiV1UsersImportPostResponses[keyof ImportUsersApiV1UsersImportPostResponses];
 
 export type ListPositionsApiV1PositionsGetData = {
     body?: never;
@@ -2121,3 +2648,232 @@ export type PutCompanyApiV1OrgCompanyPutResponses = {
 };
 
 export type PutCompanyApiV1OrgCompanyPutResponse = PutCompanyApiV1OrgCompanyPutResponses[keyof PutCompanyApiV1OrgCompanyPutResponses];
+
+export type ListProjectsApiV1ProjectsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/projects';
+};
+
+export type ListProjectsApiV1ProjectsGetResponses = {
+    /**
+     * Response List Projects Api V1 Projects Get
+     *
+     * Successful Response
+     */
+    200: Array<ProjectResponse>;
+};
+
+export type ListProjectsApiV1ProjectsGetResponse = ListProjectsApiV1ProjectsGetResponses[keyof ListProjectsApiV1ProjectsGetResponses];
+
+export type CreateProjectApiV1ProjectsPostData = {
+    body: ProjectCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/projects';
+};
+
+export type CreateProjectApiV1ProjectsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateProjectApiV1ProjectsPostError = CreateProjectApiV1ProjectsPostErrors[keyof CreateProjectApiV1ProjectsPostErrors];
+
+export type CreateProjectApiV1ProjectsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProjectResponse;
+};
+
+export type CreateProjectApiV1ProjectsPostResponse = CreateProjectApiV1ProjectsPostResponses[keyof CreateProjectApiV1ProjectsPostResponses];
+
+export type DeleteProjectApiV1ProjectsProjectIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}';
+};
+
+export type DeleteProjectApiV1ProjectsProjectIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteProjectApiV1ProjectsProjectIdDeleteError = DeleteProjectApiV1ProjectsProjectIdDeleteErrors[keyof DeleteProjectApiV1ProjectsProjectIdDeleteErrors];
+
+export type DeleteProjectApiV1ProjectsProjectIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteProjectApiV1ProjectsProjectIdDeleteResponse = DeleteProjectApiV1ProjectsProjectIdDeleteResponses[keyof DeleteProjectApiV1ProjectsProjectIdDeleteResponses];
+
+export type GetProjectApiV1ProjectsProjectIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}';
+};
+
+export type GetProjectApiV1ProjectsProjectIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProjectApiV1ProjectsProjectIdGetError = GetProjectApiV1ProjectsProjectIdGetErrors[keyof GetProjectApiV1ProjectsProjectIdGetErrors];
+
+export type GetProjectApiV1ProjectsProjectIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectResponse;
+};
+
+export type GetProjectApiV1ProjectsProjectIdGetResponse = GetProjectApiV1ProjectsProjectIdGetResponses[keyof GetProjectApiV1ProjectsProjectIdGetResponses];
+
+export type UpdateProjectApiV1ProjectsProjectIdPutData = {
+    body: ProjectUpdate;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}';
+};
+
+export type UpdateProjectApiV1ProjectsProjectIdPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateProjectApiV1ProjectsProjectIdPutError = UpdateProjectApiV1ProjectsProjectIdPutErrors[keyof UpdateProjectApiV1ProjectsProjectIdPutErrors];
+
+export type UpdateProjectApiV1ProjectsProjectIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectResponse;
+};
+
+export type UpdateProjectApiV1ProjectsProjectIdPutResponse = UpdateProjectApiV1ProjectsProjectIdPutResponses[keyof UpdateProjectApiV1ProjectsProjectIdPutResponses];
+
+export type ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/schedule/versions';
+};
+
+export type ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetError = ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetErrors[keyof ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetErrors];
+
+export type ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponses = {
+    /**
+     * Response List Schedule Versions Api V1 Projects  Project Id  Schedule Versions Get
+     *
+     * Successful Response
+     */
+    200: Array<ScheduleVersionListItem>;
+};
+
+export type ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponse = ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponses[keyof ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponses];
+
+export type SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostData = {
+    body: ScheduleVersionCreate;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/schedule/versions';
+};
+
+export type SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostError = SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostErrors[keyof SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostErrors];
+
+export type SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ScheduleVersionResponse;
+};
+
+export type SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponse = SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponses[keyof SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponses];
+
+export type GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+        /**
+         * Version Id
+         */
+        version_id: string;
+    };
+    query?: never;
+    url: '/api/v1/projects/{project_id}/schedule/versions/{version_id}';
+};
+
+export type GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetError = GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetErrors[keyof GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetErrors];
+
+export type GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScheduleVersionResponse;
+};
+
+export type GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponse = GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponses[keyof GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponses];

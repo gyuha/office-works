@@ -148,6 +148,11 @@ try:
     except ImportError:
         logger.debug("org models not found — skipping")
 
+    try:
+        from domains.projects import models as _projects_models  # noqa: F401
+    except ImportError:
+        logger.debug("projects models not found — skipping")
+
     target_metadata = Base.metadata
 except ImportError:
     # Database module may not be created yet (bootstrapping phase).

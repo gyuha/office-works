@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createPositionApiV1PositionsPost, createUserApiV1UsersPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deletePositionApiV1PositionsPositionIdDelete, deleteUserApiV1UsersUserIdDelete, exportUsersApiV1UsersExportGet, getCompanyApiV1OrgCompanyGet, getConversationApiV1ChatConversationsConversationIdGet, getLeaveSettingsApiV1OrgLeaveSettingsGet, getMeApiV1AuthMeGet, getProviderInfoApiV1ChatProviderGet, getUserApiV1UsersUserIdGet, getWorkSettingsApiV1OrgWorkSettingsGet, healthHealthGet, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, listUsersApiV1UsersGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, myRecordApiV1UsersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, putCompanyApiV1OrgCompanyPut, putLeaveSettingsApiV1OrgLeaveSettingsPut, putWorkSettingsApiV1OrgWorkSettingsPut, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateUserApiV1UsersUserIdPatch, userStatsApiV1UsersStatsGet, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
-import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, CreateUserApiV1UsersPostData, CreateUserApiV1UsersPostError, CreateUserApiV1UsersPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, DeleteUserApiV1UsersUserIdDeleteData, DeleteUserApiV1UsersUserIdDeleteError, DeleteUserApiV1UsersUserIdDeleteResponse, ExportUsersApiV1UsersExportGetData, ExportUsersApiV1UsersExportGetError, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponse, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, GetUserApiV1UsersUserIdGetData, GetUserApiV1UsersUserIdGetError, GetUserApiV1UsersUserIdGetResponse, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, HealthHealthGetData, HealthHealthGetResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, ListUsersApiV1UsersGetData, ListUsersApiV1UsersGetError, ListUsersApiV1UsersGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MyRecordApiV1UsersMeGetData, MyRecordApiV1UsersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutError, PutCompanyApiV1OrgCompanyPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutError, PutWorkSettingsApiV1OrgWorkSettingsPutResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateUserApiV1UsersUserIdPatchData, UpdateUserApiV1UsersUserIdPatchError, UpdateUserApiV1UsersUserIdPatchResponse, UserStatsApiV1UsersStatsGetData, UserStatsApiV1UsersStatsGetResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
+import { chatCompleteApiV1ChatCompletePost, chatStreamApiV1ChatStreamPost, confirmPasswordResetApiV1AuthPasswordResetConfirmPost, createConversationApiV1ChatConversationsPost, createEmploymentTypeApiV1EmploymentTypesPost, createGradeApiV1GradesPost, createPositionApiV1PositionsPost, createProjectApiV1ProjectsPost, createUserApiV1UsersPost, deleteEmploymentTypeApiV1EmploymentTypesTypeIdDelete, deleteGradeApiV1GradesGradeIdDelete, deletePositionApiV1PositionsPositionIdDelete, deleteProjectApiV1ProjectsProjectIdDelete, deleteUserApiV1UsersUserIdDelete, exportUsersApiV1UsersExportGet, getCompanyApiV1OrgCompanyGet, getConversationApiV1ChatConversationsConversationIdGet, getLeaveSettingsApiV1OrgLeaveSettingsGet, getMeApiV1AuthMeGet, getProjectApiV1ProjectsProjectIdGet, getProviderInfoApiV1ChatProviderGet, getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGet, getUserApiV1UsersUserIdGet, getWorkSettingsApiV1OrgWorkSettingsGet, healthHealthGet, importTemplateApiV1UsersImportTemplateGet, importUsersApiV1UsersImportPost, listConversationsApiV1ChatConversationsGet, listEmploymentTypesApiV1EmploymentTypesGet, listGradesApiV1GradesGet, listMessagesApiV1ChatConversationsConversationIdMessagesGet, listPositionsApiV1PositionsGet, listProjectsApiV1ProjectsGet, listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGet, listUsersApiV1UsersGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, myRecordApiV1UsersMeGet, oauthCallbackApiV1AuthOauthProviderCallbackGet, oauthLoginApiV1AuthOauthProviderLoginGet, type Options, putCompanyApiV1OrgCompanyPut, putLeaveSettingsApiV1OrgLeaveSettingsPut, putWorkSettingsApiV1OrgWorkSettingsPut, readyReadyGet, refreshApiV1AuthRefreshPost, renamePositionApiV1PositionsPositionIdPatch, reorderGradesApiV1GradesOrderPatch, reorderPositionsApiV1PositionsOrderPatch, requestPasswordResetApiV1AuthPasswordResetPost, saveScheduleApiV1ProjectsProjectIdScheduleVersionsPost, sendMessageApiV1ChatConversationsConversationIdMessagesPost, signupApiV1AuthSignupPost, updateGradeApiV1GradesGradeIdPatch, updateProjectApiV1ProjectsProjectIdPut, updateUserApiV1UsersUserIdPatch, userStatsApiV1UsersStatsGet, verifyEmailApiV1AuthVerifyEmailTokenPost } from '../sdk.gen';
+import type { ChatCompleteApiV1ChatCompletePostData, ChatCompleteApiV1ChatCompletePostError, ChatCompleteApiV1ChatCompletePostResponse, ChatStreamApiV1ChatStreamPostData, ChatStreamApiV1ChatStreamPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostData, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostError, ConfirmPasswordResetApiV1AuthPasswordResetConfirmPostResponse, CreateConversationApiV1ChatConversationsPostData, CreateConversationApiV1ChatConversationsPostError, CreateConversationApiV1ChatConversationsPostResponse, CreateEmploymentTypeApiV1EmploymentTypesPostData, CreateEmploymentTypeApiV1EmploymentTypesPostError, CreateEmploymentTypeApiV1EmploymentTypesPostResponse, CreateGradeApiV1GradesPostData, CreateGradeApiV1GradesPostError, CreateGradeApiV1GradesPostResponse, CreatePositionApiV1PositionsPostData, CreatePositionApiV1PositionsPostError, CreatePositionApiV1PositionsPostResponse, CreateProjectApiV1ProjectsPostData, CreateProjectApiV1ProjectsPostError, CreateProjectApiV1ProjectsPostResponse, CreateUserApiV1UsersPostData, CreateUserApiV1UsersPostError, CreateUserApiV1UsersPostResponse, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteData, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteError, DeleteEmploymentTypeApiV1EmploymentTypesTypeIdDeleteResponse, DeleteGradeApiV1GradesGradeIdDeleteData, DeleteGradeApiV1GradesGradeIdDeleteError, DeleteGradeApiV1GradesGradeIdDeleteResponse, DeletePositionApiV1PositionsPositionIdDeleteData, DeletePositionApiV1PositionsPositionIdDeleteError, DeletePositionApiV1PositionsPositionIdDeleteResponse, DeleteProjectApiV1ProjectsProjectIdDeleteData, DeleteProjectApiV1ProjectsProjectIdDeleteError, DeleteProjectApiV1ProjectsProjectIdDeleteResponse, DeleteUserApiV1UsersUserIdDeleteData, DeleteUserApiV1UsersUserIdDeleteError, DeleteUserApiV1UsersUserIdDeleteResponse, ExportUsersApiV1UsersExportGetData, ExportUsersApiV1UsersExportGetError, GetCompanyApiV1OrgCompanyGetData, GetCompanyApiV1OrgCompanyGetResponse, GetConversationApiV1ChatConversationsConversationIdGetData, GetConversationApiV1ChatConversationsConversationIdGetError, GetConversationApiV1ChatConversationsConversationIdGetResponse, GetLeaveSettingsApiV1OrgLeaveSettingsGetData, GetLeaveSettingsApiV1OrgLeaveSettingsGetResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, GetProjectApiV1ProjectsProjectIdGetData, GetProjectApiV1ProjectsProjectIdGetError, GetProjectApiV1ProjectsProjectIdGetResponse, GetProviderInfoApiV1ChatProviderGetData, GetProviderInfoApiV1ChatProviderGetResponse, GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetData, GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetError, GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponse, GetUserApiV1UsersUserIdGetData, GetUserApiV1UsersUserIdGetError, GetUserApiV1UsersUserIdGetResponse, GetWorkSettingsApiV1OrgWorkSettingsGetData, GetWorkSettingsApiV1OrgWorkSettingsGetResponse, HealthHealthGetData, HealthHealthGetResponse, ImportTemplateApiV1UsersImportTemplateGetData, ImportUsersApiV1UsersImportPostData, ImportUsersApiV1UsersImportPostError, ImportUsersApiV1UsersImportPostResponse, ListConversationsApiV1ChatConversationsGetData, ListConversationsApiV1ChatConversationsGetResponse, ListEmploymentTypesApiV1EmploymentTypesGetData, ListEmploymentTypesApiV1EmploymentTypesGetResponse, ListGradesApiV1GradesGetData, ListGradesApiV1GradesGetResponse, ListMessagesApiV1ChatConversationsConversationIdMessagesGetData, ListMessagesApiV1ChatConversationsConversationIdMessagesGetError, ListMessagesApiV1ChatConversationsConversationIdMessagesGetResponse, ListPositionsApiV1PositionsGetData, ListPositionsApiV1PositionsGetResponse, ListProjectsApiV1ProjectsGetData, ListProjectsApiV1ProjectsGetResponse, ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetData, ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetError, ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponse, ListUsersApiV1UsersGetData, ListUsersApiV1UsersGetError, ListUsersApiV1UsersGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostError, LogoutApiV1AuthLogoutPostResponse, MyRecordApiV1UsersMeGetData, MyRecordApiV1UsersMeGetResponse, OauthCallbackApiV1AuthOauthProviderCallbackGetData, OauthCallbackApiV1AuthOauthProviderCallbackGetError, OauthLoginApiV1AuthOauthProviderLoginGetData, OauthLoginApiV1AuthOauthProviderLoginGetError, OauthLoginApiV1AuthOauthProviderLoginGetResponse, PutCompanyApiV1OrgCompanyPutData, PutCompanyApiV1OrgCompanyPutError, PutCompanyApiV1OrgCompanyPutResponse, PutLeaveSettingsApiV1OrgLeaveSettingsPutData, PutLeaveSettingsApiV1OrgLeaveSettingsPutError, PutLeaveSettingsApiV1OrgLeaveSettingsPutResponse, PutWorkSettingsApiV1OrgWorkSettingsPutData, PutWorkSettingsApiV1OrgWorkSettingsPutError, PutWorkSettingsApiV1OrgWorkSettingsPutResponse, ReadyReadyGetData, ReadyReadyGetResponse, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostError, RefreshApiV1AuthRefreshPostResponse, RenamePositionApiV1PositionsPositionIdPatchData, RenamePositionApiV1PositionsPositionIdPatchError, RenamePositionApiV1PositionsPositionIdPatchResponse, ReorderGradesApiV1GradesOrderPatchData, ReorderGradesApiV1GradesOrderPatchError, ReorderGradesApiV1GradesOrderPatchResponse, ReorderPositionsApiV1PositionsOrderPatchData, ReorderPositionsApiV1PositionsOrderPatchError, ReorderPositionsApiV1PositionsOrderPatchResponse, RequestPasswordResetApiV1AuthPasswordResetPostData, RequestPasswordResetApiV1AuthPasswordResetPostError, RequestPasswordResetApiV1AuthPasswordResetPostResponse, SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostData, SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostError, SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponse, SendMessageApiV1ChatConversationsConversationIdMessagesPostData, SendMessageApiV1ChatConversationsConversationIdMessagesPostError, SignupApiV1AuthSignupPostData, SignupApiV1AuthSignupPostError, SignupApiV1AuthSignupPostResponse, UpdateGradeApiV1GradesGradeIdPatchData, UpdateGradeApiV1GradesGradeIdPatchError, UpdateGradeApiV1GradesGradeIdPatchResponse, UpdateProjectApiV1ProjectsProjectIdPutData, UpdateProjectApiV1ProjectsProjectIdPutError, UpdateProjectApiV1ProjectsProjectIdPutResponse, UpdateUserApiV1UsersUserIdPatchData, UpdateUserApiV1UsersUserIdPatchError, UpdateUserApiV1UsersUserIdPatchResponse, UserStatsApiV1UsersStatsGetData, UserStatsApiV1UsersStatsGetResponse, VerifyEmailApiV1AuthVerifyEmailTokenPostData, VerifyEmailApiV1AuthVerifyEmailTokenPostError, VerifyEmailApiV1AuthVerifyEmailTokenPostResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -652,6 +652,26 @@ export const exportUsersApiV1UsersExportGetOptions = (options?: Options<ExportUs
     queryKey: exportUsersApiV1UsersExportGetQueryKey(options)
 });
 
+export const importTemplateApiV1UsersImportTemplateGetQueryKey = (options?: Options<ImportTemplateApiV1UsersImportTemplateGetData>) => createQueryKey('importTemplateApiV1UsersImportTemplateGet', options);
+
+/**
+ * Download the .xlsx bulk-import template
+ *
+ * Return a blank ``.xlsx`` with the canonical header row for bulk import.
+ */
+export const importTemplateApiV1UsersImportTemplateGetOptions = (options?: Options<ImportTemplateApiV1UsersImportTemplateGetData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof importTemplateApiV1UsersImportTemplateGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await importTemplateApiV1UsersImportTemplateGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: importTemplateApiV1UsersImportTemplateGetQueryKey(options)
+});
+
 /**
  * Soft-delete an employee
  *
@@ -700,6 +720,28 @@ export const updateUserApiV1UsersUserIdPatchMutation = (options?: Partial<Option
     const mutationOptions: UseMutationOptions<UpdateUserApiV1UsersUserIdPatchResponse, UpdateUserApiV1UsersUserIdPatchError, Options<UpdateUserApiV1UsersUserIdPatchData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateUserApiV1UsersUserIdPatch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Bulk-create employees from an .xlsx upload (partial success)
+ *
+ * Parse the uploaded ``.xlsx`` and create each valid row.
+ *
+ * Partial success: invalid rows and duplicate emails are collected as failures
+ * (with their 1-based Excel row number) rather than aborting the whole upload.
+ */
+export const importUsersApiV1UsersImportPostMutation = (options?: Partial<Options<ImportUsersApiV1UsersImportPostData>>): UseMutationOptions<ImportUsersApiV1UsersImportPostResponse, ImportUsersApiV1UsersImportPostError, Options<ImportUsersApiV1UsersImportPostData>> => {
+    const mutationOptions: UseMutationOptions<ImportUsersApiV1UsersImportPostResponse, ImportUsersApiV1UsersImportPostError, Options<ImportUsersApiV1UsersImportPostData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await importUsersApiV1UsersImportPost({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1038,3 +1080,143 @@ export const putCompanyApiV1OrgCompanyPutMutation = (options?: Partial<Options<P
     };
     return mutationOptions;
 };
+
+export const listProjectsApiV1ProjectsGetQueryKey = (options?: Options<ListProjectsApiV1ProjectsGetData>) => createQueryKey('listProjectsApiV1ProjectsGet', options);
+
+/**
+ * List projects
+ */
+export const listProjectsApiV1ProjectsGetOptions = (options?: Options<ListProjectsApiV1ProjectsGetData>) => queryOptions<ListProjectsApiV1ProjectsGetResponse, DefaultError, ListProjectsApiV1ProjectsGetResponse, ReturnType<typeof listProjectsApiV1ProjectsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listProjectsApiV1ProjectsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listProjectsApiV1ProjectsGetQueryKey(options)
+});
+
+/**
+ * Create a project
+ */
+export const createProjectApiV1ProjectsPostMutation = (options?: Partial<Options<CreateProjectApiV1ProjectsPostData>>): UseMutationOptions<CreateProjectApiV1ProjectsPostResponse, CreateProjectApiV1ProjectsPostError, Options<CreateProjectApiV1ProjectsPostData>> => {
+    const mutationOptions: UseMutationOptions<CreateProjectApiV1ProjectsPostResponse, CreateProjectApiV1ProjectsPostError, Options<CreateProjectApiV1ProjectsPostData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createProjectApiV1ProjectsPost({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a project
+ */
+export const deleteProjectApiV1ProjectsProjectIdDeleteMutation = (options?: Partial<Options<DeleteProjectApiV1ProjectsProjectIdDeleteData>>): UseMutationOptions<DeleteProjectApiV1ProjectsProjectIdDeleteResponse, DeleteProjectApiV1ProjectsProjectIdDeleteError, Options<DeleteProjectApiV1ProjectsProjectIdDeleteData>> => {
+    const mutationOptions: UseMutationOptions<DeleteProjectApiV1ProjectsProjectIdDeleteResponse, DeleteProjectApiV1ProjectsProjectIdDeleteError, Options<DeleteProjectApiV1ProjectsProjectIdDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteProjectApiV1ProjectsProjectIdDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getProjectApiV1ProjectsProjectIdGetQueryKey = (options: Options<GetProjectApiV1ProjectsProjectIdGetData>) => createQueryKey('getProjectApiV1ProjectsProjectIdGet', options);
+
+/**
+ * Get a project
+ */
+export const getProjectApiV1ProjectsProjectIdGetOptions = (options: Options<GetProjectApiV1ProjectsProjectIdGetData>) => queryOptions<GetProjectApiV1ProjectsProjectIdGetResponse, GetProjectApiV1ProjectsProjectIdGetError, GetProjectApiV1ProjectsProjectIdGetResponse, ReturnType<typeof getProjectApiV1ProjectsProjectIdGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getProjectApiV1ProjectsProjectIdGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getProjectApiV1ProjectsProjectIdGetQueryKey(options)
+});
+
+/**
+ * Replace a project
+ */
+export const updateProjectApiV1ProjectsProjectIdPutMutation = (options?: Partial<Options<UpdateProjectApiV1ProjectsProjectIdPutData>>): UseMutationOptions<UpdateProjectApiV1ProjectsProjectIdPutResponse, UpdateProjectApiV1ProjectsProjectIdPutError, Options<UpdateProjectApiV1ProjectsProjectIdPutData>> => {
+    const mutationOptions: UseMutationOptions<UpdateProjectApiV1ProjectsProjectIdPutResponse, UpdateProjectApiV1ProjectsProjectIdPutError, Options<UpdateProjectApiV1ProjectsProjectIdPutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateProjectApiV1ProjectsProjectIdPut({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetQueryKey = (options: Options<ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetData>) => createQueryKey('listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGet', options);
+
+/**
+ * List schedule history (newest first)
+ */
+export const listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetOptions = (options: Options<ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetData>) => queryOptions<ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponse, ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetError, ListScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetResponse, ReturnType<typeof listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetQueryKey(options)
+});
+
+/**
+ * Save the schedule (snapshot + set current)
+ */
+export const saveScheduleApiV1ProjectsProjectIdScheduleVersionsPostMutation = (options?: Partial<Options<SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostData>>): UseMutationOptions<SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponse, SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostError, Options<SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostData>> => {
+    const mutationOptions: UseMutationOptions<SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostResponse, SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostError, Options<SaveScheduleApiV1ProjectsProjectIdScheduleVersionsPostData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await saveScheduleApiV1ProjectsProjectIdScheduleVersionsPost({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetQueryKey = (options: Options<GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetData>) => createQueryKey('getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGet', options);
+
+/**
+ * Load one schedule version
+ */
+export const getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetOptions = (options: Options<GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetData>) => queryOptions<GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponse, GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetError, GetScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetResponse, ReturnType<typeof getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetQueryKey(options)
+});
