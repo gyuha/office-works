@@ -2,6 +2,8 @@
 
 from domains.users.schemas.user_schemas import (
     UserCreate,
+    UserImportResult,
+    UserImportRowError,
     UserListResponse,
     UserResponse,
     UserStatsResponse,
@@ -10,6 +12,8 @@ from domains.users.schemas.user_schemas import (
 
 __all__ = [
     "UserCreate",
+    "UserImportResult",
+    "UserImportRowError",
     "UserListResponse",
     "UserResponse",
     "UserStatsResponse",

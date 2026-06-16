@@ -55,6 +55,13 @@ class UserDirectoryRepository:
         )
         return result.scalar_one_or_none() is not None
 
+    async def position_exists(self, name: str) -> bool:
+        """Whether *name* is a valid rank in the org ``positions`` table (raw SQL)."""
+        result = await self._session.execute(
+            text("SELECT 1 FROM positions WHERE name = :name LIMIT 1"), {"name": name}
+        )
+        return result.scalar_one_or_none() is not None
+
     # ── Queries ────────────────────────────────────────────────────────────
 
     async def list(
@@ -133,7 +140,7 @@ class UserDirectoryRepository:
         *,
         employee_no: str,
         name: str,
-        department: str,
+        department: str | None,
         rank: str,
         grade: str,
         phone: str,

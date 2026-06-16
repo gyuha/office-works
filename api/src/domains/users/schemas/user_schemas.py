@@ -26,14 +26,15 @@ from pydantic import BaseModel, EmailStr, Field, field_validator, model_validato
 
 
 class UserCreate(BaseModel):
-    """Request body for POST /users. ``employee_no`` is server-generated."""
+    """Request body for POST /users. ``employee_no`` optional — blank ⇒ server-generated."""
 
     name: str = Field(min_length=1, max_length=128)
-    department: str = Field(min_length=1, max_length=64)
+    department: str | None = Field(default=None, max_length=64)
     rank: str = Field(min_length=1, max_length=64)
     grade: str = Field(min_length=1, max_length=16)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr
+    employee_no: str | None = Field(default=None, max_length=16)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -42,7 +43,7 @@ class UserCreate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
+    @field_validator("name", "rank", "grade", "phone", mode="before")
     @classmethod
     def strip_required_text(cls, v: object) -> object:
         if isinstance(v, str):
@@ -52,16 +53,25 @@ class UserCreate(BaseModel):
             return stripped
         return v
 
+    # 사번·소속은 선택값 — 빈 문자열은 None으로(미지정). 사번 None ⇒ 자동생성.
+    @field_validator("employee_no", "department", mode="before")
+    @classmethod
+    def blank_to_none(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
+        return v
+
 
 class UserUpdate(BaseModel):
     """Request body for PATCH /users/{id}. All fields optional (partial update)."""
 
     name: str | None = Field(default=None, min_length=1, max_length=128)
-    department: str | None = Field(default=None, min_length=1, max_length=64)
+    department: str | None = Field(default=None, max_length=64)
     rank: str | None = Field(default=None, min_length=1, max_length=64)
     grade: str | None = Field(default=None, min_length=1, max_length=16)
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     email: EmailStr | None = None
+    employee_no: str | None = Field(default=None, min_length=1, max_length=16)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -70,7 +80,7 @@ class UserUpdate(BaseModel):
             return v.strip().lower()
         return v
 
-    @field_validator("name", "department", "rank", "grade", "phone", mode="before")
+    @field_validator("name", "rank", "grade", "phone", "employee_no", mode="before")
     @classmethod
     def strip_text(cls, v: object) -> object:
         if isinstance(v, str):
@@ -78,6 +88,14 @@ class UserUpdate(BaseModel):
             if not stripped:
                 raise ValueError("Field must not be blank.")
             return stripped
+        return v
+
+    # 소속은 빈 문자열을 None(미지정)으로 — 편집에서 소속 비우기 허용.
+    @field_validator("department", mode="before")
+    @classmethod
+    def blank_department_to_none(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
         return v
 
 
@@ -141,3 +159,17 @@ class UserStatsResponse(BaseModel):
     new_this_month: int
     grade_distribution: dict[str, int]
     departments: list[str]
+
+
+class UserImportRowError(BaseModel):
+    """A single failed row from an Excel bulk import (1-based Excel row number)."""
+
+    row: int
+    reason: str
+
+
+class UserImportResult(BaseModel):
+    """Outcome of POST /users/import — partial success: some rows may fail."""
+
+    created: int
+    failed: list[UserImportRowError]

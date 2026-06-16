@@ -172,6 +172,16 @@ tasks:
     cmds:
       - uv run python scripts/seed.py
 
+  users-template:
+    desc: "Write a blank users import template .xlsx (DB 불필요; 선택 인자: 출력 경로)"
+    cmds:
+      - PYTHONPATH=src uv run python scripts/users_cli.py template {{.CLI_ARGS}}
+
+  users-import:
+    desc: "Bulk-import users from a .xlsx (DB 가동·마이그레이션 선행 필요; 인자: 파일 경로)"
+    cmds:
+      - PYTHONPATH=src uv run python scripts/users_cli.py import {{.CLI_ARGS}}
+
   revision:
     desc: Create a new autogenerate Alembic revision
     interactive: true

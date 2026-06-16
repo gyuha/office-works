@@ -17,13 +17,12 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-
-from core.ids import generate_id
 from datetime import UTC, datetime
 
 import pytest
 
 from core.exceptions import AppError, ConflictError, NotFoundError
+from core.ids import generate_id
 from domains.users.schemas import UserCreate, UserUpdate
 from domains.users.service import UserDirectoryService
 
@@ -58,9 +57,14 @@ class FakeUserDirectoryRepository:
         self.users: list[_FakeUser] = []
         # Grades considered valid by grade_exists() — mirrors the seeded grades table.
         self.valid_grades: set[str] = {"특급", "고급", "중급", "초급"}
+        # Ranks considered valid by position_exists() — mirrors the seeded positions table.
+        self.valid_ranks: set[str] = {"사원", "주임", "대리", "과장", "차장", "부장", "팀장"}
 
     async def grade_exists(self, name: str) -> bool:
         return name in self.valid_grades
+
+    async def position_exists(self, name: str) -> bool:
+        return name in self.valid_ranks
 
     async def list(
         self,
@@ -217,6 +221,33 @@ async def test_create_duplicate_email_raises_conflict_error(service: UserDirecto
 async def test_create_with_unknown_grade_raises_app_error(service: UserDirectoryService) -> None:
     with pytest.raises(AppError):
         await service.create(_payload(email="badgrade@example.com", grade="없는등급"))
+
+
+async def test_create_with_unknown_rank_raises_app_error(service: UserDirectoryService) -> None:
+    payload = UserCreate(
+        name="홍길동",
+        department="개발팀",
+        rank="없는직급",
+        grade="중급",  # type: ignore[arg-type]
+        phone="010-1234-5678",
+        email="badrank@example.com",  # type: ignore[arg-type]
+    )
+    with pytest.raises(AppError):
+        await service.create(payload)
+
+
+async def test_create_with_provided_employee_no_uses_it(service: UserDirectoryService) -> None:
+    payload = UserCreate(
+        name="김사번",
+        department="개발팀",
+        rank="사원",
+        grade="중급",  # type: ignore[arg-type]
+        phone="010-0000-0000",
+        email="emp@example.com",  # type: ignore[arg-type]
+        employee_no="EMP-777",
+    )
+    created = await service.create(payload)
+    assert created.employee_no == "EMP-777"
 
 
 async def test_update_email_collides_with_other_user_raises_conflict_error(

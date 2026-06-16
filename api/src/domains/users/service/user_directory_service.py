@@ -76,13 +76,20 @@ class UserDirectoryService:
         if not await self._repo.grade_exists(grade):
             raise AppError(f"Unknown grade '{grade}'.")
 
+    async def _validate_rank(self, rank: str) -> None:
+        """Rank must be a name present in the org `positions` table (grade와 동일 패턴)."""
+        if not await self._repo.position_exists(rank):
+            raise AppError(f"Unknown rank '{rank}'.")
+
     async def create(self, payload: UserCreate) -> UserResponse:
         existing = await self._repo.get_by_email(payload.email)
         if existing is not None:
             raise ConflictError(f"A user with email '{payload.email}' already exists.")
         await self._validate_grade(payload.grade)
+        await self._validate_rank(payload.rank)
 
-        employee_no = await self._repo.next_employee_no()
+        # 사번 직접 입력 시 그 값 사용, 비면 서버 자동생성. 중복은 아래 IntegrityError로 409.
+        employee_no = payload.employee_no or await self._repo.next_employee_no()
         try:
             user = await self._repo.create(
                 employee_no=employee_no,
@@ -114,6 +121,10 @@ class UserDirectoryService:
         new_grade = changes.get("grade")
         if isinstance(new_grade, str):
             await self._validate_grade(new_grade)
+
+        new_rank = changes.get("rank")
+        if isinstance(new_rank, str):
+            await self._validate_rank(new_rank)
 
         try:
             updated = await self._repo.update(user, changes)

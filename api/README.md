@@ -403,6 +403,33 @@ task dev
 
 > 참고: `email` 클레임은 항상 제공되지 않습니다 → 백엔드가 `email → preferred_username → upn` 순으로 이메일을 결정합니다. 필요하면 Token configuration에서 optional claim `email`을 추가할 수 있습니다.
 
+### 개발용 관리자 계정 · 권한(RBAC) 부여
+
+프로젝트 **생성/수정/삭제·일정 저장**과 조직설정(**직급/등급/고용형태/config**) **쓰기** API는 `org:write` 권한을 요구합니다. 이 권한은 `admin` 역할에 묶여 있습니다(`admin` = `org:write` + `users:write`). 신규 가입·SSO 사용자는 역할이 없어 이 API에서 `403 {"detail":"Permission 'org:write' required."}`를 받습니다 — 역할을 부여하면 해결됩니다.
+
+전제: 역할·권한 레코드는 `task seed`가 생성합니다(마이그레이션 후 1회). 부여 흐름:
+
+```
+task seed (역할·권한 생성) → create_dev_admin / grant_admin (역할 부여) → 다음 API 호출부터 반영
+```
+
+**방법 A — 개발용 admin 계정 생성/리셋** (이메일+비밀번호 로그인)
+
+```bash
+# admin@officemate.co.kr / admin1234! 를 admin 역할로 생성(재실행 시 비밀번호 리셋 + 역할 재부여)
+PYTHONPATH=src uv run python scripts/create_dev_admin.py
+```
+
+**방법 B — 기존 사용자(SSO 포함)에 admin 역할만 부여** (비밀번호 건드리지 않음)
+
+```bash
+# OAuth/SSO 사용자는 로컬 비밀번호가 없으므로 역할만 부여한다. 이메일을 인자로 전달.
+PYTHONPATH=src uv run python scripts/grant_admin.py <이메일>
+# 예: PYTHONPATH=src uv run python scripts/grant_admin.py someone@example.com
+```
+
+> 권한은 매 요청마다 DB에서 실시간 로드됩니다(JWT에는 `sub`/`jti`만 담김). 따라서 역할 부여 후 **재로그인 없이** 다음 API 호출부터 즉시 반영됩니다(토큰이 유효한 경우). 로그아웃 상태라면 로그인만 하면 됩니다. 두 스크립트 모두 idempotent하며 로컬 DB 전용입니다.
+
 ### Production 모드 (`--profile prod`)
 
 `docker-compose.prod.yml` 오버레이를 사용하면 프로덕션 환경을 구성할 수 있습니다.
@@ -458,6 +485,10 @@ task serve        # 서버만 재시작 (infra 이미 실행 중일 때)
 task infra        # docker-compose up -d (infra only, healthy 대기)
 task infra-down   # docker-compose down
 task migrate      # alembic upgrade head
+
+# 사용자 디렉터리 일괄 등록
+task users-template -- ./out              # 빈 임포트 템플릿 .xlsx 저장 (DB 불필요)
+task users-import -- path/to/users.xlsx   # .xlsx에서 사용자 일괄 등록 (DB 가동·마이그레이션 선행 필요)
 
 # 테스트 & 품질
 task test         # pytest (전체)

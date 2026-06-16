@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import {
   ArrowLeft,
   ChevronDown,
@@ -6,32 +7,47 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Download,
+  FileDown,
   Pencil,
   Plus,
   Search,
   SearchX,
   Trash2,
+  Upload,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
   createUserApiV1UsersPostMutation,
   deleteUserApiV1UsersUserIdDeleteMutation,
   getUserApiV1UsersUserIdGetOptions,
+  importUsersApiV1UsersImportPostMutation,
   listGradesApiV1GradesGetOptions,
+  listPositionsApiV1PositionsGetOptions,
   listUsersApiV1UsersGetOptions,
   updateUserApiV1UsersUserIdPatchMutation,
   userStatsApiV1UsersStatsGetOptions,
 } from '@/client/@tanstack/react-query.gen';
-import { exportUsersApiV1UsersExportGet } from '@/client/sdk.gen';
+import {
+  exportUsersApiV1UsersExportGet,
+  importTemplateApiV1UsersImportTemplateGet,
+} from '@/client/sdk.gen';
 import type {
   DomainsUsersSchemasUserSchemasUserResponse,
   GradeResponse,
   UserCreate,
+  UserImportResult,
 } from '@/client/types.gen';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { DEPARTMENT_OPTIONS } from '../data/org-tree';
 import type { ScreenModule } from './types';
 
 /* ============================================================
@@ -109,6 +125,7 @@ function GradeTag({ grade }: { grade: string | null }) {
 
 function MembersScreen() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('no');
   const [sortAsc, setSortAsc] = useState(true);
@@ -117,8 +134,12 @@ function MembersScreen() {
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
 
-  const [view, setView] = useState<'list' | 'detail' | 'edit' | 'add'>('list');
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // Excel 일괄 등록
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importResult, setImportResult] = useState<UserImportResult | null>(null);
+
+  // 상세·편집은 /app/members/[id] 라우트가 담당. 목록 화면은 목록 + 추가(add)만.
+  const [view, setView] = useState<'list' | 'add'>('list');
 
   const listFilters = {
     q: query.trim() || undefined,
@@ -157,8 +178,7 @@ function MembersScreen() {
   }
 
   function openDetail(id: string) {
-    setActiveId(id);
-    setView('detail');
+    navigate({ to: '/app/members/$memberId', params: { memberId: id } });
   }
 
   async function handleExport() {
@@ -182,33 +202,41 @@ function MembersScreen() {
     }
   }
 
-  if (view === 'detail' && activeId) {
-    return (
-      <MemberDetail
-        memberId={activeId}
-        onBack={() => setView('list')}
-        onEdit={() => setView('edit')}
-        onDeleted={() => {
-          refresh();
-          setPage(1);
-          setView('list');
-        }}
-      />
-    );
+  async function handleTemplateDownload() {
+    try {
+      const { data } = await importTemplateApiV1UsersImportTemplateGet({
+        parseAs: 'blob',
+        throwOnError: true,
+      });
+      const url = URL.createObjectURL(data as Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'users_template.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('템플릿 다운로드에 실패했습니다.');
+    }
   }
 
-  if (view === 'edit' && activeId) {
-    return (
-      <MemberEdit
-        memberId={activeId}
-        depts={depts}
-        onCancel={() => setView('detail')}
-        onSaved={() => {
-          refresh();
-          setView('detail');
-        }}
-      />
-    );
+  const importMut = useMutation({
+    ...importUsersApiV1UsersImportPostMutation(),
+    onSuccess: (result) => {
+      setImportResult(result);
+      queryClient.invalidateQueries();
+      const ok = result.created;
+      const ng = result.failed.length;
+      if (ng === 0) toast.success(`${ok}명을 등록했습니다.`);
+      else toast.warning(`${ok}명 등록, ${ng}건 실패`);
+    },
+    onError: () => toast.error('업로드에 실패했습니다. (권한 또는 파일 형식 확인)'),
+  });
+
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // 같은 파일 재선택 허용
+    if (!file) return;
+    importMut.mutate({ body: { file } });
   }
 
   if (view === 'add') {
@@ -375,6 +403,30 @@ function MembersScreen() {
           </div>
 
           <div className="ml-auto flex flex-shrink-0 gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button
+              variant="outline"
+              className="h-[38px] gap-1.5 text-[13px] [&_svg]:size-[15px]"
+              onClick={handleTemplateDownload}
+            >
+              <FileDown />
+              템플릿
+            </Button>
+            <Button
+              variant="outline"
+              className="h-[38px] gap-1.5 text-[13px] [&_svg]:size-[15px]"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importMut.isPending}
+            >
+              <Upload />
+              {importMut.isPending ? '업로드 중…' : 'Excel 업로드'}
+            </Button>
             <Button
               variant="outline"
               className="h-[38px] gap-1.5 text-[13px] [&_svg]:size-[15px]"
@@ -553,6 +605,47 @@ function MembersScreen() {
           </div>
         )}
       </section>
+
+      <Dialog open={importResult !== null} onOpenChange={(o) => !o && setImportResult(null)}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Excel 일괄 등록 결과</DialogTitle>
+          </DialogHeader>
+          {importResult && (
+            <div className="flex flex-col gap-3 py-1">
+              <div className="text-sm">
+                <strong className="text-om-green">{importResult.created}명</strong> 등록
+                {importResult.failed.length > 0 && (
+                  <>
+                    {' · '}
+                    <strong className="text-om-red">{importResult.failed.length}건</strong> 실패
+                  </>
+                )}
+              </div>
+              {importResult.failed.length > 0 && (
+                <div className="max-h-[320px] overflow-y-auto rounded-md border border-border">
+                  <table className="w-full border-collapse text-[13px]">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="px-3 py-2 text-left font-bold text-muted-foreground">행</th>
+                        <th className="px-3 py-2 text-left font-bold text-muted-foreground">사유</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importResult.failed.map((f) => (
+                        <tr key={`${f.row}-${f.reason}`} className="border-b border-[#F0F1F3]">
+                          <td className="px-3 py-2 font-mono text-foreground/80">{f.row}</td>
+                          <td className="px-3 py-2 text-foreground/80">{f.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -646,7 +739,7 @@ function PageBtn({
 /* 상세 화면                                                           */
 /* ------------------------------------------------------------------ */
 
-function MemberDetail({
+export function MemberDetail({
   memberId,
   onBack,
   onEdit,
@@ -774,7 +867,7 @@ function Field({
 /* 편집 화면                                                           */
 /* ------------------------------------------------------------------ */
 
-function MemberEdit({
+export function MemberEdit({
   memberId,
   depts,
   onCancel,
@@ -865,14 +958,18 @@ function MemberForm({
   onSubmit: (body: UserCreate) => void;
 }) {
   const grades = useGrades();
-  const deptOptions = depts.length > 0 ? depts : initial ? [initial.department ?? ''] : [];
+  const positionsQuery = useQuery(listPositionsApiV1PositionsGetOptions());
+  const rankOptions = (positionsQuery.data ?? []).map((p) => p.name);
+  // 소속 = 팀관리 조직도 전체 노드(공용 상수). 비면(이론상 없음) 기존 depts로 폴백.
+  const deptOptions = DEPARTMENT_OPTIONS.length > 0 ? DEPARTMENT_OPTIONS : depts;
   const [form, setForm] = useState<UserCreate>({
     name: initial?.name ?? '',
-    department: initial?.department ?? deptOptions[0] ?? '',
+    department: initial?.department ?? '', // 빈 값 = 소속 미지정(보존)
     rank: initial?.rank ?? '',
     grade: initial?.grade ?? '중급',
     phone: initial?.phone ?? '',
     email: initial?.email ?? '',
+    employee_no: initial?.employee_no ?? '',
   });
 
   function update<K extends keyof UserCreate>(key: K, val: UserCreate[K]) {
@@ -903,11 +1000,19 @@ function MemberForm({
         <div className="flex items-center gap-4 border-b border-[#F0F1F3] px-7 py-6">
           <Avatar name={form.name || '?'} size={64} />
           <div className="font-mono text-[13px] text-[#8A93A6]">
-            {initial?.employee_no ?? '사번 자동 생성'}
+            {form.employee_no || (initial ? '사번 없음' : '비우면 자동 생성')}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-x-7 gap-y-5 px-7 py-6 sm:grid-cols-2">
+          <EditField label="사번">
+            <input
+              value={form.employee_no ?? ''}
+              placeholder={initial ? '' : '비우면 자동 생성'}
+              onChange={(e) => update('employee_no', e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+            />
+          </EditField>
           <EditField label="이름">
             <input
               value={form.name}
@@ -920,10 +1025,11 @@ function MemberForm({
             {deptOptions.length > 0 ? (
               <div className="relative">
                 <select
-                  value={form.department}
+                  value={form.department ?? ''}
                   onChange={(e) => update('department', e.target.value)}
                   className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-border bg-white px-3 pr-8 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
                 >
+                  <option value="">— 소속 없음 —</option>
                   {deptOptions.map((d) => (
                     <option key={d} value={d}>
                       {d}
@@ -943,12 +1049,33 @@ function MemberForm({
             )}
           </EditField>
           <EditField label="직급">
-            <input
-              value={form.rank}
-              required
-              onChange={(e) => update('rank', e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
-            />
+            {rankOptions.length > 0 ? (
+              <div className="relative">
+                <select
+                  value={form.rank}
+                  onChange={(e) => update('rank', e.target.value)}
+                  className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-border bg-white px-3 pr-8 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+                >
+                  <option value="" disabled>
+                    직급 선택
+                  </option>
+                  {rankOptions.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-[#8A93A6]" />
+              </div>
+            ) : (
+              <input
+                value={form.rank}
+                required
+                placeholder="직급"
+                onChange={(e) => update('rank', e.target.value)}
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-[#1B2435] outline-none transition-colors focus:border-primary"
+              />
+            )}
           </EditField>
           <EditField label="등급">
             <div className="relative">
