@@ -1,7 +1,7 @@
 """Projects table: project aggregate with JSONB collections.
 
 Revision ID: 0010_projects
-Revises: 0011_user_memo
+Revises: 0009_string_ids
 Create Date: hand-written for the project-management feature.
 
 A project owns five collections (members / tasks / contracts / issues / costs)
@@ -17,7 +17,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0010_projects"
-down_revision: str | None = "0011_user_memo"
+down_revision: str | None = "0009_string_ids"
 branch_labels: str | None = None
 depends_on: str | None = None
 
