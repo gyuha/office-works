@@ -10,7 +10,6 @@ Naming convention:
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from typing import Literal
 
@@ -32,56 +31,6 @@ class UserResponse(BaseModel):
     is_verified: bool
     is_active: bool
     created_at: datetime
-
-
-class SignupRequest(BaseModel):
-    """Request body for POST /auth/signup."""
-
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
-    display_name: str = Field(min_length=1, max_length=128)
-
-    @field_validator("email", mode="before")
-    @classmethod
-    def normalize_email(cls, v: object) -> object:
-        """Trim and lower-case email before EmailStr format validation."""
-        if isinstance(v, str):
-            return v.strip().lower()
-        return v
-
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        """Require a production-grade password shape for signup payloads."""
-        if any(c.isspace() for c in v):
-            raise ValueError("Password must not contain whitespace.")
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least one uppercase letter.")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least one lowercase letter.")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit.")
-        if not re.search(r"[^A-Za-z0-9\s]", v):
-            raise ValueError("Password must contain at least one special character.")
-        return v
-
-    @field_validator("display_name", mode="before")
-    @classmethod
-    def normalize_display_name(cls, v: object) -> object:
-        """Trim display_name and reject blank user-facing names."""
-        if isinstance(v, str):
-            display_name = v.strip()
-            if not display_name:
-                raise ValueError("Display name is required.")
-            return display_name
-        return v
-
-
-class SignupResponse(BaseModel):
-    """Response body for POST /auth/signup."""
-
-    user: UserResponse
-    message: str = "Verification email sent."
 
 
 # ---------------------------------------------------------------------------
@@ -139,18 +88,6 @@ class LogoutRequest(BaseModel):
     """Request body for POST /auth/logout."""
 
     refresh_token: str
-
-
-# ---------------------------------------------------------------------------
-# Email verification
-# ---------------------------------------------------------------------------
-
-
-class VerifyEmailResponse(BaseModel):
-    """Response body for POST /auth/verify-email/{token}."""
-
-    message: str = "Email verified successfully."
-    user: UserResponse
 
 
 # ---------------------------------------------------------------------------

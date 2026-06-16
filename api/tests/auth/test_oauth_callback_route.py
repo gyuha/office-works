@@ -47,11 +47,14 @@ class _FakeOAuthAdapter:
 
 
 class _FakeProvisionService:
-    def __init__(self) -> None:
+    def __init__(self, raise_exc: Exception | None = None) -> None:
         self.calls: list[dict[str, Any]] = []
+        self._raise = raise_exc
 
     async def oauth_provision_user(self, **kwargs: Any) -> tuple[object, dict[str, Any]]:
         self.calls.append(kwargs)
+        if self._raise is not None:
+            raise self._raise
         return object(), {
             "access_token": "app.access.jwt",
             "refresh_token": "app.refresh.jwt",
@@ -159,3 +162,65 @@ async def test_oauth_callback_redirects_to_login_error_when_exchange_fails(
     assert response.status_code == 302
     assert response.headers["location"] == f"{_FRONTEND_URL}/login?error=oauth"
     assert service.calls == []
+
+
+async def test_oauth_callback_redirects_to_not_member_error_when_user_is_not_registered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from core.exceptions import ForbiddenError
+
+    redis = _FakeRedis({"oauth:state:good-state": "microsoft"})
+    service = _FakeProvisionService(raise_exc=ForbiddenError("not a member"))
+    adapter = _FakeOAuthAdapter(
+        {
+            "provider_user_id": "oid-stranger",
+            "email": "stranger@example.com",
+            "display_name": "Stranger",
+        }
+    )
+    _patch_env(monkeypatch, adapter)
+    app = _build_app(redis=redis, service=service)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport, base_url="http://testserver", follow_redirects=False
+    ) as client:
+        response = await client.get(
+            "/api/v1/auth/oauth/microsoft/callback",
+            params={"code": "auth-code", "state": "good-state"},
+        )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == f"{_FRONTEND_URL}/login?error=not_member"
+    assert len(service.calls) == 1
+
+
+async def test_oauth_callback_redirects_to_generic_error_for_other_app_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from core.exceptions import UnauthorizedError
+
+    redis = _FakeRedis({"oauth:state:good-state": "microsoft"})
+    service = _FakeProvisionService(raise_exc=UnauthorizedError("associated user not found"))
+    adapter = _FakeOAuthAdapter(
+        {
+            "provider_user_id": "oid-2",
+            "email": "alice@example.com",
+            "display_name": "Alice",
+        }
+    )
+    _patch_env(monkeypatch, adapter)
+    app = _build_app(redis=redis, service=service)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport, base_url="http://testserver", follow_redirects=False
+    ) as client:
+        response = await client.get(
+            "/api/v1/auth/oauth/microsoft/callback",
+            params={"code": "auth-code", "state": "good-state"},
+        )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == f"{_FRONTEND_URL}/login?error=oauth"
+    assert len(service.calls) == 1

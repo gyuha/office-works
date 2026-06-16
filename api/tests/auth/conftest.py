@@ -19,9 +19,9 @@ from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
-from core.ids import generate_id
-
 import pytest
+
+from core.ids import generate_id
 
 # ---------------------------------------------------------------------------
 # Fake Redis
@@ -78,7 +78,6 @@ class FakeAuthRepository:
         self.users: dict[str, Any] = {}  # email → user-like object
         self.users_by_id: dict[str, Any] = {}  # str(id) → user-like object
         self.refresh_tokens: dict[str, Any] = {}  # jti → token row
-        self.email_verifications: dict[str, Any] = {}  # token_hash → ev row
         self.password_resets: dict[str, Any] = {}  # token_hash → pr row
         self.oauth_accounts: dict[str, Any] = {}  # (provider, uid) → oa row
         self.roles: dict[str, Any] = {}  # name → role
@@ -120,6 +119,23 @@ class FakeAuthRepository:
         user.roles = []
         self.users[normalized_email] = user
         self.users_by_id[str(user.id)] = user
+        return user
+
+    async def seed_verified_user(
+        self,
+        email: str,
+        password: str,
+        display_name: str | None = None,
+    ) -> Any:
+        """Create an active, verified user with a hashed password.
+
+        Replacement for the removed self-signup flow (ADR-0009): tests that need
+        a pre-registered member seed the row directly instead of registering.
+        """
+        from domains.auth.security import hash_password
+
+        user = await self.create_user(email, hash_password(password), display_name)
+        user.is_verified = True
         return user
 
     async def mark_user_verified(self, user_id: Any) -> None:
@@ -209,36 +225,6 @@ class FakeAuthRepository:
 
     async def delete_refresh_token(self, jti: str) -> None:
         self.refresh_tokens.pop(jti, None)
-
-    async def create_email_verification(
-        self,
-        user_id: Any,
-        raw_token: str,
-        expires_at: datetime,
-    ) -> Any:
-
-        from domains.auth.security import hash_token
-
-        row = MagicMock()
-        row.id = generate_id("rid")
-        row.user_id = user_id
-        row.token_hash = hash_token(raw_token)
-        row.expires_at = expires_at
-        row.used = False
-        row.created_at = datetime.now(UTC)
-        self.email_verifications[row.token_hash] = row
-        return row
-
-    async def get_email_verification_by_token(self, raw_token: str) -> Any | None:
-        from domains.auth.security import hash_token
-
-        h = hash_token(raw_token)
-        return self.email_verifications.get(h)
-
-    async def mark_email_verification_used(self, ev_id: Any) -> None:
-        for row in self.email_verifications.values():
-            if str(row.id) == str(ev_id):
-                row.used = True
 
     async def mark_user_password_resets_used(self, user_id: Any) -> None:
         for row in self.password_resets.values():

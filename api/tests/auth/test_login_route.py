@@ -93,12 +93,11 @@ async def test_login_route_returns_bearer_jwt_pair_for_verified_user(
     auth_service: AuthService,
     fake_repo: Any,
 ) -> None:
-    user, verification_token = await auth_service.signup(
+    user = await fake_repo.seed_verified_user(
         "alice@example.com",
         "Password1!",
         "Alice",
     )
-    await auth_service.verify_email(verification_token)
 
     application = FastAPI()
     application.include_router(router, prefix="/api/v1")

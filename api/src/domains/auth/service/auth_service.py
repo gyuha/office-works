@@ -10,7 +10,6 @@ Usage::
     repo = AuthRepository(session)
     svc = AuthService(repo, redis)
 
-    user, tokens = await svc.signup("alice@example.com", "password123")
     tokens = await svc.login("alice@example.com", "password123")
     tokens = await svc.refresh(refresh_token_str)
     await svc.logout(refresh_token_str, access_jti)
@@ -25,11 +24,9 @@ from typing import Any
 
 import structlog
 from redis.asyncio import Redis
-from sqlalchemy.exc import IntegrityError
 
 from core.exceptions import (
-    ConflictError,
-    NotFoundError,
+    ForbiddenError,
     UnauthorizedError,
 )
 from domains.auth.email import (
@@ -51,20 +48,8 @@ from domains.auth.security import (
 
 logger = structlog.get_logger(__name__)
 
-# Verification token TTL
-EMAIL_VERIFY_EXPIRE_HOURS: int = 24
+# Password-reset token TTL
 PASSWORD_RESET_EXPIRE_HOURS: int = 1
-
-
-def _normalize_display_name(display_name: str | None, email: str) -> str:
-    """Return a non-empty display name for a local signup identity."""
-    if display_name is not None:
-        normalized = display_name.strip()
-        if normalized:
-            return normalized
-
-    local_part = normalize_email(email).split("@", maxsplit=1)[0]
-    return local_part or "user"
 
 
 def _refresh_token_reuse_state(token_row: RefreshToken | None) -> str:
@@ -120,100 +105,6 @@ class AuthService:
         self._repo = repo
         self._redis = redis
         self._mail_service = mail_service or get_auth_email_service()
-
-    # ── Signup ────────────────────────────────────────────────────────────────
-
-    async def signup(
-        self,
-        email: str,
-        password: str,
-        display_name: str | None = None,
-    ) -> tuple[User, str]:
-        """Register a new user.
-
-        Returns
-        -------
-        tuple[User, str]
-            The created :class:`User` and the raw email-verification token
-            (must be emailed to the user by the caller).
-
-        Raises
-        ------
-        ConflictError
-            If a user with *email* already exists.
-        """
-        normalized_email = normalize_email(email)
-        normalized_display_name = _normalize_display_name(display_name, normalized_email)
-
-        existing = await self._repo.get_user_by_email(normalized_email)
-        if existing is not None:
-            raise ConflictError(f"An account with email '{normalized_email}' already exists.")
-
-        hashed = hash_password(password)
-        try:
-            user = await self._repo.create_user(normalized_email, hashed, normalized_display_name)
-        except IntegrityError as exc:
-            raise ConflictError(
-                f"An account with email '{normalized_email}' already exists."
-            ) from exc
-
-        # Issue verification token
-        raw_token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(UTC) + timedelta(hours=EMAIL_VERIFY_EXPIRE_HOURS)
-        await self._repo.create_email_verification(user.id, raw_token, expires_at)
-
-        # Assign default "user" role if it exists
-        default_role = await self._repo.get_role_by_name("user")
-        if default_role:
-            await self._repo.assign_role_to_user(user, default_role)
-
-        logger.info("user_created", user_id=str(user.id), email=normalized_email)
-        return user, raw_token
-
-    async def signup_and_send_email(
-        self,
-        email: str,
-        password: str,
-        display_name: str | None = None,
-    ) -> User:
-        """Register a new user and send the verification email."""
-        user, raw_token = await self.signup(email, password, display_name)
-        try:
-            await self._mail_service.send_verification_email(user.email, raw_token)
-        except Exception as exc:
-            logger.error("verification_email_failed", user_id=str(user.id), error=str(exc))
-            # Don't fail signup if email delivery fails — user can request resend
-        return user
-
-    # ── Email verification ────────────────────────────────────────────────────
-
-    async def verify_email(self, raw_token: str) -> User:
-        """Mark a user's email as verified.
-
-        Raises
-        ------
-        UnauthorizedError
-            If the token is invalid, expired, or already used.
-        NotFoundError
-            If the associated user no longer exists.
-        """
-        ev = await self._repo.get_email_verification_by_token(raw_token)
-        if ev is None:
-            raise UnauthorizedError("Invalid verification token.")
-        if ev.used:
-            raise UnauthorizedError("Verification token already used.")
-        if ev.expires_at < datetime.now(UTC):
-            raise UnauthorizedError("Verification token has expired.")
-
-        await self._repo.mark_email_verification_used(ev.id)
-        await self._repo.mark_user_verified(ev.user_id)
-
-        user = await self._repo.get_user_by_id(ev.user_id)
-        if user is None:
-            raise NotFoundError("User")
-
-        logger.info("email_verified", user_id=str(user.id))
-        return user
 
     # ── Login ─────────────────────────────────────────────────────────────────
 
@@ -431,15 +322,22 @@ class AuthService:
         refresh_token: str | None = None,
         expires_at: datetime | None = None,
     ) -> tuple[User, dict[str, Any]]:
-        """Find or create a user from an OAuth callback.
+        """Resolve an OAuth callback to an existing user and issue tokens.
 
-        Looks up an existing :class:`OAuthAccount` first; if not found, creates
-        or links a :class:`User` (matching by email), then creates the account row.
+        Looks up an existing :class:`OAuthAccount` first; if not found, links the
+        OAuth identity to an existing :class:`User` matched by email. Closed
+        membership (ADR-0009): an unknown email raises :class:`ForbiddenError` —
+        no user is created at login.
 
         Returns
         -------
         tuple[User, dict]
-            The (possibly new) user and their JWT pair.
+            The matched user and their JWT pair.
+
+        Raises
+        ------
+        ForbiddenError
+            If no existing user matches the verified OAuth email.
         """
         oa = await self._repo.get_oauth_account(provider, provider_user_id)
         if oa is not None:
@@ -449,15 +347,11 @@ class AuthService:
             if user is None:
                 raise UnauthorizedError("Associated user not found.")
         else:
-            # Check if a user with this email already exists
+            # Closed membership (ADR-0009): only an already-existing users row may
+            # log in. The gate is row existence, not employee_no — no JIT creation.
             user = await self._repo.get_user_by_email(email)
             if user is None:
-                user = await self._repo.create_user(email, None, display_name)
-                await self._repo.mark_user_verified(user.id)
-                # Assign default role
-                default_role = await self._repo.get_role_by_name("user")
-                if default_role:
-                    await self._repo.assign_role_to_user(user, default_role)
+                raise ForbiddenError("Login is restricted to registered members.")
 
             await self._repo.create_oauth_account(
                 user.id, provider, provider_user_id, access_token, refresh_token, expires_at

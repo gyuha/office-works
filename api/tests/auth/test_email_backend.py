@@ -4,7 +4,7 @@ These tests pin the local development email topology:
 
 * docker-compose runs Mailpit and exposes SMTP on localhost:1025.
 * FastAPI runs on the host via uvicorn/uv.
-* signup verification emails are delivered through fastapi-mail using those env settings.
+* password-reset emails are delivered through fastapi-mail using those env settings.
 """
 
 from __future__ import annotations
@@ -45,92 +45,6 @@ def test_password_reset_email_template_renders_subject_and_body_from_injected_li
     assert "{reset_confirm_url}" not in rendered.body
     assert "The link expires in 1 hour." in rendered.body
     assert "If you did not request a reset, ignore this email." in rendered.body
-
-
-def test_build_verification_email_payload_includes_recipient_subject_body_and_link(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Verification emails expose a complete payload before SMTP dispatch."""
-    verification_value = "verify-token-123"
-    with patch.dict(
-        os.environ,
-        {
-            "SECRET_KEY": "test-secret-key",
-            "JWT_SECRET_KEY": "test-jwt-secret-key",
-            "FRONTEND_URL": "https://app.example.com/",
-        },
-        clear=True,
-    ):
-        get_settings.cache_clear()
-        try:
-            payload = email_module.build_verification_email_payload(
-                "alice@example.com",
-                verification_value,
-            )
-        finally:
-            get_settings.cache_clear()
-
-    assert payload.recipient == "alice@example.com"
-    assert payload.subject == "Verify your email address"
-    assert payload.token == verification_value
-    assert payload.verification_url == (
-        "https://app.example.com/auth/verify-email/verify-token-123"
-    )
-    assert payload.body.startswith("Hello,")
-    assert "Please verify your email address" in payload.body
-    assert payload.verification_url in payload.body
-    assert verification_value in payload.body
-    assert "The link expires in 24 hours." in payload.body
-
-
-@pytest.mark.asyncio
-async def test_verification_email_uses_mailpit_dev_smtp_settings(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Any,
-) -> None:
-    """send_verification_email routes signup mail to local Mailpit SMTP."""
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(email_module, "FastMail", CapturingFastMail)
-    CapturingFastMail.instances.clear()
-
-    with patch.dict(
-        os.environ,
-        {
-            "SECRET_KEY": "test-secret-key",
-            "JWT_SECRET_KEY": "test-jwt-secret-key",
-            "FRONTEND_URL": "http://localhost:3000",
-            "MAIL_SERVER": "localhost",
-            "MAIL_PORT": "1025",
-            "MAIL_USERNAME": "",
-            "MAIL_PASSWORD": "",
-            "MAIL_FROM": "noreply@office-works.example.com",
-            "MAIL_FROM_NAME": "Example API",
-            "MAIL_STARTTLS": "false",
-            "MAIL_SSL_TLS": "false",
-        },
-        clear=True,
-    ):
-        get_settings.cache_clear()
-        try:
-            await email_module.send_verification_email("alice@example.com", "verify-token-123")
-        finally:
-            get_settings.cache_clear()
-
-    assert len(CapturingFastMail.instances) == 1
-    mailer = CapturingFastMail.instances[0]
-    assert mailer.config.MAIL_SERVER == "localhost"
-    assert mailer.config.MAIL_PORT == 1025
-    assert mailer.config.MAIL_STARTTLS is False
-    assert mailer.config.MAIL_SSL_TLS is False
-    assert mailer.config.USE_CREDENTIALS is False
-    assert mailer.config.VALIDATE_CERTS is False
-
-    assert len(mailer.messages) == 1
-    message = mailer.messages[0]
-    assert message.subject == "Verify your email address"
-    assert len(message.recipients) == 1
-    assert "alice@example.com" in str(message.recipients[0])
-    assert "http://localhost:3000/auth/verify-email/verify-token-123" in message.body
 
 
 @pytest.mark.asyncio

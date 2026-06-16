@@ -22,7 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from domains.auth.models import (
-    EmailVerification,
     OAuthAccount,
     PasswordReset,
     RefreshToken,
@@ -194,36 +193,6 @@ class AuthRepository:
 
     async def delete_refresh_token(self, jti: str) -> None:
         await self._session.execute(delete(RefreshToken).where(RefreshToken.jti == jti))
-
-    # ── EmailVerification ─────────────────────────────────────────────────────
-
-    async def create_email_verification(
-        self,
-        user_id: str,
-        raw_token: str,
-        expires_at: datetime,
-    ) -> EmailVerification:
-        ev = EmailVerification(
-            user_id=user_id,
-            token_hash=hash_token(raw_token),
-            expires_at=expires_at,
-            used=False,
-            created_at=datetime.now(UTC),
-        )
-        self._session.add(ev)
-        await self._session.flush()
-        return ev
-
-    async def get_email_verification_by_token(self, raw_token: str) -> EmailVerification | None:
-        result = await self._session.execute(
-            select(EmailVerification).where(EmailVerification.token_hash == hash_token(raw_token))
-        )
-        return result.scalar_one_or_none()
-
-    async def mark_email_verification_used(self, ev_id: str) -> None:
-        await self._session.execute(
-            update(EmailVerification).where(EmailVerification.id == ev_id).values(used=True)
-        )
 
     # ── PasswordReset ─────────────────────────────────────────────────────────
 

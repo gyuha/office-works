@@ -8,7 +8,6 @@ Tables
 * role_permissions — M:N join table
 * user_roles      — M:N join table
 * refresh_tokens  — one row per active refresh token (rotation + reuse detection)
-* email_verifications — pending email verification tokens
 * password_resets — pending password-reset tokens
 
 * oauth_accounts  — linked federated-provider identities
@@ -41,7 +40,6 @@ from sqlalchemy.sql import func
 
 from core.database import Base
 from core.ids import (
-    EMAIL_VERIFICATION,
     ID_LENGTH,
     OAUTH_ACCOUNT,
     PASSWORD_RESET,
@@ -195,9 +193,6 @@ class User(Base):
     refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         "RefreshToken", back_populates="user", cascade="all, delete-orphan"
     )
-    email_verifications: Mapped[list[EmailVerification]] = relationship(
-        "EmailVerification", back_populates="user", cascade="all, delete-orphan"
-    )
     password_resets: Mapped[list[PasswordReset]] = relationship(
         "PasswordReset", back_populates="user", cascade="all, delete-orphan"
     )
@@ -265,37 +260,6 @@ class RefreshToken(Base):
 
 
 # ---------------------------------------------------------------------------
-# EmailVerification
-# ---------------------------------------------------------------------------
-
-
-class EmailVerification(Base):
-    """Pending email verification record.
-
-    The ``token`` field is a random URL-safe token (not a JWT).  It is stored
-    as a SHA-256 hash for security.  The raw token is emailed to the user.
-    """
-
-    __tablename__ = "email_verifications"
-
-    id: Mapped[str] = id_column(EMAIL_VERIFICATION)
-    user_id: Mapped[str] = mapped_column(
-        String(ID_LENGTH), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-
-    user: Mapped[User] = relationship("User", back_populates="email_verifications")
-
-    def __repr__(self) -> str:
-        return f"<EmailVerification user_id={self.user_id!r} used={self.used}>"
-
-
-# ---------------------------------------------------------------------------
 # PasswordReset
 # ---------------------------------------------------------------------------
 
@@ -303,7 +267,8 @@ class EmailVerification(Base):
 class PasswordReset(Base):
     """Pending password-reset record.
 
-    Same token lifecycle as :class:`EmailVerification`.
+    The ``token`` is a random URL-safe value (not a JWT), stored as a SHA-256
+    hash; the raw token is emailed to the user and expires after one hour.
     """
 
     __tablename__ = "password_resets"

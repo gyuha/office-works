@@ -46,6 +46,8 @@ GRADE = "grd"
 WORK_SETTINGS = "wks"
 LEAVE_SETTINGS = "lvs"
 COMPANY_INFO = "cmp"
+PROJECT = "prj"
+SCHEDULE_VERSION = "psv"
 
 #: Column width: longest prefix (3) + "_" (1) + ULID (26) = 30; 40 leaves room.
 ID_LENGTH = 40

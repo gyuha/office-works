@@ -2,8 +2,6 @@
 
 Routes
 ------
-POST   /auth/signup                     Register + send verification email
-POST   /auth/verify-email/{token}       Verify email address
 POST   /auth/login                      Login → JWT pair
 POST   /auth/refresh                    Rotate refresh token
 POST   /auth/logout                     Revoke tokens
@@ -29,7 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import Settings, get_settings
 from core.database import get_async_session
-from core.exceptions import AppError
+from core.exceptions import AppError, ForbiddenError
 from core.redis import get_redis_dep
 from domains.auth.email import AuthEmailSender, get_auth_email_service
 from domains.auth.models import User
@@ -43,11 +41,8 @@ from domains.auth.schemas import (
     PasswordResetRequest,
     PasswordResetRequestResponse,
     RefreshRequest,
-    SignupRequest,
-    SignupResponse,
     TokenResponse,
     UserResponse,
-    VerifyEmailResponse,
 )
 from domains.auth.security import (
     AccessTokenContext,
@@ -85,61 +80,6 @@ def _app_error_to_http(exc: AppError) -> HTTPException:
 # ---------------------------------------------------------------------------
 # Auth endpoints
 # ---------------------------------------------------------------------------
-
-
-@router.post(
-    "/signup",
-    response_model=SignupResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
-)
-async def signup(
-    payload: SignupRequest,
-    service: AuthService = Depends(_get_service),
-) -> SignupResponse:
-    """Register a new user account and send a verification email.
-
-    FastAPI validates and normalizes ``payload`` before this handler delegates
-    registration to the auth application service.  The response does NOT
-    include a JWT — the user must verify their email first (or the calling
-    client skips verification in non-prod envs).
-
-    Raises
-    ------
-    409
-        If a user with the given email already exists.
-    """
-    try:
-        user = await service.signup_and_send_email(
-            email=payload.email,
-            password=payload.password,
-            display_name=payload.display_name,
-        )
-    except AppError as exc:
-        raise _app_error_to_http(exc) from exc
-
-    return SignupResponse(
-        user=UserResponse.model_validate(user),
-        message="Verification email sent. Please check your inbox.",
-    )
-
-
-@router.post(
-    "/verify-email/{token}",
-    response_model=VerifyEmailResponse,
-    summary="Verify email address",
-)
-async def verify_email(
-    token: str,
-    service: AuthService = Depends(_get_service),
-) -> VerifyEmailResponse:
-    """Mark a user's email as verified using the token from the email link."""
-    try:
-        user = await service.verify_email(token)
-    except AppError as exc:
-        raise _app_error_to_http(exc) from exc
-
-    return VerifyEmailResponse(user=UserResponse.model_validate(user))
 
 
 @router.post(
@@ -355,6 +295,13 @@ async def oauth_callback(
             access_token=user_info.get("access_token"),
             refresh_token=user_info.get("refresh_token"),
             expires_at=expires_at,
+        )
+    except ForbiddenError as exc:
+        # Closed membership (ADR-0009): the OAuth email matches no registered user.
+        logger.info("oauth_login_not_member", provider=provider, error=str(exc))
+        return RedirectResponse(
+            url=f"{frontend_url}/login?error=not_member",
+            status_code=status.HTTP_302_FOUND,
         )
     except AppError as exc:
         logger.error("oauth_provision_failed", provider=provider, error=str(exc))

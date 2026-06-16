@@ -1,17 +1,16 @@
 """Auth E2E flow integration tests.
 
-Tests the full auth lifecycle using in-memory fakes (no DB, no Redis, no email).
-Covers the acceptance criteria exit condition:
+Tests the auth lifecycle using in-memory fakes (no DB, no Redis, no email).
+Pre-registered members are seeded directly (closed membership, ADR-0009 —
+self-signup and email verification were removed):
 
-    auth_e2e: signup → verify → login → refresh → logout pytest 통과
+    login → refresh → logout pytest 통과
 
 All tests are sync (no asyncio fixtures needed — we run async service methods
 via pytest-asyncio's asyncio_mode="auto" via pyproject.toml configuration).
 
 Test classes
 ------------
-* :class:`TestSignup`       — registration + email verification trigger
-* :class:`TestVerifyEmail`  — email-verification token lifecycle
 * :class:`TestLogin`        — credential validation + JWT issuance
 * :class:`TestRefresh`      — token rotation + reuse detection
 * :class:`TestLogout`       — token revocation + Redis blacklisting
@@ -66,266 +65,13 @@ class CapturingAuthEmailService:
     """In-memory application mail-service fake for auth service tests."""
 
     def __init__(self) -> None:
-        self.verification_emails: list[tuple[str, str]] = []
         self.password_reset_emails: list[tuple[str, str]] = []
-        self.fail_verification = False
         self.fail_password_reset = False
-
-    async def send_verification_email(self, user_email: str, token: str) -> None:
-        if self.fail_verification:
-            raise RuntimeError("SMTP error")
-        self.verification_emails.append((user_email, token))
 
     async def send_password_reset_email(self, user_email: str, token: str) -> None:
         if self.fail_password_reset:
             raise RuntimeError("SMTP error")
         self.password_reset_emails.append((user_email, token))
-
-
-# ---------------------------------------------------------------------------
-# TestSignup
-# ---------------------------------------------------------------------------
-
-
-class TestSignup:
-    """signup() — user creation, password hashing, email verification token issuance."""
-
-    async def test_signup_creates_user(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD, "Alice")
-
-        assert user.email == _EMAIL.lower()
-        assert user.display_name == "Alice"
-        assert user.is_verified is False
-
-    async def test_signup_persists_normalized_identity_fields(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        user, _raw_token = await auth_service.signup(
-            "  ALICE@EXAMPLE.COM  ",
-            _PASSWORD,
-            "  Alice Kim  ",
-        )
-
-        assert fake_repo.users["alice@example.com"] is user
-        assert user.email == "alice@example.com"
-        assert user.display_name == "Alice Kim"
-        assert user.hashed_password is not None
-        assert user.hashed_password != _PASSWORD
-        assert user.is_verified is False
-        assert user.is_active is True
-        assert isinstance(user.created_at, datetime)
-
-    async def test_signup_hashes_password(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        assert user.hashed_password is not None
-        assert user.hashed_password != _PASSWORD
-        assert verify_password(_PASSWORD, user.hashed_password)
-
-    async def test_signup_issues_verification_token(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-
-        # Token should be stored in repo
-        ev = await fake_repo.get_email_verification_by_token(raw_token)
-        assert ev is not None
-        assert ev.user_id == user.id
-        assert ev.used is False
-
-    async def test_signup_initializes_required_verification_state(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        started_at = datetime.now(UTC)
-
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        ev = await fake_repo.get_email_verification_by_token(raw_token)
-
-        assert user.is_verified is False
-        assert ev is not None
-        assert ev.user_id == user.id
-        assert ev.token_hash == hash_token(raw_token)
-        assert ev.token_hash != raw_token
-        assert ev.used is False
-        assert isinstance(ev.created_at, datetime)
-        assert started_at <= ev.created_at <= datetime.now(UTC)
-        assert ev.expires_at.tzinfo is not None
-        assert (
-            timedelta(hours=23, minutes=59)
-            <= ev.expires_at - ev.created_at
-            <= timedelta(
-                hours=24,
-                minutes=1,
-            )
-        )
-
-    async def test_signup_duplicate_email_raises_conflict(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from core.exceptions import ConflictError
-
-        await auth_service.signup(_EMAIL, _PASSWORD)
-        with pytest.raises(ConflictError, match="already exists"):
-            await auth_service.signup(_EMAIL, "AnotherPass2!")
-
-    async def test_signup_duplicate_email_uses_normalized_identity(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from core.exceptions import ConflictError
-
-        await auth_service.signup("alice@example.com", _PASSWORD, "Alice")
-
-        with pytest.raises(ConflictError, match="alice@example.com"):
-            await auth_service.signup(
-                "  ALICE@EXAMPLE.COM  ",
-                "AnotherPass2!",
-                "Alice Duplicate",
-            )
-
-    async def test_signup_database_unique_violation_returns_deterministic_conflict(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from sqlalchemy.exc import IntegrityError
-
-        from core.exceptions import ConflictError
-
-        async def create_user_raises_unique_violation(*args: Any, **kwargs: Any) -> Any:
-            raise IntegrityError(
-                statement="INSERT INTO users (email) VALUES (:email)",
-                params={"email": "alice@example.com"},
-                orig=Exception("duplicate key value violates unique constraint users_email_key"),
-            )
-
-        fake_repo.create_user = create_user_raises_unique_violation
-
-        with pytest.raises(ConflictError) as exc_info:
-            await auth_service.signup("  ALICE@EXAMPLE.COM  ", _PASSWORD, "Alice")
-
-        assert exc_info.value.status_code == 409
-        assert exc_info.value.message == "An account with email 'alice@example.com' already exists."
-
-    async def test_signup_and_send_email_dispatches_verification_email_via_mail_service(
-        self,
-        fake_repo: Any,
-        fake_redis: Any,
-    ) -> None:
-        """signup_and_send_email sends the raw verification token through mail service."""
-        mail_service = CapturingAuthEmailService()
-        service = AuthService(repo=fake_repo, redis=fake_redis, mail_service=mail_service)
-
-        user = await service.signup_and_send_email(_EMAIL, _PASSWORD)
-
-        assert user.email == _EMAIL.lower()
-        assert len(mail_service.verification_emails) == 1
-        sent_email, sent_token = mail_service.verification_emails[0]
-        assert sent_email == _EMAIL
-        assert await fake_repo.get_email_verification_by_token(sent_token) is not None
-
-    async def test_signup_and_send_email_suppresses_mail_error(
-        self,
-        fake_repo: Any,
-        fake_redis: Any,
-    ) -> None:
-        """signup_and_send_email should not raise even if email delivery fails."""
-        mail_service = CapturingAuthEmailService()
-        mail_service.fail_verification = True
-        service = AuthService(repo=fake_repo, redis=fake_redis, mail_service=mail_service)
-
-        user = await service.signup_and_send_email(_EMAIL, _PASSWORD)
-
-        assert user.email == _EMAIL.lower()
-
-    async def test_signup_user_cannot_login_until_email_is_verified(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from core.exceptions import UnauthorizedError
-
-        user, _raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-
-        assert user.is_verified is False
-        assert user.is_active is True
-        with pytest.raises(UnauthorizedError, match="Email verification is required"):
-            await auth_service.login(_EMAIL, _PASSWORD)
-
-
-# ---------------------------------------------------------------------------
-# TestVerifyEmail
-# ---------------------------------------------------------------------------
-
-
-class TestVerifyEmail:
-    """verify_email() — token lifecycle."""
-
-    async def test_verify_email_marks_user_verified(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        assert user.is_verified is False
-
-        verified_user = await auth_service.verify_email(raw_token)
-
-        assert verified_user.is_verified is True
-
-    async def test_verify_email_invalid_token_raises_unauthorized(
-        self,
-        auth_service: AuthService,
-    ) -> None:
-        from core.exceptions import UnauthorizedError
-
-        with pytest.raises(UnauthorizedError, match="Invalid"):
-            await auth_service.verify_email("nonexistent-token")
-
-    async def test_verify_email_already_used_raises_unauthorized(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from core.exceptions import UnauthorizedError
-
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
-
-        with pytest.raises(UnauthorizedError, match="already used"):
-            await auth_service.verify_email(raw_token)
-
-    async def test_verify_email_expired_token_raises_unauthorized(
-        self,
-        auth_service: AuthService,
-        fake_repo: Any,
-    ) -> None:
-        from core.exceptions import UnauthorizedError
-
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-
-        # Expire the token manually
-        ev = await fake_repo.get_email_verification_by_token(raw_token)
-        ev.expires_at = datetime.now(UTC) - timedelta(hours=1)
-
-        with pytest.raises(UnauthorizedError, match="expired"):
-            await auth_service.verify_email(raw_token)
 
 
 # ---------------------------------------------------------------------------
@@ -337,9 +83,7 @@ class TestLogin:
     """login() — credential validation + JWT pair issuance."""
 
     async def _signup_and_verify(self, auth_service: AuthService, fake_repo: Any) -> Any:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
-        return user
+        return await fake_repo.seed_verified_user(_EMAIL, _PASSWORD)
 
     async def test_authenticate_credentials_returns_stored_user_for_valid_password_hash(
         self,
@@ -419,8 +163,7 @@ class TestLogin:
     ) -> None:
         from core.exceptions import UnauthorizedError
 
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
+        user = await fake_repo.seed_verified_user(_EMAIL, _PASSWORD)
         user.is_active = False
 
         with pytest.raises(UnauthorizedError):
@@ -436,8 +179,7 @@ class TestRefresh:
     """refresh() — token rotation + reuse detection."""
 
     async def _get_tokens(self, auth_service: AuthService, fake_repo: Any) -> dict[str, Any]:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
+        await fake_repo.seed_verified_user(_EMAIL, _PASSWORD)
         return await auth_service.login(_EMAIL, _PASSWORD)
 
     async def test_refresh_returns_new_token_pair(
@@ -770,8 +512,7 @@ class TestLogout:
     """logout() — refresh token revocation + access token blacklisting."""
 
     async def _get_tokens(self, auth_service: AuthService, fake_repo: Any) -> dict[str, Any]:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
+        await fake_repo.seed_verified_user(_EMAIL, _PASSWORD)
         return await auth_service.login(_EMAIL, _PASSWORD)
 
     async def test_logout_revokes_refresh_token(
@@ -847,9 +588,7 @@ class TestPasswordReset:
     """password reset flow — request + confirm."""
 
     async def _registered_user(self, auth_service: AuthService, fake_repo: Any) -> Any:
-        user, raw_token = await auth_service.signup(_EMAIL, _PASSWORD)
-        await auth_service.verify_email(raw_token)
-        return user
+        return await fake_repo.seed_verified_user(_EMAIL, _PASSWORD)
 
     async def test_request_password_reset_sends_email(
         self,

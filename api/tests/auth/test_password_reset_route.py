@@ -18,11 +18,7 @@ class CapturingMailService:
     """Auth email-service fake that records outbound messages."""
 
     def __init__(self) -> None:
-        self.verification_emails: list[tuple[str, str]] = []
         self.password_reset_emails: list[tuple[str, str]] = []
-
-    async def send_verification_email(self, user_email: str, token: str) -> None:
-        self.verification_emails.append((user_email, token))
 
     async def send_password_reset_email(self, user_email: str, token: str) -> None:
         self.password_reset_emails.append((user_email, token))
@@ -41,7 +37,7 @@ async def test_password_reset_endpoint_returns_same_response_for_existing_and_un
 ) -> None:
     mail_service = CapturingMailService()
     service = AuthService(repo=fake_repo, redis=fake_redis, mail_service=mail_service)
-    await service.signup("alice@example.com", _PASSWORD, "Alice")
+    await fake_repo.seed_verified_user("alice@example.com", _PASSWORD, "Alice")
     app = _build_app(service)
 
     transport = ASGITransport(app=app)
