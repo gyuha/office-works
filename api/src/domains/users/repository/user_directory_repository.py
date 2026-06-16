@@ -143,8 +143,10 @@ class UserDirectoryRepository:
         department: str | None,
         rank: str,
         grade: str,
+        employment_type: str | None,
         phone: str,
         email: str,
+        memo: str | None = None,
     ) -> User:
         """Create a credential-less employee user (pre-registered, no login yet)."""
         user = User(
@@ -157,6 +159,8 @@ class UserDirectoryRepository:
             department=department,
             rank=rank,
             grade=grade,
+            employment_type=employment_type,
+            memo=memo,
             phone=phone,
         )
         self._session.add(user)

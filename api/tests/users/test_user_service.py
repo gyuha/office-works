@@ -43,8 +43,10 @@ class _FakeUser:
     department: str
     rank: str
     grade: str
+    employment_type: str
     phone: str
     email: str
+    memo: str | None = None
     id: str = field(default_factory=lambda: generate_id("usr"))
     is_active: bool = True
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
@@ -112,8 +114,10 @@ class FakeUserDirectoryRepository:
         department: str,
         rank: str,
         grade: str,
+        employment_type: str,
         phone: str,
         email: str,
+        memo: str | None = None,
     ) -> _FakeUser:
         user = _FakeUser(
             employee_no=employee_no,
@@ -121,8 +125,10 @@ class FakeUserDirectoryRepository:
             department=department,
             rank=rank,
             grade=grade,
+            employment_type=employment_type,
             phone=phone,
             email=email.strip().lower(),
+            memo=memo,
         )
         self.users.append(user)
         return user
@@ -174,16 +180,36 @@ def service(repo: FakeUserDirectoryRepository) -> UserDirectoryService:
 
 
 def _payload(
-    email: str = "alice@example.com", grade: str = "중급", department: str = "개발팀"
+    email: str = "alice@example.com",
+    grade: str = "중급",
+    department: str = "개발팀",
+    memo: str | None = None,
 ) -> UserCreate:
     return UserCreate(
         name="홍길동",
         department=department,
         rank="사원",
         grade=grade,  # type: ignore[arg-type]
+        employment_type="정규직",
         phone="010-1234-5678",
         email=email,  # type: ignore[arg-type]
+        memo=memo,
     )
+
+
+# ── memo (rich-text) round-trip ──────────────────────────────────────────────
+
+
+async def test_create_withMemo_persistsAndEchoesInResponse(
+    service: UserDirectoryService,
+) -> None:
+    created = await service.create(_payload(memo="<p><strong>중요</strong> 메모</p>"))
+    assert created.memo == "<p><strong>중요</strong> 메모</p>"
+
+
+async def test_create_withoutMemo_defaultsToNone(service: UserDirectoryService) -> None:
+    created = await service.create(_payload())
+    assert created.memo is None
 
 
 # ── employee_no auto-generation ──────────────────────────────────────────────

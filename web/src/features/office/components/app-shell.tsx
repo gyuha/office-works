@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 
 import { SCREEN_LABELS, pathToScreen } from '../nav';
+import { SCREEN_REGISTRY } from '../screens/registry';
 import { useSidebarStore } from '../store/sidebar-store';
 import { OfficeSidebar } from './sidebar';
 import { OfficeTopbar } from './topbar';
@@ -13,7 +14,11 @@ function metaFor(screen: string): { title: string; subtitle: string } {
   if (screen === 'dashboard') {
     return { title: '대시보드', subtitle: '오늘 하루도 화이팅입니다! 👋' };
   }
-  return { title: SCREEN_LABELS[screen] ?? '화면', subtitle: '준비 중인 화면입니다' };
+  const def = SCREEN_REGISTRY[screen];
+  return {
+    title: def?.title ?? SCREEN_LABELS[screen] ?? '화면',
+    subtitle: def?.sub ?? '준비 중인 화면입니다',
+  };
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {

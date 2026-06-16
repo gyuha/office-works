@@ -32,9 +32,13 @@ class UserCreate(BaseModel):
     department: str | None = Field(default=None, max_length=64)
     rank: str = Field(min_length=1, max_length=64)
     grade: str = Field(min_length=1, max_length=16)
+    # 고용 형태 — main에서 추가된 멤버 필드. 현재 폼 미연동이라 선택값으로 둔다(후속에서 필수화·UI 연동).
+    employment_type: str | None = Field(default=None, max_length=64)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr
     employee_no: str | None = Field(default=None, max_length=16)
+    # 리치텍스트 메모(HTML). 선택 입력 — 렌더 시 sanitize (ADR-0007).
+    memo: str | None = Field(default=None, max_length=100_000)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -53,8 +57,8 @@ class UserCreate(BaseModel):
             return stripped
         return v
 
-    # 사번·소속은 선택값 — 빈 문자열은 None으로(미지정). 사번 None ⇒ 자동생성.
-    @field_validator("employee_no", "department", mode="before")
+    # 사번·소속·고용형태는 선택값 — 빈 문자열은 None으로(미지정). 사번 None ⇒ 자동생성.
+    @field_validator("employee_no", "department", "employment_type", mode="before")
     @classmethod
     def blank_to_none(cls, v: object) -> object:
         if isinstance(v, str):
@@ -69,9 +73,12 @@ class UserUpdate(BaseModel):
     department: str | None = Field(default=None, max_length=64)
     rank: str | None = Field(default=None, min_length=1, max_length=64)
     grade: str | None = Field(default=None, min_length=1, max_length=16)
+    employment_type: str | None = Field(default=None, min_length=1, max_length=64)
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     email: EmailStr | None = None
     employee_no: str | None = Field(default=None, min_length=1, max_length=16)
+    # 리치텍스트 메모(HTML). 선택 — 렌더 시 sanitize (ADR-0007).
+    memo: str | None = Field(default=None, max_length=100_000)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -115,6 +122,8 @@ class UserResponse(BaseModel):
     department: str | None
     rank: str | None
     grade: str | None
+    employment_type: str | None
+    memo: str | None
     phone: str | None
     email: EmailStr
     is_active: bool
@@ -133,6 +142,8 @@ class UserResponse(BaseModel):
                 "department": data.department,
                 "rank": data.rank,
                 "grade": data.grade,
+                "employment_type": data.employment_type,
+                "memo": data.memo,
                 "phone": data.phone,
                 "email": data.email,
                 "is_active": data.is_active,

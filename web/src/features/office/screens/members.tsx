@@ -1040,7 +1040,7 @@ function MemberForm({
               </div>
             ) : (
               <input
-                value={form.department}
+                value={form.department ?? ''}
                 required
                 placeholder="부서명"
                 onChange={(e) => update('department', e.target.value)}

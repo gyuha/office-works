@@ -175,6 +175,8 @@ class User(Base):
     department: Mapped[str | None] = mapped_column(String(64), nullable=True)
     rank: Mapped[str | None] = mapped_column(String(64), nullable=True)
     grade: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    employment_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    memo: Mapped[str | None] = mapped_column(Text, nullable=True)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

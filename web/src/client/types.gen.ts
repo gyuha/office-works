@@ -1002,39 +1002,6 @@ export type SendMessageRequest = {
 };
 
 /**
- * SignupRequest
- *
- * Request body for POST /auth/signup.
- */
-export type SignupRequest = {
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Display Name
-     */
-    display_name: string;
-};
-
-/**
- * SignupResponse
- *
- * Response body for POST /auth/signup.
- */
-export type SignupResponse = {
-    user: DomainsAuthSchemasAuthSchemasUserResponse;
-    /**
-     * Message
-     */
-    message?: string;
-};
-
-/**
  * TaskItem
  */
 export type TaskItem = {
@@ -1103,7 +1070,7 @@ export type UserCreate = {
     /**
      * Department
      */
-    department: string;
+    department?: string | null;
     /**
      * Rank
      */
@@ -1112,6 +1079,10 @@ export type UserCreate = {
      * Grade
      */
     grade: string;
+    /**
+     * Employment Type
+     */
+    employment_type?: string | null;
     /**
      * Phone
      */
@@ -1124,6 +1095,10 @@ export type UserCreate = {
      * Employee No
      */
     employee_no?: string | null;
+    /**
+     * Memo
+     */
+    memo?: string | null;
 };
 
 /**
@@ -1239,6 +1214,10 @@ export type UserUpdate = {
      */
     grade?: string | null;
     /**
+     * Employment Type
+     */
+    employment_type?: string | null;
+    /**
      * Phone
      */
     phone?: string | null;
@@ -1250,6 +1229,10 @@ export type UserUpdate = {
      * Employee No
      */
     employee_no?: string | null;
+    /**
+     * Memo
+     */
+    memo?: string | null;
 };
 
 /**
@@ -1278,19 +1261,6 @@ export type ValidationError = {
     ctx?: {
         [key: string]: unknown;
     };
-};
-
-/**
- * VerifyEmailResponse
- *
- * Response body for POST /auth/verify-email/{token}.
- */
-export type VerifyEmailResponse = {
-    /**
-     * Message
-     */
-    message?: string;
-    user: DomainsAuthSchemasAuthSchemasUserResponse;
 };
 
 /**
@@ -1384,6 +1354,14 @@ export type DomainsUsersSchemasUserSchemasUserResponse = {
      */
     grade: string | null;
     /**
+     * Employment Type
+     */
+    employment_type: string | null;
+    /**
+     * Memo
+     */
+    memo: string | null;
+    /**
      * Phone
      */
     phone: string | null;
@@ -1440,61 +1418,6 @@ export type ReadyReadyGetResponses = {
 };
 
 export type ReadyReadyGetResponse = ReadyReadyGetResponses[keyof ReadyReadyGetResponses];
-
-export type SignupApiV1AuthSignupPostData = {
-    body: SignupRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/auth/signup';
-};
-
-export type SignupApiV1AuthSignupPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SignupApiV1AuthSignupPostError = SignupApiV1AuthSignupPostErrors[keyof SignupApiV1AuthSignupPostErrors];
-
-export type SignupApiV1AuthSignupPostResponses = {
-    /**
-     * Successful Response
-     */
-    201: SignupResponse;
-};
-
-export type SignupApiV1AuthSignupPostResponse = SignupApiV1AuthSignupPostResponses[keyof SignupApiV1AuthSignupPostResponses];
-
-export type VerifyEmailApiV1AuthVerifyEmailTokenPostData = {
-    body?: never;
-    path: {
-        /**
-         * Token
-         */
-        token: string;
-    };
-    query?: never;
-    url: '/api/v1/auth/verify-email/{token}';
-};
-
-export type VerifyEmailApiV1AuthVerifyEmailTokenPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type VerifyEmailApiV1AuthVerifyEmailTokenPostError = VerifyEmailApiV1AuthVerifyEmailTokenPostErrors[keyof VerifyEmailApiV1AuthVerifyEmailTokenPostErrors];
-
-export type VerifyEmailApiV1AuthVerifyEmailTokenPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: VerifyEmailResponse;
-};
-
-export type VerifyEmailApiV1AuthVerifyEmailTokenPostResponse = VerifyEmailApiV1AuthVerifyEmailTokenPostResponses[keyof VerifyEmailApiV1AuthVerifyEmailTokenPostResponses];
 
 export type LoginApiV1AuthLoginPostData = {
     body: LoginRequest;
