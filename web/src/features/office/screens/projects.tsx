@@ -1,6 +1,27 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type IApi,
+  type IColumnConfig,
+  type IScaleConfig,
+  type ITask,
+  Gantt,
+  Willow,
+} from '@svar-ui/react-gantt';
+import '@svar-ui/react-gantt/all.css';
+import { createContext, useContext, useMemo, useRef, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 
+import {
+  createProjectApiV1ProjectsPostMutation,
+  getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetOptions,
+  listProjectsApiV1ProjectsGetOptions,
+  listProjectsApiV1ProjectsGetQueryKey,
+  listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetOptions,
+  listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetQueryKey,
+  saveScheduleApiV1ProjectsProjectIdScheduleVersionsPostMutation,
+} from '@/client/@tanstack/react-query.gen';
+import type { ProjectResponse } from '@/client/types.gen';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,7 +61,7 @@ type Member = {
   end: string;
   active?: boolean;
 };
-type Task = { name: string; start: string; end: string; done: number; dept: string };
+type Task = { id: string; name: string; start: string; end: string; done: number; dept: string };
 type Contract = {
   name: string;
   date: string;
@@ -60,7 +81,7 @@ type Issue = {
   desc?: string;
 };
 type Cost = { category: string; budgeted: number; actual: number; date?: string };
-type Project = {
+export type Project = {
   id: string;
   name: string;
   client: string;
@@ -79,405 +100,33 @@ type Project = {
   costs: Cost[];
 };
 
-/* ---- sample data (projects.js) ---- */
-const PROJECTS_DATA: Project[] = [
-  {
-    id: 'PRJ-2024-001',
-    name: '스마트 HR 시스템 구축',
-    client: '삼성전자 (주)',
-    status: '진행중',
-    progress: 62,
-    pm: '윤서준',
-    startDate: '2024-03-01',
-    endDate: '2024-08-31',
-    budget: 250000000,
-    spent: 148000000,
-    desc: '인사관리 시스템 전면 리뉴얼 및 클라우드 전환 프로젝트. AI 기반 채용 추천, 성과 관리, 급여 자동화 기능 포함.',
-    members: [
-      {
-        id: 'EMP-007',
-        name: '윤서준',
-        rank: '부장',
-        role: 'PM',
-        grade: '특급',
-        start: '2024-03-01',
-        end: '2024-08-31',
-      },
-      {
-        id: 'EMP-001',
-        name: '김지훈',
-        rank: '대리',
-        role: '백엔드 개발',
-        grade: '고급',
-        start: '2024-03-01',
-        end: '2024-08-31',
-      },
-      {
-        id: 'EMP-005',
-        name: '정다은',
-        rank: '과장',
-        role: '프론트엔드 개발',
-        grade: '특급',
-        start: '2024-03-15',
-        end: '2024-08-31',
-      },
-      {
-        id: 'EMP-006',
-        name: '강태양',
-        rank: '대리',
-        role: 'UI/UX 디자인',
-        grade: '중급',
-        start: '2024-03-01',
-        end: '2024-06-30',
-      },
-      {
-        id: 'EMP-009',
-        name: '홍준서',
-        rank: '주임',
-        role: '기획',
-        grade: '중급',
-        start: '2024-03-01',
-        end: '2024-05-31',
-      },
-    ],
-    tasks: [
-      { name: '요구사항 분석', start: '2024-03-01', end: '2024-03-31', done: 100, dept: '기획' },
-      { name: '시스템 설계', start: '2024-03-15', end: '2024-04-30', done: 100, dept: '개발' },
-      { name: 'UI/UX 디자인', start: '2024-03-20', end: '2024-05-15', done: 100, dept: '디자인' },
-      { name: '백엔드 개발', start: '2024-04-01', end: '2024-07-31', done: 70, dept: '개발' },
-      { name: '프론트엔드 개발', start: '2024-04-15', end: '2024-07-31', done: 55, dept: '개발' },
-      { name: '통합 테스트', start: '2024-07-01', end: '2024-08-15', done: 0, dept: 'QA' },
-      { name: '운영 이관', start: '2024-08-16', end: '2024-08-31', done: 0, dept: '운영' },
-    ],
-    contracts: [
-      { name: '본계약서', date: '2024-02-28', amount: 250000000, type: '용역계약', status: '체결' },
-      {
-        name: '추가 변경계약',
-        date: '2024-05-10',
-        amount: 15000000,
-        type: '변경계약',
-        status: '체결',
-      },
-    ],
-    issues: [
-      {
-        no: 1,
-        title: 'API 응답 지연 이슈',
-        type: '기술',
-        priority: '높음',
-        status: '처리중',
-        date: '2024-06-10',
-        assignee: '김지훈',
-        desc: '<p>특정 시간대(오후 2~4시)에 API 응답 시간이 <strong>5초 이상</strong> 지연되는 현상이 발생하고 있습니다.</p><ul><li>회원 로그인 API</li><li>검색 API</li><li>데이터 조회 API</li></ul><p>원인 분석 진행 중이며 DB 커넥션 풀 부족이 주요 원인으로 추정됩니다.</p>',
-      },
-      {
-        no: 2,
-        title: '고객사 요구사항 변경',
-        type: '요구사항',
-        priority: '보통',
-        status: '검토중',
-        date: '2024-06-05',
-        assignee: '윤서준',
-        desc: '<p>고객사 측에서 <strong>기존 계약 범위 외</strong>의 추가 기능 개발을 요청하였습니다.</p><ol><li>모바일 앱 연동 기능</li><li>엑셀 내보내기 기능</li></ol><p>PM과 고객사 간 협의를 통해 범위 및 일정을 조정할 예정입니다.</p>',
-      },
-    ],
-    costs: [
-      { category: '인건비', budgeted: 180000000, actual: 110000000 },
-      { category: '외주비', budgeted: 30000000, actual: 22000000 },
-      { category: '장비/SW', budgeted: 25000000, actual: 12000000 },
-      { category: '기타', budgeted: 15000000, actual: 4000000 },
-    ],
-  },
-  {
-    id: 'PRJ-2024-002',
-    name: '모바일 뱅킹 앱 개발',
-    client: '신한은행',
-    status: '진행중',
-    progress: 35,
-    pm: '장미래',
-    startDate: '2024-05-01',
-    endDate: '2024-11-30',
-    budget: 180000000,
-    spent: 52000000,
-    desc: 'iOS/Android 모바일 뱅킹 앱 신규 개발. 간편 송금, 계좌 관리, 대출 신청, 자산 관리 기능 포함.',
-    members: [
-      {
-        id: 'EMP-012',
-        name: '장미래',
-        rank: '팀장',
-        role: 'PM',
-        grade: '특급',
-        start: '2024-05-01',
-        end: '2024-11-30',
-      },
-      {
-        id: 'EMP-017',
-        name: '서보람',
-        rank: '대리',
-        role: 'iOS 개발',
-        grade: '중급',
-        start: '2024-05-01',
-        end: '2024-11-30',
-      },
-      {
-        id: 'EMP-021',
-        name: '황도윤',
-        rank: '주임',
-        role: 'Android 개발',
-        grade: '고급',
-        start: '2024-05-01',
-        end: '2024-11-30',
-      },
-      {
-        id: 'EMP-020',
-        name: '유은서',
-        rank: '사원',
-        role: 'UI 디자인',
-        grade: '중급',
-        start: '2024-05-15',
-        end: '2024-09-30',
-      },
-    ],
-    tasks: [
-      { name: '분석/기획', start: '2024-05-01', end: '2024-05-31', done: 100, dept: '기획' },
-      { name: '디자인', start: '2024-05-20', end: '2024-07-15', done: 80, dept: '디자인' },
-      { name: 'iOS 개발', start: '2024-06-01', end: '2024-10-31', done: 30, dept: '개발' },
-      { name: 'Android 개발', start: '2024-06-01', end: '2024-10-31', done: 25, dept: '개발' },
-      { name: 'QA 테스트', start: '2024-10-01', end: '2024-11-15', done: 0, dept: 'QA' },
-      { name: '배포/런칭', start: '2024-11-16', end: '2024-11-30', done: 0, dept: '운영' },
-    ],
-    contracts: [
-      {
-        name: '개발 용역계약서',
-        date: '2024-04-25',
-        amount: 180000000,
-        type: '용역계약',
-        status: '체결',
-      },
-    ],
-    issues: [
-      {
-        no: 1,
-        title: '보안 모듈 연동 오류',
-        type: '기술',
-        priority: '매우 높음',
-        status: '처리중',
-        date: '2024-06-20',
-        assignee: '서보람',
-      },
-    ],
-    costs: [
-      { category: '인건비', budgeted: 130000000, actual: 40000000 },
-      { category: '외주비', budgeted: 20000000, actual: 8000000 },
-      { category: '장비/SW', budgeted: 20000000, actual: 4000000 },
-      { category: '기타', budgeted: 10000000, actual: 0 },
-    ],
-  },
-  {
-    id: 'PRJ-2023-015',
-    name: 'ERP 고도화 프로젝트',
-    client: 'LG화학',
-    status: '완료',
-    progress: 100,
-    pm: '권태오',
-    startDate: '2023-09-01',
-    endDate: '2024-02-29',
-    budget: 320000000,
-    spent: 298000000,
-    desc: '기존 ERP 시스템 고도화 및 공급망 관리 모듈 추가 구현. SAP 연동 포함.',
-    members: [
-      {
-        id: 'EMP-016',
-        name: '권태오',
-        rank: '부장',
-        role: 'PM',
-        grade: '특급',
-        start: '2023-09-01',
-        end: '2024-02-29',
-      },
-      {
-        id: 'EMP-011',
-        name: '신현우',
-        rank: '과장',
-        role: '백엔드 개발',
-        grade: '고급',
-        start: '2023-09-01',
-        end: '2024-02-29',
-      },
-      {
-        id: 'EMP-023',
-        name: '한지민',
-        rank: '대리',
-        role: '프론트엔드 개발',
-        grade: '고급',
-        start: '2023-09-01',
-        end: '2024-02-29',
-      },
-    ],
-    tasks: [
-      { name: '현황 분석', start: '2023-09-01', end: '2023-09-30', done: 100, dept: '기획' },
-      { name: '시스템 설계', start: '2023-10-01', end: '2023-11-15', done: 100, dept: '개발' },
-      { name: '개발', start: '2023-11-01', end: '2024-01-31', done: 100, dept: '개발' },
-      { name: '테스트/이관', start: '2024-02-01', end: '2024-02-29', done: 100, dept: 'QA' },
-    ],
-    contracts: [
-      {
-        name: '메인 계약서',
-        date: '2023-08-20',
-        amount: 320000000,
-        type: '용역계약',
-        status: '완료',
-      },
-    ],
-    issues: [],
-    costs: [
-      { category: '인건비', budgeted: 240000000, actual: 225000000 },
-      { category: '외주비', budgeted: 40000000, actual: 38000000 },
-      { category: '장비/SW', budgeted: 30000000, actual: 28000000 },
-      { category: '기타', budgeted: 10000000, actual: 7000000 },
-    ],
-  },
-  {
-    id: 'PRJ-2024-003',
-    name: 'AI 챗봇 서비스 구축',
-    client: '현대자동차',
-    status: '대기',
-    progress: 0,
-    pm: '정다은',
-    startDate: '2024-09-01',
-    endDate: '2025-02-28',
-    budget: 150000000,
-    spent: 0,
-    desc: '고객 상담 AI 챗봇 시스템 구축. LLM 기반 자연어 처리, 다국어 지원, CRM 연동 포함.',
-    members: [
-      {
-        id: 'EMP-005',
-        name: '정다은',
-        rank: '과장',
-        role: 'PM',
-        grade: '특급',
-        start: '2024-09-01',
-        end: '2025-02-28',
-      },
-    ],
-    tasks: [
-      { name: '요구사항 분석', start: '2024-09-01', end: '2024-09-30', done: 0, dept: '기획' },
-      { name: 'AI 모델 설계', start: '2024-10-01', end: '2024-11-30', done: 0, dept: '개발' },
-      { name: '개발', start: '2024-11-01', end: '2025-01-31', done: 0, dept: '개발' },
-      { name: '테스트/배포', start: '2025-02-01', end: '2025-02-28', done: 0, dept: 'QA' },
-    ],
-    contracts: [
-      {
-        name: '사업 제안서',
-        date: '2024-07-15',
-        amount: 150000000,
-        type: '제안서',
-        status: '검토중',
-      },
-    ],
-    issues: [],
-    costs: [
-      { category: '인건비', budgeted: 110000000, actual: 0 },
-      { category: '외주비', budgeted: 20000000, actual: 0 },
-      { category: '장비/SW', budgeted: 15000000, actual: 0 },
-      { category: '기타', budgeted: 5000000, actual: 0 },
-    ],
-  },
-  {
-    id: 'PRJ-2024-004',
-    name: '물류 관리 시스템 개선',
-    client: 'CJ대한통운',
-    status: '보류',
-    progress: 20,
-    pm: '오지은',
-    startDate: '2024-04-01',
-    endDate: '2024-09-30',
-    budget: 95000000,
-    spent: 18000000,
-    desc: '물류 창고 관리 시스템 UI/UX 개선 및 실시간 배송 추적 기능 강화.',
-    members: [
-      {
-        id: 'EMP-010',
-        name: '오지은',
-        rank: '팀장',
-        role: 'PM',
-        grade: '고급',
-        start: '2024-04-01',
-        end: '2024-09-30',
-      },
-      {
-        id: 'EMP-022',
-        name: '송채원',
-        rank: '사원',
-        role: '기획',
-        grade: '중급',
-        start: '2024-04-01',
-        end: '2024-05-31',
-      },
-    ],
-    tasks: [
-      { name: '현황 파악', start: '2024-04-01', end: '2024-04-30', done: 100, dept: '기획' },
-      { name: 'UI 설계', start: '2024-05-01', end: '2024-05-31', done: 40, dept: '디자인' },
-      { name: '개발', start: '2024-06-01', end: '2024-08-31', done: 0, dept: '개발' },
-      { name: '테스트', start: '2024-09-01', end: '2024-09-30', done: 0, dept: 'QA' },
-    ],
-    contracts: [
-      {
-        name: '용역 계약서',
-        date: '2024-03-25',
-        amount: 95000000,
-        type: '용역계약',
-        status: '체결',
-      },
-    ],
-    issues: [
-      {
-        no: 1,
-        title: '고객사 내부 승인 지연',
-        type: '행정',
-        priority: '높음',
-        status: '보류',
-        date: '2024-05-20',
-        assignee: '오지은',
-        desc: '<p>고객사 내부 IT 보안 심의 절차로 인해 프로젝트 착수가 <strong>지연</strong>되고 있습니다.</p><p>예상 처리 기간: 2~3주</p>',
-      },
-    ],
-    costs: [
-      { category: '인건비', budgeted: 65000000, actual: 12000000 },
-      { category: '외주비', budgeted: 15000000, actual: 4000000 },
-      { category: '장비/SW', budgeted: 10000000, actual: 2000000 },
-      { category: '기타', budgeted: 5000000, actual: 0 },
-    ],
-  },
-];
-
 /* member pool (members.js) — 인력 추가 picker */
 const MEMBERS_DATA = [
-  { id: 'EMP-001', name: '김지훈', rank: '대리', grade: '고급' },
-  { id: 'EMP-002', name: '이수연', rank: '과장', grade: '특급' },
-  { id: 'EMP-003', name: '박민준', rank: '사원', grade: '중급' },
-  { id: 'EMP-004', name: '최유진', rank: '차장', grade: '고급' },
-  { id: 'EMP-005', name: '정다은', rank: '과장', grade: '특급' },
-  { id: 'EMP-006', name: '강태양', rank: '대리', grade: '중급' },
-  { id: 'EMP-007', name: '윤서준', rank: '부장', grade: '특급' },
-  { id: 'EMP-008', name: '임나영', rank: '사원', grade: '초급' },
-  { id: 'EMP-009', name: '홍준서', rank: '주임', grade: '중급' },
-  { id: 'EMP-010', name: '오지은', rank: '팀장', grade: '고급' },
-  { id: 'EMP-011', name: '신현우', rank: '과장', grade: '고급' },
-  { id: 'EMP-012', name: '장미래', rank: '팀장', grade: '특급' },
-  { id: 'EMP-013', name: '노지훈', rank: '사원', grade: '초급' },
-  { id: 'EMP-014', name: '허수아', rank: '대리', grade: '고급' },
-  { id: 'EMP-015', name: '조하늘', rank: '차장', grade: '중급' },
-  { id: 'EMP-016', name: '권태오', rank: '부장', grade: '특급' },
-  { id: 'EMP-017', name: '서보람', rank: '대리', grade: '중급' },
-  { id: 'EMP-018', name: '문가영', rank: '주임', grade: '고급' },
-  { id: 'EMP-019', name: '배성준', rank: '팀장', grade: '고급' },
-  { id: 'EMP-020', name: '유은서', rank: '사원', grade: '중급' },
-  { id: 'EMP-021', name: '황도윤', rank: '주임', grade: '고급' },
-  { id: 'EMP-022', name: '송채원', rank: '사원', grade: '중급' },
-  { id: 'EMP-023', name: '한지민', rank: '대리', grade: '고급' },
-  { id: 'EMP-024', name: '전현서', rank: '과장', grade: '특급' },
-  { id: 'EMP-025', name: '류아인', rank: '주임', grade: '초급' },
+  { id: 'EMP-001', name: '김지훈', team: '개발팀', rank: '대리', grade: '고급' },
+  { id: 'EMP-002', name: '이수연', team: '기획팀', rank: '과장', grade: '특급' },
+  { id: 'EMP-003', name: '박민준', team: '영업팀', rank: '사원', grade: '중급' },
+  { id: 'EMP-004', name: '최유진', team: '인사팀', rank: '차장', grade: '고급' },
+  { id: 'EMP-005', name: '정다은', team: '개발팀', rank: '과장', grade: '특급' },
+  { id: 'EMP-006', name: '강태양', team: '디자인팀', rank: '대리', grade: '중급' },
+  { id: 'EMP-007', name: '윤서준', team: '개발팀', rank: '부장', grade: '특급' },
+  { id: 'EMP-008', name: '임나영', team: '마케팅팀', rank: '사원', grade: '초급' },
+  { id: 'EMP-009', name: '홍준서', team: '기획팀', rank: '주임', grade: '중급' },
+  { id: 'EMP-010', name: '오지은', team: '인사팀', rank: '팀장', grade: '고급' },
+  { id: 'EMP-011', name: '신현우', team: '영업팀', rank: '과장', grade: '고급' },
+  { id: 'EMP-012', name: '장미래', team: '디자인팀', rank: '팀장', grade: '특급' },
+  { id: 'EMP-013', name: '노지훈', team: '개발팀', rank: '사원', grade: '초급' },
+  { id: 'EMP-014', name: '허수아', team: '마케팅팀', rank: '대리', grade: '고급' },
+  { id: 'EMP-015', name: '조하늘', team: '기획팀', rank: '차장', grade: '중급' },
+  { id: 'EMP-016', name: '권태오', team: '영업팀', rank: '부장', grade: '특급' },
+  { id: 'EMP-017', name: '서보람', team: '개발팀', rank: '대리', grade: '중급' },
+  { id: 'EMP-018', name: '문가영', team: '인사팀', rank: '주임', grade: '고급' },
+  { id: 'EMP-019', name: '배성준', team: '마케팅팀', rank: '팀장', grade: '고급' },
+  { id: 'EMP-020', name: '유은서', team: '디자인팀', rank: '사원', grade: '중급' },
+  { id: 'EMP-021', name: '황도윤', team: '개발팀', rank: '주임', grade: '고급' },
+  { id: 'EMP-022', name: '송채원', team: '기획팀', rank: '사원', grade: '중급' },
+  { id: 'EMP-023', name: '한지민', team: '영업팀', rank: '대리', grade: '고급' },
+  { id: 'EMP-024', name: '전현서', team: '디자인팀', rank: '과장', grade: '특급' },
+  { id: 'EMP-025', name: '류아인', team: '마케팅팀', rank: '주임', grade: '초급' },
 ];
 
 /* ---- config maps (token classes) ---- */
@@ -500,6 +149,12 @@ const DEPT_COLORS: Record<string, string> = {
   QA: '#FF9200',
   운영: '#00BF40',
 };
+const GRADE_COLORS: Record<string, string> = {
+  특급: '#0066ff',
+  고급: '#00bf40',
+  중급: '#ff9200',
+  초급: '#94a3b8',
+};
 const PRIORITY_CFG: Record<string, string> = {
   '매우 높음': 'bg-om-red-bg text-om-red border-om-red/30',
   높음: 'bg-om-orange-bg text-om-orange border-om-orange/30',
@@ -520,19 +175,26 @@ const CONTRACT_STATUS_CFG: Record<string, string> = {
   해지: 'bg-om-red-bg text-om-red border-om-red/30',
 };
 
-const DETAIL_TABS = [
+export const DETAIL_TABS = [
   { id: 'info', label: '프로젝트 정보' },
+  { id: 'gantt', label: '업무 일정' },
   { id: 'members', label: '투입 인력' },
-  { id: 'gantt', label: '일정 (간트차트)' },
   { id: 'contracts', label: '계약서 관리' },
   { id: 'issues', label: '이슈/리스크' },
   { id: 'cost', label: '비용 관리' },
 ] as const;
-type TabId = (typeof DETAIL_TABS)[number]['id'];
+export type TabId = (typeof DETAIL_TABS)[number]['id'];
 
 /* ---- helpers ---- */
 const fmt = (n: number) => Number(n).toLocaleString('ko-KR');
 const fmtDate = (d?: string) => (d ? d.replace(/-/g, '.') : '-');
+const fmtDateTime = (iso?: string) => {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(+d)) return iso;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 const fmtW = (n: number) =>
   n >= 100000000
     ? `${(n / 100000000).toFixed(1)}억`
@@ -561,7 +223,7 @@ function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   );
 }
 
-function StatusBadge({ s }: { s: string }) {
+export function StatusBadge({ s }: { s: string }) {
   return (
     <span
       className={cn(
@@ -613,7 +275,15 @@ const CARD_INSET = 'rounded-lg border border-border bg-muted/40 p-[18px]';
 /* ============================================================
    LIST VIEW
    ============================================================ */
-function ListView({ onOpen }: { onOpen: (id: string) => void }) {
+function ListView({
+  projects,
+  onOpen,
+  onAdd,
+}: {
+  projects: Project[];
+  onOpen: (id: string) => void;
+  onAdd: () => void;
+}) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -622,20 +292,18 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
 
   const counts = useMemo(() => {
     const c = { 진행중: 0, 완료: 0, 대기: 0, 보류: 0 } as Record<ProjectStatus, number>;
-    PROJECTS_DATA.forEach((p) => (c[p.status] += 1));
+    projects.forEach((p) => (c[p.status] += 1));
     return c;
-  }, []);
+  }, [projects]);
 
   const years = useMemo(
     () =>
-      [...new Set(PROJECTS_DATA.map((p) => p.startDate.slice(0, 4)).filter(Boolean))]
-        .sort()
-        .reverse(),
-    []
+      [...new Set(projects.map((p) => p.startDate.slice(0, 4)).filter(Boolean))].sort().reverse(),
+    [projects]
   );
 
   const filtered = useMemo(() => {
-    let list = PROJECTS_DATA.slice();
+    let list = projects.slice();
     if (filterStatus !== 'all') list = list.filter((p) => p.status === filterStatus);
     if (filterYear !== 'all') list = list.filter((p) => p.startDate.startsWith(filterYear));
     if (search) {
@@ -755,7 +423,7 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
               className="h-[34px] w-[230px] bg-muted/40 pl-8 text-[13px]"
             />
           </div>
-          <Button className="h-[34px] gap-1.5">
+          <Button className="h-[34px] gap-1.5" onClick={onAdd}>
             <svg viewBox="0 0 24 24" fill="none" className="size-3.5">
               <path
                 d="M12 5v14M5 12h14"
@@ -929,81 +597,21 @@ function PagerBtn({
 }
 
 /* ============================================================
-   DETAIL — shell (tabs)
+   DETAIL — 라우트 공유 컨텍스트
+   레이아웃 라우트(app.proj.$projectId)가 draft·persist를 제공하고
+   자식 탭 라우트(app.proj.$projectId.$tab)가 useProjectDetail로 소비한다.
    ============================================================ */
-function DetailView({
-  project,
-  onBack,
-  onEdit,
-  bump,
-}: {
-  project: Project;
-  onBack: () => void;
-  onEdit: () => void;
-  bump: () => void;
-}) {
-  const [tab, setTab] = useState<TabId>('info');
-
-  return (
-    <div>
-      <div className="mb-4 flex items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border bg-white px-3 py-[7px] text-[13px] font-semibold text-foreground/80"
-        >
-          <ChevL />
-          목록으로
-        </button>
-        <span className="text-xs text-muted-foreground">프로젝트 관리</span>
-        <span className="text-sm text-muted-foreground">/</span>
-        <span className="text-sm font-bold text-foreground">{project.name}</span>
-        <StatusBadge s={project.status} />
-        <span className="ml-auto" />
-        <button
-          type="button"
-          onClick={onEdit}
-          className="h-[34px] cursor-pointer rounded-md border border-border bg-white px-4 text-[13px] font-semibold text-foreground/80"
-        >
-          편집
-        </button>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-        <div className="flex overflow-x-auto border-b border-border">
-          {DETAIL_TABS.map((t) => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  'whitespace-nowrap border-b-[2.5px] px-[18px] py-3 text-[13.5px] transition-colors',
-                  active
-                    ? 'border-primary font-bold text-primary'
-                    : 'border-transparent font-medium text-foreground/70'
-                )}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="p-[22px]">
-          {tab === 'info' && <InfoTab p={project} />}
-          {tab === 'members' && <MembersTab p={project} bump={bump} />}
-          {tab === 'gantt' && <GanttTab p={project} />}
-          {tab === 'contracts' && <ContractsTab p={project} bump={bump} />}
-          {tab === 'issues' && <IssuesTab p={project} bump={bump} />}
-          {tab === 'cost' && <CostTab p={project} bump={bump} />}
-        </div>
-      </div>
-    </div>
-  );
+export type ProjectDetailCtx = { project: Project; bump: () => void };
+export const ProjectDetailContext = createContext<ProjectDetailCtx | null>(null);
+export function useProjectDetail(): ProjectDetailCtx {
+  const ctx = useContext(ProjectDetailContext);
+  if (!ctx) {
+    throw new Error('useProjectDetail은 프로젝트 상세 라우트 내부에서만 사용할 수 있습니다');
+  }
+  return ctx;
 }
 
-function ChevL() {
+export function ChevL() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="size-[15px]">
       <path
@@ -1018,7 +626,7 @@ function ChevL() {
 }
 
 /* ---- Tab: 프로젝트 정보 ---- */
-function InfoTab({ p }: { p: Project }) {
+export function InfoTab({ p }: { p: Project }) {
   const spentPct = p.budget ? Math.round((p.spent / p.budget) * 100) : 0;
   const spentColor =
     spentPct > 90
@@ -1109,8 +717,9 @@ function InfoTab({ p }: { p: Project }) {
 }
 
 /* ---- Tab: 투입 인력 ---- */
-function MembersTab({ p, bump }: { p: Project; bump: () => void }) {
+export function MembersTab({ p, bump }: { p: Project; bump: () => void }) {
   const [modalIdx, setModalIdx] = useState<number | null>(null); // null=closed, -1=add, >=0 edit
+  const [view, setView] = useState<'table' | 'gantt'>('table');
 
   const TH = 'px-3.5 py-2.5 text-left text-xs font-bold text-muted-foreground';
 
@@ -1118,12 +727,33 @@ function MembersTab({ p, bump }: { p: Project; bump: () => void }) {
     <>
       <div className="mb-3.5 flex items-center justify-between">
         <span className="text-sm font-bold text-foreground">총 {p.members.length}명</span>
-        <Button size="sm" className="h-8" onClick={() => setModalIdx(-1)}>
-          + 인력 추가
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex overflow-hidden rounded-md border border-border">
+            {(['table', 'gantt'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={cn(
+                  'px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  view === v
+                    ? 'bg-om-blue-bg text-primary'
+                    : 'bg-white text-foreground/70 hover:bg-muted/40'
+                )}
+              >
+                {v === 'table' ? '테이블' : '간트'}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" className="h-8" onClick={() => setModalIdx(-1)}>
+            + 인력 추가
+          </Button>
+        </div>
       </div>
       {p.members.length === 0 ? (
         <p className="py-5 text-muted-foreground">투입된 인력이 없습니다.</p>
+      ) : view === 'gantt' ? (
+        <MembersGanttView p={p} bump={bump} onEdit={(i) => setModalIdx(i)} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -1199,6 +829,126 @@ function MembersTab({ p, bump }: { p: Project; bump: () => void }) {
   );
 }
 
+/* ---- 투입 인력 간트 뷰 — SVAR 렌더 + 드래그 편집(투입 기간) + 더블클릭→MemberModal ---- */
+function MembersGanttView({
+  p,
+  bump,
+  onEdit,
+}: {
+  p: Project;
+  bump: () => void;
+  onEdit: (i: number) => void;
+}) {
+  const apiRef = useRef<IApi | null>(null);
+  const [viewMode, setViewMode] = useState<GanttViewMode>('Month');
+
+  const dated = p.members.filter((m) => m.start && m.end);
+  const missing = p.members.length - dated.length;
+
+  const scales = useMemo(() => scalesFor(viewMode), [viewMode]);
+  const svarMembers = dated.map(memberToSvar);
+  // 멤버 집합/날짜/활성 변화 시 Gantt 재마운트 — 드래그 커밋·모달 편집·추가/삭제 모두 반영.
+  const sig = dated.map((m) => `${m.id}:${m.start}:${m.end}:${m.active}`).join('|');
+
+  const handleInit = (api: IApi) => {
+    apiRef.current = api;
+    // 드래그/리사이즈 커밋 → 해당 멤버 투입 기간 in-place 변형 + bump (진행 중 이벤트 무시)
+    api.on('update-task', (ev) => {
+      if (ev.inProgress) return;
+      const st = api.getTask(ev.id);
+      if (!st) return;
+      const m = p.members.find((x) => x.id === String(ev.id));
+      if (!m) return;
+      const next = applySvarChangeToMember(m, { start: st.start, end: st.end });
+      m.start = next.start;
+      m.end = next.end;
+      bump();
+    });
+    // 막대 더블클릭 → SVAR 내장 에디터 차단하고 기존 MemberModal 오픈
+    api.intercept('show-editor', (ev) => {
+      const i = p.members.findIndex((x) => x.id === String(ev.id));
+      if (i >= 0) onEdit(i);
+      return false;
+    });
+  };
+
+  return (
+    <div className="min-w-0">
+      {/* 툴바: 일/주/월 토글 */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="flex-1" />
+        <div className="flex overflow-hidden rounded-md border border-border">
+          {GANTT_VIEW_MODES.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className={cn(
+                'px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                viewMode === mode
+                  ? 'bg-om-blue-bg text-primary'
+                  : 'bg-white text-foreground/70 hover:bg-muted/40'
+              )}
+            >
+              {mode === 'Day' ? '일' : mode === 'Week' ? '주' : '월'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 등급 범례 */}
+      <div className="mb-2 flex flex-wrap gap-3">
+        {Object.entries(GRADE_COLORS).map(([grade, color]) => (
+          <span key={grade} className="inline-flex items-center gap-1.5 text-xs text-foreground/80">
+            <span
+              className="inline-block size-2.5 flex-shrink-0 rounded-sm"
+              style={{ background: color }}
+            />
+            {grade}
+          </span>
+        ))}
+      </div>
+
+      {dated.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border py-8 text-center text-muted-foreground">
+          투입일이 지정된 인력이 없습니다. 테이블에서 투입 시작·종료를 입력하면 간트에 표시됩니다.
+        </p>
+      ) : (
+        <div className="om-gantt h-[60vh] min-h-[360px] overflow-hidden rounded-lg border border-border [&_.wx-gantt]:h-full [&_.wx-willow-theme]:h-full">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: 등급 색상용 정적 CSS(멤버 id는 사번) */}
+          <style dangerouslySetInnerHTML={{ __html: memberStyleCss(dated) }} />
+          <Willow>
+            <Gantt
+              key={`${viewMode}:${sig}`}
+              tasks={svarMembers}
+              scales={scales}
+              // 좌측 작업 그리드 숨김 — 라이브러리 타입 교차 이슈로 캐스트(GanttTab과 동일).
+              columns={false as unknown as IColumnConfig[]}
+              cellHeight={38}
+              readonly={false}
+              init={handleInit}
+            />
+          </Willow>
+        </div>
+      )}
+      {missing > 0 && (
+        <p className="mt-2 text-[11.5px] text-muted-foreground">
+          {missing}명 투입일 미지정 — 간트 미표시 (테이블에서 투입 시작·종료를 입력하세요)
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-semibold text-muted-foreground">{label}</span>
+      <span className="text-[13.5px] font-semibold text-foreground">{value || '—'}</span>
+    </div>
+  );
+}
+
 function MemberModal({
   p,
   editIdx,
@@ -1216,25 +966,32 @@ function MemberModal({
 
   const [memberId, setMemberId] = useState(pool[0]?.id ?? '');
   const [role, setRole] = useState(editing?.role ?? '');
-  const [grade, setGrade] = useState(editing?.grade ?? '중급');
   const [start, setStart] = useState(editing?.start ?? '');
   const [end, setEnd] = useState(editing?.end ?? '');
+
+  // 선택된 구성원의 마스터 데이터(이름/팀/등급/직급) — 읽기 전용 표시·저장에 사용
+  const selectedId = editing ? editing.id : memberId;
+  const src = MEMBERS_DATA.find((x) => x.id === selectedId);
+  const info = {
+    name: editing?.name ?? src?.name ?? '',
+    team: src?.team ?? '—',
+    grade: editing?.grade ?? src?.grade ?? '',
+    rank: editing?.rank ?? src?.rank ?? '',
+  };
 
   const save = () => {
     if (editing) {
       if (role) editing.role = role;
-      editing.grade = grade;
       if (start) editing.start = start;
       if (end) editing.end = end;
     } else {
-      const src = MEMBERS_DATA.find((x) => x.id === memberId);
       if (!src) return;
       p.members.push({
         id: src.id,
         name: src.name,
         rank: src.rank,
         role: role || src.rank,
-        grade,
+        grade: src.grade,
         start,
         end,
       });
@@ -1286,6 +1043,14 @@ function MemberModal({
               </div>
             )}
           </div>
+          {src && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-border bg-muted/30 px-3 py-3">
+              <ReadOnlyField label="이름" value={info.name} />
+              <ReadOnlyField label="팀" value={info.team} />
+              <ReadOnlyField label="등급" value={info.grade} />
+              <ReadOnlyField label="직급" value={info.rank} />
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="mm-role">역할</Label>
             <Input
@@ -1294,21 +1059,6 @@ function MemberModal({
               onChange={(e) => setRole(e.target.value)}
               placeholder="예) 백엔드 개발, PM, 디자인"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>등급</Label>
-            <Select value={grade} onValueChange={(v) => setGrade(v ?? '중급')}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {['초급', '중급', '고급', '특급'].map((g) => (
-                  <SelectItem key={g} value={g}>
-                    {g}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -1353,129 +1103,457 @@ function MemberModal({
 }
 
 /* ---- Tab: 간트차트 ---- */
-function GanttTab({ p }: { p: Project }) {
-  if (!p.tasks.length) return <p className="py-5 text-muted-foreground">등록된 일정이 없습니다.</p>;
+function genTaskId(): string {
+  return `tsk_${crypto.randomUUID().slice(0, 8)}`;
+}
 
-  const ms = p.tasks.flatMap((t) => [+new Date(t.start), +new Date(t.end)]);
-  const MIN = Math.min(...ms);
-  const MAX = Math.max(...ms);
-  const SPAN = MAX - MIN || 1;
-  const pct = (d: number) => ((d - MIN) / SPAN) * 100;
+function fmtYMD(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
-  const months: { label: string; p: number }[] = [];
-  let cur = new Date(new Date(MIN).getFullYear(), new Date(MIN).getMonth(), 1);
-  while (+cur <= MAX) {
-    months.push({
-      label: `${cur.getFullYear()}.${String(cur.getMonth() + 1).padStart(2, '0')}`,
-      p: pct(+cur),
+const GANTT_VIEW_MODES = ['Day', 'Week', 'Month'] as const;
+type GanttViewMode = (typeof GANTT_VIEW_MODES)[number];
+
+/* ---- frappe→SVAR 마이그레이션: 순수 매핑 헬퍼 (단위 테스트 대상) ---- */
+function parseYMD(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+/** 우리 Task → SVAR ITask. end는 inclusive(우리) → exclusive(SVAR)로 +1일. */
+export function taskToSvar(t: Task): ITask {
+  const today = fmtYMD(new Date());
+  const start = parseYMD(t.start || today);
+  const endIncl = parseYMD(t.end || t.start || today);
+  return { id: t.id, text: t.name, start, end: addDays(endIncl, 1), progress: t.done, type: 'task' };
+}
+/** SVAR 편집 결과(start/end/progress/text)를 우리 Task에 반영. end는 exclusive→inclusive로 -1일. */
+export function applySvarChange(
+  t: Task,
+  ch: { start?: Date; end?: Date; progress?: number; text?: string }
+): Task {
+  return {
+    ...t,
+    ...(ch.start ? { start: fmtYMD(ch.start) } : {}),
+    ...(ch.end ? { end: fmtYMD(addDays(ch.end, -1)) } : {}),
+    ...(ch.progress != null ? { done: Math.round(ch.progress) } : {}),
+    ...(ch.text ? { name: ch.text } : {}),
+  };
+}
+/** 뷰모드 → SVAR 시간축. */
+function scalesFor(mode: GanttViewMode): IScaleConfig[] {
+  const monthName = (d: Date) => `${d.getMonth() + 1}월`;
+  const yearMonth = (d: Date) => `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+  if (mode === 'Day')
+    return [
+      { unit: 'month', step: 1, format: yearMonth },
+      { unit: 'day', step: 1, format: (d) => String(d.getDate()) },
+    ];
+  if (mode === 'Week')
+    return [
+      { unit: 'month', step: 1, format: yearMonth },
+      { unit: 'week', step: 1, format: (d) => `${d.getMonth() + 1}/${d.getDate()}` },
+    ];
+  return [
+    { unit: 'year', step: 1, format: (d) => `${d.getFullYear()}년` },
+    { unit: 'month', step: 1, format: monthName },
+  ];
+}
+/** 부서별 막대 색상을 data-task-id 스코프 CSS 변수로 주입(타입 오염 없이 per-task 색상). */
+function deptStyleCss(tasks: Task[]): string {
+  return tasks
+    .map((t) => {
+      const c = DEPT_COLORS[t.dept] ?? '#94A3B8';
+      return `.wx-bar[data-task-id="${t.id}"]{--wx-gantt-task-color:${c}b3;--wx-gantt-task-fill-color:${c};--wx-gantt-task-border-color:${c};}`;
+    })
+    .join('\n');
+}
+
+/* ---- 멤버 간트: 멤버 ↔ SVAR 매핑 (GanttTab 미사용 — 순수 헬퍼만 재사용) ---- */
+/** 투입 멤버 → SVAR ITask. end는 inclusive(우리) → exclusive(SVAR)로 +1일. 진척 개념 없음. */
+function memberToSvar(m: Member): ITask {
+  return {
+    id: m.id,
+    text: m.name,
+    start: parseYMD(m.start),
+    end: addDays(parseYMD(m.end), 1),
+    progress: 0,
+    type: 'task',
+  };
+}
+/** SVAR 편집 결과(start/end)를 멤버 투입 기간에 반영. end는 exclusive→inclusive로 -1일. */
+function applySvarChangeToMember(m: Member, ch: { start?: Date; end?: Date }): Member {
+  return {
+    ...m,
+    ...(ch.start ? { start: fmtYMD(ch.start) } : {}),
+    ...(ch.end ? { end: fmtYMD(addDays(ch.end, -1)) } : {}),
+  };
+}
+/** 등급별 막대 색상 + 비활성 멤버 흐리게를 data-task-id 스코프 CSS로 주입. */
+function memberStyleCss(members: Member[]): string {
+  return members
+    .map((m) => {
+      const c = GRADE_COLORS[m.grade] ?? '#94a3b8';
+      const dim = m.active === false ? 'opacity:0.45;' : '';
+      return `.wx-bar[data-task-id="${m.id}"]{--wx-gantt-task-color:${c}b3;--wx-gantt-task-fill-color:${c};--wx-gantt-task-border-color:${c};${dim}}`;
+    })
+    .join('\n');
+}
+
+/* ---- Tab: 일정 (간트차트) — SVAR React Gantt 기반 마우스 편집 + 저장 히스토리 ---- */
+export function GanttTab({ p }: { p: Project }) {
+  const queryClient = useQueryClient();
+  const apiRef = useRef<IApi | null>(null);
+
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    p.tasks.map((t) => ({ ...t, id: t.id || genTaskId() }))
+  );
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+
+  const [viewMode, setViewMode] = useState<GanttViewMode>('Month');
+  const [note, setNote] = useState('');
+  const [editIdx, setEditIdx] = useState<number | null>(null); // null=closed, -1=add
+  const [viewingVersion, setViewingVersion] = useState<{ id: string; at: string } | null>(null);
+  const [dirty, setDirty] = useState(false);
+  // 우리 쪽 변경(다이얼로그/히스토리/뷰모드)에만 SVAR 재마운트. SVAR 드래그 편집은 재마운트하지 않는다.
+  const [reloadKey, setReloadKey] = useState(0);
+  const reloadGantt = () => setReloadKey((k) => k + 1);
+
+  const historyQuery = useQuery(
+    listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetOptions({
+      path: { project_id: p.id },
+    })
+  );
+
+  const saveMut = useMutation({
+    ...saveScheduleApiV1ProjectsProjectIdScheduleVersionsPostMutation(),
+    onSuccess: () => {
+      p.tasks = tasksRef.current; // 메모리 프로젝트(다른 탭) 동기화
+      setDirty(false);
+      setNote('');
+      setViewingVersion(null);
+      queryClient.invalidateQueries({
+        queryKey: listScheduleVersionsApiV1ProjectsProjectIdScheduleVersionsGetQueryKey({
+          path: { project_id: p.id },
+        }),
+      });
+      queryClient.invalidateQueries({ queryKey: listProjectsApiV1ProjectsGetQueryKey() });
+      toast.success('일정이 저장되었습니다 (히스토리 추가됨)');
+    },
+    onError: () => toast.error('일정 저장에 실패했습니다'),
+  });
+
+  const scales = useMemo(() => scalesFor(viewMode), [viewMode]);
+  // reloadKey 시점의 tasks를 스냅샷 → 드래그 편집(setTasks)으로는 prop이 바뀌지 않아 재마운트 없음.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey는 의도적 무효화 트리거(드래그 편집과 우리 변경을 구분해 재마운트)
+  const svarTasks = useMemo(() => tasksRef.current.map(taskToSvar), [reloadKey]);
+
+  const handleInit = (api: IApi) => {
+    apiRef.current = api;
+    // 드래그/리사이즈/진척 커밋 반영 (진행 중 이벤트는 무시)
+    api.on('update-task', (ev) => {
+      if (ev.inProgress) return;
+      const st = api.getTask(ev.id);
+      if (!st) return;
+      const id = String(ev.id);
+      setTasks((prev) =>
+        prev.map((x) =>
+          x.id === id
+            ? applySvarChange(x, {
+                start: st.start,
+                end: st.end,
+                progress: st.progress,
+                text: st.text,
+              })
+            : x
+        )
+      );
+      setDirty(true);
     });
-    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-  }
+    // 막대 더블클릭 → SVAR 내장 에디터 차단하고 우리 다이얼로그 오픈
+    api.intercept('show-editor', (ev) => {
+      const i = tasksRef.current.findIndex((t) => t.id === String(ev.id));
+      if (i >= 0) setEditIdx(i);
+      return false;
+    });
+  };
 
-  const LW = 200;
-  const ROW = 44;
-  const BAR = 24;
+  const editing = editIdx !== null && editIdx >= 0 ? tasks[editIdx] : null;
+
+  const applyTaskEdit = (next: Task) => {
+    setTasks((prev) => {
+      if (editIdx === -1) return [...prev, next];
+      return prev.map((t, i) => (i === editIdx ? next : t));
+    });
+    setDirty(true);
+    setEditIdx(null);
+    reloadGantt();
+  };
+
+  const deleteTask = (idx: number) => {
+    setTasks((prev) => prev.filter((_, i) => i !== idx));
+    setDirty(true);
+    setEditIdx(null);
+    reloadGantt();
+  };
+
+  const loadVersion = async (versionId: string, at: string) => {
+    try {
+      const v = await queryClient.fetchQuery(
+        getScheduleVersionApiV1ProjectsProjectIdScheduleVersionsVersionIdGetOptions({
+          path: { project_id: p.id, version_id: versionId },
+        })
+      );
+      setTasks(
+        (v.tasks ?? []).map((t) => ({
+          id: t.id || genTaskId(),
+          name: t.name,
+          start: t.start ?? '',
+          end: t.end ?? '',
+          done: t.done ?? 0,
+          dept: t.dept ?? '',
+        }))
+      );
+      setViewingVersion({ id: versionId, at });
+      setDirty(false);
+      reloadGantt();
+      toast.info('히스토리 버전을 불러왔습니다');
+    } catch {
+      toast.error('버전을 불러오지 못했습니다');
+    }
+  };
+
+  const restoreCurrent = () => {
+    setTasks(p.tasks.map((t) => ({ ...t, id: t.id || genTaskId() })));
+    setViewingVersion(null);
+    setDirty(false);
+    reloadGantt();
+  };
+
+  const save = () => {
+    saveMut.mutate({
+      path: { project_id: p.id },
+      body: { note: note.trim(), tasks: tasksRef.current },
+    });
+  };
+
+  const history = historyQuery.data ?? [];
+  const selectValue = viewingVersion?.id ?? 'current';
+  const onHistoryChange = (val: string | null) => {
+    if (!val || val === 'current') {
+      restoreCurrent();
+      return;
+    }
+    const ver = history.find((h) => h.id === val);
+    if (ver) loadVersion(val, ver.created_at);
+  };
 
   return (
-    <div>
-      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2.5">
-        <span className="text-sm font-bold text-foreground">전체 {p.tasks.length}개 작업</span>
-        <div className="flex flex-wrap gap-3">
-          {Object.entries(DEPT_COLORS).map(([dept, color]) => (
-            <span
-              key={dept}
-              className="inline-flex items-center gap-1.5 text-xs text-foreground/80"
+    <div className="min-w-0">
+      {/* 툴바 */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-foreground">전체 {tasks.length}개 작업</span>
+        <span className="flex-1" />
+        <div className="flex overflow-hidden rounded-md border border-border">
+          {GANTT_VIEW_MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setViewMode(m)}
+              className={cn(
+                'px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                viewMode === m
+                  ? 'bg-om-blue-bg text-primary'
+                  : 'bg-white text-foreground/70 hover:bg-muted/40'
+              )}
             >
-              <span
-                className="inline-block size-2.5 flex-shrink-0 rounded-sm"
-                style={{ background: color }}
-              />
-              {dept}
-            </span>
+              {m === 'Day' ? '일' : m === 'Week' ? '주' : '월'}
+            </button>
           ))}
         </div>
-      </div>
-      <div className="overflow-hidden rounded-lg border border-border">
-        <div className="flex border-b-2 border-border">
-          <div
-            className="flex flex-shrink-0 items-center border-r border-[#F0F1F3] bg-muted/40 px-3.5"
-            style={{ width: LW, height: 34 }}
-          >
-            <span className="text-[11.5px] font-bold text-muted-foreground">작업</span>
-          </div>
-          <div className="relative flex-1 bg-muted/40" style={{ height: 34 }}>
-            {months.map((m) => (
-              <div
-                key={m.label}
-                className="absolute flex h-full items-center border-l border-[#F0F1F3] pl-1.5"
-                style={{ left: `${m.p}%` }}
-              >
-                <span className="whitespace-nowrap text-[11px] font-bold text-muted-foreground">
-                  {m.label}
-                </span>
-              </div>
+        <Button
+          variant="outline"
+          className="h-[34px] border-border bg-white text-foreground/80"
+          onClick={() => setEditIdx(-1)}
+        >
+          + 작업 추가
+        </Button>
+        <Select value={selectValue} onValueChange={onHistoryChange}>
+          <SelectTrigger className="h-[34px] w-[230px] text-[13px]">
+            <SelectValue placeholder="변경 히스토리" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="current">현재 일정 (편집 중)</SelectItem>
+            {history.map((v) => (
+              <SelectItem key={v.id} value={v.id}>
+                {fmtDateTime(v.created_at)} · {v.note || '메모 없음'} · {v.task_count}개
+              </SelectItem>
             ))}
-          </div>
-        </div>
-        {p.tasks.map((t, i) => {
-          const lp = pct(+new Date(t.start));
-          const wp = pct(+new Date(t.end)) - lp;
-          const c = DEPT_COLORS[t.dept] ?? '#70737C';
-          return (
-            <div key={i} className="flex border-b border-[#F0F1F3] last:border-b-0">
-              <div
-                className="flex flex-shrink-0 items-center border-r border-[#F0F1F3] px-3.5"
-                style={{ width: LW, height: ROW }}
-              >
-                <div>
-                  <div className="max-w-[172px] overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold text-foreground">
-                    {t.name}
-                  </div>
-                  <div className="mt-px text-[11px] font-bold" style={{ color: c }}>
-                    {t.dept}
-                  </div>
-                </div>
-              </div>
-              <div className="relative flex-1 overflow-hidden" style={{ height: ROW }}>
-                {months.map((m) => (
-                  <div
-                    key={m.label}
-                    className="absolute bottom-0 top-0 w-px bg-[#F0F1F3]"
-                    style={{ left: `${m.p}%` }}
-                  />
-                ))}
-                <div
-                  className="absolute overflow-hidden rounded-[7px]"
-                  style={{
-                    left: `${lp}%`,
-                    width: `max(${wp}%, 4px)`,
-                    top: (ROW - BAR) / 2,
-                    height: BAR,
-                    background: `${c}22`,
-                    border: `1.5px solid ${c}66`,
-                  }}
-                >
-                  <div className="h-full" style={{ width: `${t.done}%`, background: `${c}cc` }} />
-                  {t.done > 0 && (
-                    <span
-                      className="absolute left-[7px] top-1/2 -translate-y-1/2 text-[11px] font-extrabold"
-                      style={{ color: t.done > 40 ? '#fff' : c }}
-                    >
-                      {t.done}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+          </SelectContent>
+        </Select>
+        <Input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="변경 메모 (선택)"
+          className="h-[34px] w-[140px] text-[13px]"
+        />
+        <Button className="h-[34px]" onClick={save} disabled={saveMut.isPending}>
+          {saveMut.isPending ? '저장 중…' : dirty ? '저장 *' : '저장'}
+        </Button>
       </div>
+
+      {/* 범례 */}
+      <div className="mb-2 flex flex-wrap gap-3">
+        {Object.entries(DEPT_COLORS).map(([dept, color]) => (
+          <span key={dept} className="inline-flex items-center gap-1.5 text-xs text-foreground/80">
+            <span
+              className="inline-block size-2.5 flex-shrink-0 rounded-sm"
+              style={{ background: color }}
+            />
+            {dept}
+          </span>
+        ))}
+      </div>
+
+      {tasks.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border py-8 text-center text-muted-foreground">
+          등록된 일정이 없습니다. “+ 작업 추가”로 시작하세요.
+        </p>
+      ) : (
+        <div className="om-gantt h-[60vh] min-h-[360px] overflow-hidden rounded-lg border border-border [&_.wx-gantt]:h-full [&_.wx-willow-theme]:h-full">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: 부서 색상용 정적 CSS(태스크 id는 내부 생성값) */}
+          <style dangerouslySetInnerHTML={{ __html: deptStyleCss(tasks) }} />
+          <Willow>
+            <Gantt
+              key={`${viewMode}:${reloadKey}`}
+              tasks={svarTasks}
+              scales={scales}
+              // 좌측 작업 그리드(표) 숨김 — SVAR 문서상 false. 라이브러리 타입 교차 이슈로 캐스트.
+              columns={false as unknown as IColumnConfig[]}
+              cellHeight={38}
+              readonly={false}
+              init={handleInit}
+            />
+          </Willow>
+        </div>
+      )}
+      <p className="mt-2 text-[11.5px] text-muted-foreground">
+        막대를 드래그하면 일정이, 좌우 끝을 끌면 기간이, 막대 우측 끝(진행) 핸들로 진척도가 바뀝니다.
+        막대를 더블클릭하면 상세 편집이 열립니다.
+      </p>
+
+      {editIdx !== null && (
+        <TaskEditDialog
+          task={editing}
+          onClose={() => setEditIdx(null)}
+          onSave={applyTaskEdit}
+          onDelete={editIdx >= 0 ? () => deleteTask(editIdx) : undefined}
+        />
+      )}
     </div>
   );
 }
 
+function TaskEditDialog({
+  task,
+  onClose,
+  onSave,
+  onDelete,
+}: {
+  task: Task | null;
+  onClose: () => void;
+  onSave: (t: Task) => void;
+  onDelete?: () => void;
+}) {
+  const today = fmtYMD(new Date());
+  const [name, setName] = useState(task?.name ?? '');
+  const [dept, setDept] = useState(task?.dept ?? Object.keys(DEPT_COLORS)[0]);
+  const [start, setStart] = useState(task?.start || today);
+  const [end, setEnd] = useState(task?.end || today);
+  const [done, setDone] = useState(task?.done ?? 0);
+
+  const save = () => {
+    if (!name.trim()) {
+      toast.error('작업명을 입력해주세요');
+      return;
+    }
+    if (end < start) {
+      toast.error('종료일이 시작일보다 빠를 수 없습니다');
+      return;
+    }
+    onSave({ id: task?.id ?? genTaskId(), name: name.trim(), dept, start, end, done });
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle>{task ? '작업 편집' : '작업 추가'}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-1">
+          <Fld label="작업명">
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </Fld>
+          <Fld label="부서">
+            <SelectField value={dept} onChange={setDept} opts={Object.keys(DEPT_COLORS)} />
+          </Fld>
+          <div className="grid grid-cols-2 gap-4">
+            <Fld label="시작일">
+              <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            </Fld>
+            <Fld label="종료일">
+              <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </Fld>
+          </div>
+          <Fld label={`진척도 ${done}%`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={done}
+              onChange={(e) => setDone(+e.target.value)}
+              className="h-1.5 w-full accent-primary"
+            />
+          </Fld>
+        </div>
+        <DialogFooter className="sm:justify-between">
+          {onDelete ? (
+            <Button
+              variant="outline"
+              onClick={onDelete}
+              className="border-om-red/40 bg-white text-om-red"
+            >
+              삭제
+            </Button>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-border bg-white text-foreground/80"
+            >
+              취소
+            </Button>
+            <Button onClick={save}>확인</Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ---- Tab: 계약서 관리 (inline accordion edit) ---- */
-function ContractsTab({ p, bump }: { p: Project; bump: () => void }) {
+export function ContractsTab({ p, bump }: { p: Project; bump: () => void }) {
   const [editIdx, setEditIdx] = useState<number>(-1);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -1832,7 +1910,7 @@ function ContractModal({
 }
 
 /* ---- Tab: 이슈/리스크 ---- */
-function IssuesTab({ p, bump }: { p: Project; bump: () => void }) {
+export function IssuesTab({ p, bump }: { p: Project; bump: () => void }) {
   const [selIdx, setSelIdx] = useState(-1);
   const [editMode, setEditMode] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -2272,7 +2350,7 @@ function IssueAddForm({
 /* ---- Tab: 비용 관리 ---- */
 const COST_CATS = ['인건비', '외주비', '장비/SW', '교통/출장', '소모품', '기타'];
 
-function CostTab({ p, bump }: { p: Project; bump: () => void }) {
+export function CostTab({ p, bump }: { p: Project; bump: () => void }) {
   const [modalIdx, setModalIdx] = useState<number | null>(null); // null=closed -1=add
 
   const totB = p.costs.reduce((s, c) => s + c.budgeted, 0);
@@ -2482,7 +2560,7 @@ function CostModal({
 /* ============================================================
    EDIT VIEW (프로젝트 편집)
    ============================================================ */
-function EditView({
+export function EditView({
   project,
   onCancel,
   onSaved,
@@ -2656,42 +2734,214 @@ function SelectField({
   );
 }
 
+/* ---- API <-> UI mapping ---- */
+export function toUiProject(r: ProjectResponse): Project {
+  return {
+    id: r.id,
+    name: r.name,
+    client: r.client ?? '',
+    status: (r.status ?? '대기') as ProjectStatus,
+    progress: r.progress ?? 0,
+    pm: r.pm ?? '',
+    startDate: r.startDate ?? '',
+    endDate: r.endDate ?? '',
+    budget: r.budget ?? 0,
+    spent: r.spent ?? 0,
+    desc: r.desc ?? '',
+    members: (r.members ?? []).map((m) => ({
+      id: m.id,
+      name: m.name,
+      rank: m.rank ?? '',
+      role: m.role ?? '',
+      grade: m.grade ?? '',
+      start: m.start ?? '',
+      end: m.end ?? '',
+      active: m.active,
+    })),
+    tasks: (r.tasks ?? []).map((t) => ({
+      id: t.id || genTaskId(),
+      name: t.name,
+      start: t.start ?? '',
+      end: t.end ?? '',
+      done: t.done ?? 0,
+      dept: t.dept ?? '',
+    })),
+    contracts: (r.contracts ?? []).map((c) => ({
+      name: c.name,
+      date: c.date ?? '',
+      amount: c.amount ?? 0,
+      type: c.type ?? '',
+      status: c.status ?? '',
+      fileName: c.fileName,
+    })),
+    issues: (r.issues ?? []).map((i) => ({
+      no: i.no,
+      title: i.title,
+      type: i.type ?? '',
+      priority: i.priority ?? '',
+      status: i.status ?? '',
+      date: i.date ?? '',
+      assignee: i.assignee ?? '',
+      desc: i.desc,
+    })),
+    costs: (r.costs ?? []).map((c) => ({
+      category: c.category,
+      budgeted: c.budgeted ?? 0,
+      actual: c.actual ?? 0,
+      date: c.date,
+    })),
+  };
+}
+
+/* ---- 프로젝트 추가 다이얼로그 ---- */
+function CreateProjectDialog({
+  onClose,
+  onCreate,
+  pending,
+}: {
+  onClose: () => void;
+  onCreate: (body: {
+    name: string;
+    client: string;
+    pm: string;
+    status: ProjectStatus;
+    startDate: string;
+    endDate: string;
+    budget: number;
+  }) => void;
+  pending: boolean;
+}) {
+  const [name, setName] = useState('');
+  const [client, setClient] = useState('');
+  const [pm, setPm] = useState(MEMBERS_DATA[0]?.name ?? '');
+  const [status, setStatus] = useState<string>('대기');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [budget, setBudget] = useState('');
+
+  const submit = () => {
+    if (!name.trim()) {
+      toast.error('프로젝트명을 입력해주세요');
+      return;
+    }
+    onCreate({
+      name: name.trim(),
+      client: client.trim(),
+      pm,
+      status: status as ProjectStatus,
+      startDate,
+      endDate,
+      budget: +budget || 0,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>프로젝트 추가</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-x-5 gap-y-4 py-1">
+          <Fld label="프로젝트명">
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </Fld>
+          <Fld label="고객사">
+            <Input value={client} onChange={(e) => setClient(e.target.value)} />
+          </Fld>
+          <Fld label="PM (프로젝트 관리자)">
+            <Select value={pm} onValueChange={(v) => setPm(v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MEMBERS_DATA.map((m) => (
+                  <SelectItem key={m.id} value={m.name}>
+                    {m.name} ({m.rank})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Fld>
+          <Fld label="상태">
+            <SelectField
+              value={status}
+              onChange={setStatus}
+              opts={['진행중', '완료', '대기', '보류']}
+            />
+          </Fld>
+          <Fld label="시작일">
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </Fld>
+          <Fld label="종료일">
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </Fld>
+          <Fld label="총 예산 (원)">
+            <Input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} />
+          </Fld>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-border bg-white text-foreground/80"
+          >
+            취소
+          </Button>
+          <Button onClick={submit} disabled={pending}>
+            {pending ? '생성 중…' : '생성'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ============================================================
    ROOT — list <-> detail <-> edit
    ============================================================ */
 function ProjectsScreen() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [, force] = useState(0);
-  const bump = () => force((n) => n + 1);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const project = selectedId ? (PROJECTS_DATA.find((x) => x.id === selectedId) ?? null) : null;
+  const projectsQuery = useQuery(listProjectsApiV1ProjectsGetOptions());
+  const projects = useMemo(() => (projectsQuery.data ?? []).map(toUiProject), [projectsQuery.data]);
 
-  if (editing && project) {
+  const openDetail = (id: string) =>
+    navigate({ to: '/app/proj/$projectId', params: { projectId: id } });
+
+  const createMut = useMutation({
+    ...createProjectApiV1ProjectsPostMutation(),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: listProjectsApiV1ProjectsGetQueryKey() });
+      setCreateOpen(false);
+      toast.success('프로젝트가 생성되었습니다');
+      openDetail(toUiProject(created).id);
+    },
+    onError: () => toast.error('프로젝트 생성에 실패했습니다'),
+  });
+
+  if (projectsQuery.isLoading) {
+    return <div className="px-1 py-10 text-sm text-muted-foreground">프로젝트를 불러오는 중…</div>;
+  }
+  if (projectsQuery.isError) {
     return (
-      <EditView
-        project={project}
-        onCancel={() => setEditing(false)}
-        onSaved={() => {
-          setEditing(false);
-          bump();
-        }}
-      />
+      <div className="px-1 py-10 text-sm text-om-red">프로젝트 목록을 불러오지 못했습니다.</div>
     );
   }
 
-  if (project) {
-    return (
-      <DetailView
-        project={project}
-        onBack={() => setSelectedId(null)}
-        onEdit={() => setEditing(true)}
-        bump={bump}
-      />
-    );
-  }
-
-  return <ListView onOpen={(id) => setSelectedId(id)} />;
+  return (
+    <>
+      <ListView projects={projects} onOpen={openDetail} onAdd={() => setCreateOpen(true)} />
+      {createOpen && (
+        <CreateProjectDialog
+          onClose={() => setCreateOpen(false)}
+          onCreate={(body) => createMut.mutate({ body })}
+          pending={createMut.isPending}
+        />
+      )}
+    </>
+  );
 }
 
 export const projectsScreens: ScreenModule = {

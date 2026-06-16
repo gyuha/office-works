@@ -258,6 +258,15 @@ def _register_routers(application: FastAPI) -> None:
     except ImportError:
         logger.debug("org_router_not_found", note="Will be added in later phase")
 
+    # Projects domain
+    try:
+        from domains.projects.router import router as projects_router
+
+        application.include_router(projects_router, prefix="/api/v1")
+        logger.debug("router_registered", prefix="/api/v1/projects")
+    except ImportError:
+        logger.debug("projects_router_not_found", note="Will be added in later phase")
+
 
 # ---------------------------------------------------------------------------
 # Module-level ``app`` — uvicorn entry point

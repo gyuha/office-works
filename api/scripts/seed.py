@@ -16,6 +16,8 @@ environment-specific / sensitive / ephemeral and are never seeded here.
 from __future__ import annotations
 
 import asyncio
+import json
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
@@ -32,6 +34,7 @@ from domains.org.models.org_models import (
     Position,
     WorkSettings,
 )
+from domains.projects.models import Project
 
 # ── Seed data (mirrors the current database) ───────────────────────────────
 
@@ -86,6 +89,11 @@ COMPANY_INFO: dict[str, Any] = {
     "email": "contact@officemate.co.kr",
     "address": "서울특별시 강남구 테헤란로 123 오피스메이트빌딩 7층",
 }
+
+# 프로젝트 — 데모 데이터셋 (id 기준 upsert). 본문이 길어 별도 JSON 파일에서 로드.
+PROJECTS: list[dict[str, Any]] = json.loads(
+    (Path(__file__).parent / "projects_seed.json").read_text(encoding="utf-8")
+)
 
 
 # ── Upsert helpers ─────────────────────────────────────────────────────────
@@ -158,6 +166,10 @@ async def seed(session: AsyncSession) -> None:
     await _upsert_singleton(session, WorkSettings, WORK_SETTINGS)
     await _upsert_singleton(session, LeaveSettings, LEAVE_SETTINGS)
     await _upsert_singleton(session, CompanyInfo, COMPANY_INFO)
+
+    for proj in PROJECTS:
+        fields = {k: v for k, v in proj.items() if k != "id"}
+        await _upsert_by(session, Project, "id", proj["id"], fields)
 
 
 async def main() -> None:
