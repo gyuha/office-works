@@ -88,7 +88,7 @@ type Approver = Person & { role: string; step: number; status: string };
 
 type ApprovalStatus = '진행' | '완료' | '반려' | '임시저장';
 
-type ApprovalDoc = {
+export type ApprovalDoc = {
   id: string;
   no: string;
   title: string;
@@ -108,7 +108,7 @@ type ApprovalDoc = {
 };
 
 /* ---- 결재 문서 데이터 ---- */
-const APPROVAL_DATA: ApprovalDoc[] = [
+export const APPROVAL_DATA: ApprovalDoc[] = [
   {
     id: 'DOC-001',
     no: '2026-06-04-6876702',
@@ -969,7 +969,7 @@ const APPROVER_STATUS_KEY: Record<string, string> = {
   대기: '임시저장',
 };
 
-function DocDetail({ doc, onBack }: { doc: ApprovalDoc; onBack: () => void }) {
+export function DocDetail({ doc, onBack }: { doc: ApprovalDoc; onBack: () => void }) {
   const tpl = APPROVAL_TEMPLATES.find((t) => t.id === doc.templateId) ?? null;
   const fields: [string, string][] = [
     ['작성자', doc.author],
@@ -1314,7 +1314,7 @@ function matchFilters(d: ApprovalDoc | InboxDoc, f: Filters): boolean {
 /* ============================================================
    상신함 (appr-sent) — list / detail / write 내부 전환
    ============================================================ */
-type SentView = 'list' | 'detail' | 'write';
+type SentView = 'list' | 'write';
 
 function genDoc(
   status: ApprovalStatus,
@@ -1349,9 +1349,9 @@ function genDoc(
 }
 
 function SentScreen() {
+  const navigate = useNavigate();
   const [docs, setDocs] = useState<ApprovalDoc[]>(APPROVAL_DATA);
   const [view, setView] = useState<SentView>('list');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [writeTpl, setWriteTpl] = useState<Template | null>(null);
   const [writeTitle, setWriteTitle] = useState('');
@@ -1366,7 +1366,7 @@ function SentScreen() {
   });
 
   const filtered = docs.filter((d) => matchFilters(d, filters));
-  const selected = docs.find((d) => d.id === selectedId) ?? null;
+  const openDoc = (id: string) => navigate({ to: '/app/appr-sent/$docId', params: { docId: id } });
 
   const openWrite = (tpl: Template | null) => {
     setWriteTpl(tpl);
@@ -1403,18 +1403,6 @@ function SentScreen() {
     );
   }
 
-  if (view === 'detail' && selected) {
-    return (
-      <DocDetail
-        doc={selected}
-        onBack={() => {
-          setView('list');
-          setSelectedId(null);
-        }}
-      />
-    );
-  }
-
   return (
     <div>
       <PageTitle title="상신함" onWrite={() => setShowModal(true)} />
@@ -1426,10 +1414,7 @@ function SentScreen() {
       <DocTable
         rows={filtered}
         emptyText="검색 결과가 없습니다."
-        onRowClick={(id) => {
-          setSelectedId(id);
-          setView('detail');
-        }}
+        onRowClick={openDoc}
         onBookmark={toggleBookmark}
       />
       {showModal && (

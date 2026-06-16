@@ -24,13 +24,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="grid min-h-screen bg-om-canvas text-[#1B2435]"
-      style={{ gridTemplateColumns: `${collapsed ? '76px' : '260px'} 1fr` }}
+      className="grid h-screen overflow-hidden bg-om-canvas text-[#1B2435]"
+      style={{
+        gridTemplateColumns: `${collapsed ? '76px' : '260px'} 1fr`,
+        gridTemplateRows: 'minmax(0, 1fr)',
+      }}
     >
       <OfficeSidebar />
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-col">
         <OfficeTopbar title={title} subtitle={subtitle} />
-        <main className="px-7 pb-10 pt-6">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 pb-10 pt-6">
+          {children}
+        </main>
       </div>
     </div>
   );

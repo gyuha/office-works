@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import {
   ChevronRight,
   Network,
@@ -10,90 +11,27 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
+import {
+  listUsersApiV1UsersGetOptions,
+  updateUserApiV1UsersUserIdPatchMutation,
+} from '@/client/@tanstack/react-query.gen';
+import type { DomainsUsersSchemasUserSchemasUserResponse } from '@/client/types.gen';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { INITIAL_NODES, type TreeNode } from '../data/org-tree';
 import type { ScreenModule } from './types';
+
+type DirectoryUser = DomainsUsersSchemasUserSchemasUserResponse;
 
 /* ============================================================
    OfficeMate — 팀 관리 (team-list)
    teams.js 의 트리/구성원/조직도 동작을 React state 로 재현
    ============================================================ */
 
-type Member = {
-  no: string;
-  name: string;
-  dept: string;
-  rank: string;
-  grade: '특급' | '고급' | '중급' | '초급';
-  phone: string;
-};
-
-type TreeNode = { id: string; name: string; parentId: string | null };
-
-const MEMBERS_DATA: Member[] = [
-  { no: 'EMP-001', name: '김지훈', dept: '개발팀', rank: '대리', grade: '고급', phone: '010-1234-5678' },
-  { no: 'EMP-002', name: '이수연', dept: '기획팀', rank: '과장', grade: '특급', phone: '010-2345-6789' },
-  { no: 'EMP-003', name: '박민준', dept: '영업팀', rank: '사원', grade: '중급', phone: '010-3456-7890' },
-  { no: 'EMP-004', name: '최유진', dept: '인사팀', rank: '차장', grade: '고급', phone: '010-4567-8901' },
-  { no: 'EMP-005', name: '정다은', dept: '개발팀', rank: '과장', grade: '특급', phone: '010-5678-9012' },
-  { no: 'EMP-006', name: '강태양', dept: '디자인팀', rank: '대리', grade: '중급', phone: '010-6789-0123' },
-  { no: 'EMP-007', name: '윤서준', dept: '개발팀', rank: '부장', grade: '특급', phone: '010-7890-1234' },
-  { no: 'EMP-008', name: '임나영', dept: '마케팅팀', rank: '사원', grade: '초급', phone: '010-8901-2345' },
-  { no: 'EMP-009', name: '홍준서', dept: '기획팀', rank: '주임', grade: '중급', phone: '010-9012-3456' },
-  { no: 'EMP-010', name: '오지은', dept: '인사팀', rank: '팀장', grade: '고급', phone: '010-0123-4567' },
-  { no: 'EMP-011', name: '신현우', dept: '영업팀', rank: '과장', grade: '고급', phone: '010-1234-5670' },
-  { no: 'EMP-012', name: '장미래', dept: '디자인팀', rank: '팀장', grade: '특급', phone: '010-2345-6780' },
-  { no: 'EMP-013', name: '노지훈', dept: '개발팀', rank: '사원', grade: '초급', phone: '010-3456-7891' },
-  { no: 'EMP-014', name: '허수아', dept: '마케팅팀', rank: '대리', grade: '고급', phone: '010-4567-8902' },
-  { no: 'EMP-015', name: '조하늘', dept: '기획팀', rank: '차장', grade: '중급', phone: '010-5678-9013' },
-  { no: 'EMP-016', name: '권태오', dept: '영업팀', rank: '부장', grade: '특급', phone: '010-6789-0124' },
-  { no: 'EMP-017', name: '서보람', dept: '개발팀', rank: '대리', grade: '중급', phone: '010-7890-1235' },
-  { no: 'EMP-018', name: '문가영', dept: '인사팀', rank: '주임', grade: '고급', phone: '010-8901-2346' },
-  { no: 'EMP-019', name: '배성준', dept: '마케팅팀', rank: '팀장', grade: '고급', phone: '010-9012-3457' },
-  { no: 'EMP-020', name: '유은서', dept: '디자인팀', rank: '사원', grade: '중급', phone: '010-0123-4568' },
-  { no: 'EMP-021', name: '황도윤', dept: '개발팀', rank: '주임', grade: '고급', phone: '010-1111-2222' },
-  { no: 'EMP-022', name: '송채원', dept: '기획팀', rank: '사원', grade: '중급', phone: '010-3333-4444' },
-  { no: 'EMP-023', name: '한지민', dept: '영업팀', rank: '대리', grade: '고급', phone: '010-5555-6666' },
-  { no: 'EMP-024', name: '전현서', dept: '디자인팀', rank: '과장', grade: '특급', phone: '010-7777-8888' },
-  { no: 'EMP-025', name: '류아인', dept: '마케팅팀', rank: '주임', grade: '초급', phone: '010-9999-0000' },
-];
-
-const INITIAL_NODES: TreeNode[] = [
-  { id: 't01', name: '대표이사', parentId: null },
-  { id: 't02', name: '전무', parentId: 't01' },
-  { id: 't03', name: '경영지원실', parentId: 't02' },
-  { id: 't04', name: '연구실', parentId: 't02' },
-  { id: 't05', name: '전략컨설팅실', parentId: 't02' },
-  { id: 't06', name: 'CTO', parentId: 't02' },
-  { id: 't07', name: '개발1팀', parentId: 't06' },
-  { id: 't08', name: '개발2팀', parentId: 't06' },
-  { id: 't09', name: '개발3팀', parentId: 't06' },
-  { id: 't10', name: 'PM전략실', parentId: 't02' },
-  { id: 't11', name: '기획팀', parentId: 't02' },
-  { id: 't12', name: '기획1Part', parentId: 't11' },
-  { id: 't13', name: '기획2Part', parentId: 't11' },
-  { id: 't14', name: '디자인실', parentId: 't02' },
-];
-
-const INITIAL_MEMBERS: Record<string, string[]> = {
-  t01: ['EMP-002'],
-  t02: ['EMP-007'],
-  t03: ['EMP-004', 'EMP-018'],
-  t04: ['EMP-021'],
-  t05: ['EMP-015'],
-  t06: ['EMP-007'],
-  t07: ['EMP-001', 'EMP-005', 'EMP-013'],
-  t08: ['EMP-017', 'EMP-021'],
-  t09: ['EMP-003'],
-  t10: ['EMP-023', 'EMP-011', 'EMP-016'],
-  t11: ['EMP-009', 'EMP-015'],
-  t12: ['EMP-022'],
-  t13: ['EMP-002'],
-  t14: ['EMP-006', 'EMP-012', 'EMP-020', 'EMP-024'],
-};
-
-const GRADE_C: Record<Member['grade'], string> = {
+const GRADE_C: Record<string, string> = {
   특급: 'bg-om-blue-bg text-om-blue border-om-blue/25',
   고급: 'bg-om-green-bg text-om-green border-om-green/25',
   중급: 'bg-om-orange-bg text-om-orange border-om-orange/25',
@@ -134,12 +72,13 @@ function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   );
 }
 
-function GradeTag({ grade }: { grade: Member['grade'] }) {
+function GradeTag({ grade }: { grade: string | null }) {
+  if (!grade) return null;
   return (
     <span
       className={cn(
         'inline-flex w-[46px] items-center justify-center rounded-[5px] border py-[3px] text-[11.5px] font-extrabold',
-        GRADE_C[grade]
+        GRADE_C[grade] ?? 'bg-muted text-muted-foreground border-border'
       )}
     >
       {grade}
@@ -285,10 +224,38 @@ function OrgChartSvg({
   );
 }
 
-function TeamListScreen() {
+export function TeamListScreen({ nodeId }: { nodeId?: string } = {}) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [nodes, setNodes] = useState<TreeNode[]>(INITIAL_NODES);
-  const [teamMembers, setTeamMembers] = useState<Record<string, string[]>>(INITIAL_MEMBERS);
-  const [selectedId, setSelectedId] = useState<string | null>('t01');
+  const [selectedId, setSelectedId] = useState<string | null>(nodeId ?? 't01');
+
+  // 실제 구성원(users) — 팀 소속은 user.department == 노드 이름으로 도출(CONTEXT: 팀 구성원).
+  const usersQuery = useQuery(
+    listUsersApiV1UsersGetOptions({ query: { page: 1, page_size: 1000 } })
+  );
+  const users: DirectoryUser[] = usersQuery.data?.items ?? [];
+
+  const updateMut = useMutation({
+    ...updateUserApiV1UsersUserIdPatchMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listUsersApiV1UsersGet'] });
+      queryClient.invalidateQueries();
+    },
+    onError: () => toast.error('변경에 실패했습니다. (권한 확인)'),
+  });
+
+  // URL의 노드 id(딥링크·뒤로가기)와 선택 상태 동기화 — nodeId(URL) 변경 시에만 반영
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedId는 비교용일 뿐 트리거 아님(URL 단방향 동기화)
+  useEffect(() => {
+    if (nodeId && nodeId !== selectedId) setSelectedId(nodeId);
+  }, [nodeId]);
+
+  // 노드 선택 = 상태 갱신 + URL 반영(/app/team-list/[nodeId])
+  const selectNode = (id: string) => {
+    setSelectedId(id);
+    navigate({ to: '/app/team-list/$nodeId', params: { nodeId: id } });
+  };
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(['t01', 't02', 't06', 't11'])
   );
@@ -313,11 +280,12 @@ function TeamListScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes]);
 
+  // 노드(+하위 트리)의 이름 집합에 속한 user 수 — 소속(department) 문자열 일치 기준.
   const memberCount = (id: string) => {
-    const ids = [id, ...descendants(id)];
-    const all = new Set<string>();
-    ids.forEach((i) => (teamMembers[i] || []).forEach((m) => all.add(m)));
-    return all.size;
+    const node = getNode(id);
+    if (!node) return 0;
+    const names = new Set<string>([node.name, ...descendants(id).map((d) => getNode(d)?.name ?? '')]);
+    return users.filter((u) => u.department != null && names.has(u.department)).length;
   };
 
   const breadcrumb = (id: string) => {
@@ -330,10 +298,12 @@ function TeamListScreen() {
     return path;
   };
 
-  const directMembers = (id: string) =>
-    (teamMembers[id] || [])
-      .map((no) => MEMBERS_DATA.find((m) => m.no === no))
-      .filter((m): m is Member => Boolean(m));
+  // 직속 구성원 = 그 노드 이름을 소속으로 가진 실제 user.
+  const directMembers = (id: string): DirectoryUser[] => {
+    const node = getNode(id);
+    if (!node) return [];
+    return users.filter((u) => u.department === node.name);
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -390,11 +360,6 @@ function TeamListScreen() {
     if (!deletingId) return;
     const toRemove = [deletingId, ...descendants(deletingId)];
     setNodes((prev) => prev.filter((n) => !toRemove.includes(n.id)));
-    setTeamMembers((prev) => {
-      const next = { ...prev };
-      toRemove.forEach((id) => delete next[id]);
-      return next;
-    });
     if (selectedId && toRemove.includes(selectedId)) {
       const remaining = nodes.filter((n) => !toRemove.includes(n.id));
       setSelectedId(remaining[0]?.id ?? null);
@@ -402,21 +367,16 @@ function TeamListScreen() {
     setDeletingId(null);
   };
 
-  const addMember = (no: string) => {
-    if (!selectedId) return;
-    setTeamMembers((prev) => {
-      const list = prev[selectedId] || [];
-      if (list.includes(no)) return prev;
-      return { ...prev, [selectedId]: [...list, no] };
-    });
+  // 팀에 구성원 추가 = 그 user의 소속을 이 노드 이름으로 PATCH(다른 팀이면 이동).
+  const addMember = (userId: string) => {
+    const node = getNode(selectedId);
+    if (!node) return;
+    updateMut.mutate({ path: { user_id: userId }, body: { department: node.name } });
   };
 
-  const removeMember = (no: string) => {
-    if (!selectedId) return;
-    setTeamMembers((prev) => ({
-      ...prev,
-      [selectedId]: (prev[selectedId] || []).filter((n) => n !== no),
-    }));
+  // 팀에서 제외 = 소속 비움(미지정).
+  const removeMember = (userId: string) => {
+    updateMut.mutate({ path: { user_id: userId }, body: { department: '' } });
   };
 
   const roots = nodes.filter((n) => n.parentId === null);
@@ -481,7 +441,7 @@ function TeamListScreen() {
           ) : (
             <button
               type="button"
-              onClick={() => setSelectedId(id)}
+              onClick={() => selectNode(id)}
               className={cn(
                 'min-w-0 flex-1 truncate text-left text-[13.5px]',
                 isSelected ? 'font-bold text-primary' : 'font-medium text-foreground'
@@ -581,7 +541,7 @@ function TeamListScreen() {
     }
     const bc = breadcrumb(selNode.id);
     const mems = directMembers(selNode.id);
-    const dc = (teamMembers[selNode.id] || []).length;
+    const dc = mems.length;
     const tc = memberCount(selNode.id);
     const par = selNode.parentId ? getNode(selNode.parentId) : null;
     const kidCount = childrenOf(selNode.id).length;
@@ -697,15 +657,15 @@ function TeamListScreen() {
               </thead>
               <tbody>
                 {mems.map((m) => (
-                  <tr key={m.no} className="hover:bg-accent">
+                  <tr key={m.id} className="hover:bg-accent">
                     <td className="border-b border-border/60 p-3">
                       <div className="flex items-center gap-[9px]">
-                        <Avatar name={m.name} />
+                        <Avatar name={m.name ?? ''} />
                         <span className="text-[14px] font-bold text-foreground">{m.name}</span>
                       </div>
                     </td>
                     <td className="border-b border-border/60 p-3 font-mono text-[12.5px] text-muted-foreground">
-                      {m.no}
+                      {m.employee_no}
                     </td>
                     <td className="border-b border-border/60 p-3 text-[13.5px] text-foreground/70">
                       {m.rank}
@@ -720,7 +680,7 @@ function TeamListScreen() {
                       <button
                         type="button"
                         title="팀에서 제외"
-                        onClick={() => removeMember(m.no)}
+                        onClick={() => removeMember(m.id)}
                         className="inline-flex size-7 items-center justify-center rounded-[7px] text-muted-foreground hover:bg-om-red-bg hover:text-om-red"
                       >
                         <X className="size-[13px]" />
@@ -736,15 +696,17 @@ function TeamListScreen() {
     );
   };
 
-  /* ---- 구성원 추가 모달 데이터 ---- */
-  const availMembers = selectedId
-    ? MEMBERS_DATA.filter((m) => {
-        const assigned = new Set(teamMembers[selectedId] || []);
-        if (assigned.has(m.no)) return false;
+  /* ---- 구성원 추가 모달 데이터 — 이 팀에 없는 실제 user 후보 ---- */
+  const selName = getNode(selectedId)?.name ?? null;
+  const availMembers = selName
+    ? users.filter((u) => {
+        if (u.department === selName) return false; // 이미 이 팀 소속
         if (!memSearch) return true;
         const q = memSearch.toLowerCase();
         return (
-          m.name.includes(memSearch) || m.no.toLowerCase().includes(q) || m.dept.includes(memSearch)
+          (u.name ?? '').includes(memSearch) ||
+          (u.employee_no ?? '').toLowerCase().includes(q) ||
+          (u.department ?? '').includes(memSearch)
         );
       })
     : [];
@@ -857,20 +819,20 @@ function TeamListScreen() {
               ) : (
                 availMembers.map((m) => (
                   <div
-                    key={m.no}
+                    key={m.id}
                     className="flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 hover:bg-accent"
                   >
-                    <Avatar name={m.name} size={36} />
+                    <Avatar name={m.name ?? ''} size={36} />
                     <div className="min-w-0 flex-1">
                       <div className="text-[14px] font-bold text-foreground">{m.name}</div>
                       <div className="text-[12.5px] text-muted-foreground">
-                        {m.dept} · {m.rank}
+                        {m.department ?? '소속 없음'} · {m.rank}
                       </div>
                     </div>
                     <GradeTag grade={m.grade} />
                     <button
                       type="button"
-                      onClick={() => addMember(m.no)}
+                      onClick={() => addMember(m.id)}
                       className="h-[30px] rounded-[7px] border border-primary bg-om-blue-bg px-3 text-[12.5px] font-bold text-primary"
                     >
                       추가

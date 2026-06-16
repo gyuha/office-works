@@ -105,9 +105,20 @@ export function screenToPath(id: string): string {
   return id === 'dashboard' ? '/' : `/app/${id}`;
 }
 
+/** 상세 base 세그먼트 → 사이드바에서 활성표시할 목록 screenId 매핑.
+ *  base가 곧 screenId인 화면(team-list, appr-sent 등)은 아래 SCREEN_LABELS 경로로 처리되므로 등록 불필요. */
+const DETAIL_BASE_TO_SCREEN: Record<string, string> = {
+  proj: 'proj-list',
+  members: 'members-list',
+};
+
 export function pathToScreen(pathname: string): string {
   if (pathname === '/') return 'dashboard';
   const match = pathname.match(/^\/app\/([^/]+)/);
-  if (match && SCREEN_LABELS[match[1]]) return match[1];
+  if (match) {
+    const seg = match[1];
+    if (DETAIL_BASE_TO_SCREEN[seg]) return DETAIL_BASE_TO_SCREEN[seg];
+    if (SCREEN_LABELS[seg]) return seg;
+  }
   return 'dashboard';
 }
